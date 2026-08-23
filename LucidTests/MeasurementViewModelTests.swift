@@ -2,6 +2,8 @@ import SwiftUI
 import XCTest
 @testable import Lucid
 
+/// Permission behaviour. The camera pipeline itself is covered by
+/// `CameraPipelineIntegrationTests`.
 @MainActor
 final class MeasurementViewModelTests: XCTestCase {
 
@@ -17,6 +19,7 @@ final class MeasurementViewModelTests: XCTestCase {
         let settings = StubSettingsOpener()
         let viewModel = MeasurementViewModel(environment: AppEnvironment(
             cameraAuthorization: authorization,
+            camera: StubCameraService(),
             settingsOpener: settings,
             allowsSimulatedData: allowsSimulatedData
         ))
@@ -36,7 +39,7 @@ final class MeasurementViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.state, .idle)
     }
 
-    func testUndecidedStatusPromptsOnceAndThenStopsAtTheMissingCapturePipeline() async {
+    func testUndecidedStatusPromptsOnceAndThenReachesAlignment() async {
         let (viewModel, authorization, _) = makeViewModel(
             initialStatus: .notDetermined, statusAfterRequest: .authorized
         )
@@ -46,8 +49,7 @@ final class MeasurementViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.authorization, .authorized)
         let count = await authorization.requestCount
         XCTAssertEqual(count, 1)
-        XCTAssertEqual(viewModel.state, .failed(.captureUnavailableInThisBuild),
-                       "Phase 1 must stop explicitly instead of pretending to measure")
+        XCTAssertEqual(viewModel.state, .alignment)
     }
 
     func testDeniedStatusNeverPromptsAndLandsInPermissionDenied() async {
@@ -104,17 +106,6 @@ final class MeasurementViewModelTests: XCTestCase {
         viewModel.openSettings()
 
         XCTAssertEqual(settings.openCount, 1)
-    }
-
-    func testBackgroundingDoesNotInterruptAStateThatHoldsNoHardware() async {
-        let (viewModel, _, _) = makeViewModel(initialStatus: .authorized)
-
-        await viewModel.startSetup()
-        XCTAssertEqual(viewModel.state, .failed(.captureUnavailableInThisBuild))
-
-        viewModel.handleScenePhaseChange(.background)
-        XCTAssertEqual(viewModel.state, .failed(.captureUnavailableInThisBuild),
-                       "a state with no live hardware must not be reported as interrupted")
     }
 
     func testSimulatedDataIsOffUnlessTheEnvironmentAllowsIt() {

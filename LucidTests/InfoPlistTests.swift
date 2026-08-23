@@ -6,7 +6,7 @@ import XCTest
 final class InfoPlistTests: XCTestCase {
 
     private var appBundle: Bundle {
-        Bundle(for: CameraPreviewPlaceholderView.self)
+        Bundle(for: CameraPreviewUIView.self)
     }
 
     func testCameraUsageDescriptionIsPresentAndMeaningful() throws {

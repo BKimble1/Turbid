@@ -157,14 +157,14 @@ final class MeasurementStateMachineTests: XCTestCase {
 
     func testFailureIsAcceptedFromAnyStateButNotRepeatedIdentically() {
         var machine = MeasurementStateMachine(state: .measuring)
-        XCTAssertTrue(machine.apply(.failed(.captureUnavailableInThisBuild)))
-        XCTAssertEqual(machine.state, .failed(.captureUnavailableInThisBuild))
-        XCTAssertFalse(machine.apply(.failed(.captureUnavailableInThisBuild)),
+        XCTAssertTrue(machine.apply(.failed(.analysisUnavailableInThisBuild)))
+        XCTAssertEqual(machine.state, .failed(.analysisUnavailableInThisBuild))
+        XCTAssertFalse(machine.apply(.failed(.analysisUnavailableInThisBuild)),
                        "re-applying the identical failure is not a transition")
     }
 
     func testFailureCanRestartTheWholeFlow() {
-        var machine = MeasurementStateMachine(state: .failed(.captureUnavailableInThisBuild))
+        var machine = MeasurementStateMachine(state: .failed(.analysisUnavailableInThisBuild))
         XCTAssertTrue(machine.apply(.startRequested))
         XCTAssertEqual(machine.state, .requestingPermission)
     }
@@ -184,7 +184,7 @@ final class MeasurementStateMachineTests: XCTestCase {
             .idle, .requestingPermission, .permissionDenied, .permissionRestricted,
             .result, .lowQuality(reasons: []), .interrupted(.appBackgrounded),
             .thermalLimited, .unsupportedHardware(reason: "x"),
-            .failed(.captureUnavailableInThisBuild)
+            .failed(.analysisUnavailableInThisBuild)
         ]
         for state in inert {
             XCTAssertFalse(state.usesCaptureHardware, "\(state) must not claim live hardware")

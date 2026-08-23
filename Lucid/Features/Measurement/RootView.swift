@@ -1,11 +1,12 @@
 import SwiftUI
 
-/// Phase 1 scaffold screen: explains the app, resolves camera permission, and
-/// exposes the defined lifecycle hook. It contains no measurement, no NTU and no
-/// analysis of any kind.
+/// The home screen: explains what Lucid does, resolves camera permission, and
+/// starts the capture session. It shows no result, no NTU and no analysis; the
+/// measurement itself lives on `MeasurementScreen`.
 struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var viewModel: MeasurementViewModel
+    @State private var showsDiagnostics = false
 
     @MainActor
     init(environment: AppEnvironment) {
@@ -32,12 +33,35 @@ struct RootView: View {
             }
             .navigationTitle("Lucid")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(isPresented: showsMeasurementScreen) {
+                MeasurementScreen(viewModel: viewModel)
+            }
+            .toolbar {
+                // Also here, not only on the measurement screen: that screen is
+                // popped as soon as the session ends, and the diagnostics have
+                // to be readable *after* a run.
+                if RuntimeEnvironment.isDebugBuild {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            showsDiagnostics = true
+                        } label: {
+                            Label("Diagnostics", systemImage: "wrench.and.screwdriver")
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $showsDiagnostics) {
+                CaptureDiagnosticsView(snapshot: viewModel.capture) { on in
+                    Task { try? await viewModel.camera.setTorch(on: on) }
+                }
+                .presentationDetents([.medium, .large])
+            }
         }
         .task {
             await viewModel.refreshAuthorization()
         }
         .onChange(of: scenePhase) { _, newPhase in
-            viewModel.handleScenePhaseChange(newPhase)
+            Task { await viewModel.handleScenePhaseChange(newPhase) }
         }
     }
 
@@ -123,16 +147,16 @@ struct RootView: View {
                     .foregroundStyle(Theme.Palette.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                CameraPreviewView(regionOfInterest: CGRect(x: 0.2, y: 0.2, width: 0.6, height: 0.6))
-                    .frame(height: 180)
-                    .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.control))
-                    .overlay(alignment: .bottom) {
-                        Text("Live preview is added in Phase 2")
+                if let selection = viewModel.capture.selection {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Camera: \(selection.cameraName)")
+                            .font(.caption.weight(.medium))
+                        Text("\(selection.resolution) · \(selection.pixelFormat) · \(String(format: "%.0f", selection.frameRate)) fps · focuses at \(selection.minimumFocusDistanceText)")
                             .font(.caption)
-                            .padding(Theme.Spacing.xs)
-                            .background(.ultraThinMaterial, in: Capsule())
-                            .padding(Theme.Spacing.sm)
+                            .foregroundStyle(Theme.Palette.secondaryText)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
 
                 PrimaryActionButton(
                     title: startButtonTitle,
@@ -143,6 +167,21 @@ struct RootView: View {
                 }
             }
         }
+    }
+
+    /// The measurement screen owns the camera, so it is presented exactly for
+    /// the states that hold hardware and dismissed the moment they end.
+    private var showsMeasurementScreen: Binding<Bool> {
+        Binding(
+            get: { viewModel.state.usesCaptureHardware },
+            set: { isPresented in
+                // Only a user-driven dismissal cancels. When the session ends
+                // on its own the state has already left `usesCaptureHardware`,
+                // and cancelling here would wipe the result before it is shown.
+                guard !isPresented, viewModel.state.usesCaptureHardware else { return }
+                Task { await viewModel.cancel() }
+            }
+        )
     }
 
     private var startButtonTitle: String {
@@ -161,6 +200,7 @@ struct RootView: View {
     RootView(environment: AppEnvironment(
         cameraAuthorization: StubCameraAuthorizationService(initialStatus: .notDetermined,
                                                             statusAfterRequest: .authorized),
+        camera: StubCameraService(),
         settingsOpener: StubSettingsOpener(),
         allowsSimulatedData: true
     ))
@@ -169,6 +209,7 @@ struct RootView: View {
 #Preview("Denied") {
     RootView(environment: AppEnvironment(
         cameraAuthorization: StubCameraAuthorizationService(initialStatus: .denied),
+        camera: StubCameraService(),
         settingsOpener: StubSettingsOpener(),
         allowsSimulatedData: true
     ))

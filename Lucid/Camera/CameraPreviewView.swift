@@ -1,30 +1,45 @@
+import AVFoundation
 import SwiftUI
 import UIKit
 
-/// The SwiftUI boundary for the live camera preview.
+/// Hosts the live camera preview and the analysis-region guide.
 ///
-/// Phase 1 deliberately renders a placeholder: no `AVCaptureVideoPreviewLayer`
-/// exists yet. The wrapper is complete and shipping — only the layer it hosts
-/// changes in Phase 2 — so the SwiftUI layout, sizing and alignment overlay can
-/// be built and reviewed now.
+/// The preview layer's pixels are never read for analysis: it is a display
+/// path only. Analysis frames come from `AVCaptureVideoDataOutput` on the
+/// processing queue.
 struct CameraPreviewView: UIViewRepresentable {
-    /// The normalized analysis region drawn over the preview.
+    /// `nil` before the session is prepared, or in the Simulator.
+    var session: AVCaptureSession?
+    /// The analysis region, in normalized preview coordinates.
     var regionOfInterest: CGRect
 
-    func makeUIView(context: Context) -> CameraPreviewPlaceholderView {
-        let view = CameraPreviewPlaceholderView()
+    func makeUIView(context: Context) -> CameraPreviewUIView {
+        let view = CameraPreviewUIView()
         view.regionOfInterest = regionOfInterest
+        view.attach(session: session)
         return view
     }
 
-    func updateUIView(_ uiView: CameraPreviewPlaceholderView, context: Context) {
+    func updateUIView(_ uiView: CameraPreviewUIView, context: Context) {
         uiView.regionOfInterest = regionOfInterest
+        uiView.attach(session: session)
     }
 }
 
-/// Draws the analysis region guide over an inert dark background.
-final class CameraPreviewPlaceholderView: UIView {
-    var regionOfInterest: CGRect = CGRect(x: 0.25, y: 0.25, width: 0.5, height: 0.5) {
+/// A `UIView` whose backing layer is the preview layer, so the video does not
+/// have to be resized in a separate sublayer on every layout pass.
+final class CameraPreviewUIView: UIView {
+
+    override class var layerClass: AnyClass { AVCaptureVideoPreviewLayer.self }
+
+    private var previewLayer: AVCaptureVideoPreviewLayer? {
+        layer as? AVCaptureVideoPreviewLayer
+    }
+
+    /// Portrait, matching the app's locked orientation.
+    private static let portraitRotationAngle: CGFloat = 90
+
+    var regionOfInterest: CGRect = CGRect(x: 0.2, y: 0.2, width: 0.6, height: 0.6) {
         didSet {
             guard regionOfInterest != oldValue else { return }
             setNeedsLayout()
@@ -32,6 +47,7 @@ final class CameraPreviewPlaceholderView: UIView {
     }
 
     private let regionLayer = CAShapeLayer()
+    private let placeholderLabel = UILabel()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -44,18 +60,49 @@ final class CameraPreviewPlaceholderView: UIView {
     }
 
     private func configure() {
-        // Fixed dark ground rather than a system colour: a measurement is made
-        // inside a dark shroud, so the preview never adopts a light appearance.
+        // A measurement happens inside a dark shroud, so the surround stays
+        // dark rather than adopting a light appearance.
         backgroundColor = UIColor(red: 0.07, green: 0.08, blue: 0.10, alpha: 1.0)
-        isAccessibilityElement = true
-        accessibilityLabel = "Camera preview placeholder"
-        accessibilityValue = "Live preview is added in Phase 2. The dashed rectangle shows where the analysis region will sit."
+
+        previewLayer?.videoGravity = .resizeAspectFill
 
         regionLayer.fillColor = UIColor.clear.cgColor
         regionLayer.strokeColor = UIColor.systemTeal.cgColor
         regionLayer.lineWidth = 2
         regionLayer.lineDashPattern = [6, 4]
         layer.addSublayer(regionLayer)
+
+        placeholderLabel.text = "Camera preview unavailable"
+        placeholderLabel.textColor = UIColor.white.withAlphaComponent(0.7)
+        placeholderLabel.font = .preferredFont(forTextStyle: .footnote)
+        placeholderLabel.adjustsFontForContentSizeCategory = true
+        placeholderLabel.textAlignment = .center
+        placeholderLabel.numberOfLines = 0
+        placeholderLabel.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(placeholderLabel)
+        NSLayoutConstraint.activate([
+            placeholderLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
+            placeholderLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
+            placeholderLabel.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 12),
+            placeholderLabel.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -12)
+        ])
+
+        isAccessibilityElement = true
+        accessibilityLabel = "Camera preview"
+        accessibilityValue = "The dashed rectangle marks the analysis region. Fill it with the sample."
+    }
+
+    func attach(session: AVCaptureSession?) {
+        guard let previewLayer else { return }
+        if previewLayer.session !== session {
+            previewLayer.session = session
+        }
+        placeholderLabel.isHidden = session != nil
+
+        if let connection = previewLayer.connection,
+           connection.isVideoRotationAngleSupported(Self.portraitRotationAngle) {
+            connection.videoRotationAngle = Self.portraitRotationAngle
+        }
     }
 
     override func layoutSubviews() {

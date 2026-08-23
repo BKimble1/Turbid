@@ -2,22 +2,24 @@ import SwiftUI
 import XCTest
 @testable import Lucid
 
-/// The scene-phase hook is the single place Phase 2 will stop the capture
-/// session and turn the torch off, so its state handling is pinned down now.
+/// The torch must never survive leaving the foreground, an error, or a
+/// cancellation. These tests pin that down at both the reducer level and the
+/// view-model level.
 @MainActor
 final class CaptureHardwareTeardownTests: XCTestCase {
 
-    private func makeViewModel() -> MeasurementViewModel {
-        MeasurementViewModel(environment: AppEnvironment(
+    private func makeViewModel() -> (MeasurementViewModel, StubCameraService) {
+        let camera = StubCameraService()
+        let viewModel = MeasurementViewModel(environment: AppEnvironment(
             cameraAuthorization: StubCameraAuthorizationService(initialStatus: .authorized),
+            camera: camera,
             settingsOpener: StubSettingsOpener(),
             allowsSimulatedData: false
         ))
+        return (viewModel, camera)
     }
 
-    func testEveryLiveStateIsInterruptedByLeavingFullScreen() {
-        // Exercised through the reducer because Phase 1 cannot reach these
-        // states without a capture pipeline.
+    func testEveryLiveStateIsInterruptibleSoTheTorchCanBeTurnedOff() {
         let live: [MeasurementState] = [
             .preparingCamera, .alignment, .warmingUp, .lockingControls,
             .acquiringBackground, .measuring, .calculating
@@ -33,13 +35,39 @@ final class CaptureHardwareTeardownTests: XCTestCase {
         }
     }
 
-    func testInactiveSceneIsTreatedTheSameAsBackground() {
-        let viewModel = makeViewModel()
-        // Idle holds no hardware, so neither phase may change the state.
-        viewModel.handleScenePhaseChange(.inactive)
+    func testBackgroundingALiveSessionStopsTheCamera() async {
+        let (viewModel, camera) = makeViewModel()
+        await viewModel.startSetup()
+        XCTAssertEqual(viewModel.state, .alignment)
+
+        await viewModel.handleScenePhaseChange(.background)
+
+        XCTAssertEqual(viewModel.state, .interrupted(.appBackgrounded))
+        let calls = await camera.calls
+        XCTAssertEqual(calls.last, .stop)
+        let snapshot = await camera.currentSnapshot()
+        XCTAssertFalse(snapshot.torch.isActive)
+    }
+
+    func testGoingInactiveIsTreatedTheSameAsBackgrounding() async {
+        let (viewModel, camera) = makeViewModel()
+        await viewModel.startSetup()
+
+        await viewModel.handleScenePhaseChange(.inactive)
+
+        XCTAssertEqual(viewModel.state, .interrupted(.appBackgrounded))
+        let calls = await camera.calls
+        XCTAssertEqual(calls.last, .stop)
+    }
+
+    func testBackgroundingWhileIdleChangesNothing() async {
+        let (viewModel, camera) = makeViewModel()
+
+        await viewModel.handleScenePhaseChange(.background)
+
         XCTAssertEqual(viewModel.state, .idle)
-        viewModel.handleScenePhaseChange(.background)
-        XCTAssertEqual(viewModel.state, .idle)
+        let calls = await camera.calls
+        XCTAssertTrue(calls.isEmpty, "there is no hardware to tear down")
     }
 
     func testReturningToForegroundRefreshesAuthorizationWithoutPrompting() async {
@@ -48,17 +76,26 @@ final class CaptureHardwareTeardownTests: XCTestCase {
         )
         let viewModel = MeasurementViewModel(environment: AppEnvironment(
             cameraAuthorization: authorization,
+            camera: StubCameraService(),
             settingsOpener: StubSettingsOpener(),
             allowsSimulatedData: false
         ))
 
-        viewModel.handleScenePhaseChange(.active)
-        // Let the refresh task started by the hook complete.
-        await Task.yield()
-        await viewModel.refreshAuthorization()
+        await viewModel.handleScenePhaseChange(.active)
 
         let count = await authorization.requestCount
         XCTAssertEqual(count, 0)
         XCTAssertTrue(viewModel.hasCheckedAuthorization)
+    }
+
+    func testInterruptingMidMeasurementStopsTheCamera() async {
+        let (viewModel, camera) = makeViewModel()
+        await viewModel.startSetup()
+
+        await viewModel.interruptCapture(reason: .sessionInterrupted)
+
+        XCTAssertEqual(viewModel.state, .interrupted(.sessionInterrupted))
+        let calls = await camera.calls
+        XCTAssertEqual(calls.last, .stop)
     }
 }

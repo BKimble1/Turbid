@@ -5,8 +5,9 @@ struct MeasurementFailure: Equatable, Sendable {
     enum Code: String, Equatable, Sendable {
         case cameraPermissionDenied
         case cameraPermissionRestricted
-        /// The capture pipeline is not part of this build. Removed in Phase 2.
-        case captureUnavailableInThisBuild
+        /// The frame analyzer is not part of this build. Removed in Phase 3A.
+        case analysisUnavailableInThisBuild
+        case cameraUnavailable
         case captureConfigurationFailed
     }
 
@@ -22,12 +23,21 @@ struct MeasurementFailure: Equatable, Sendable {
 }
 
 extension MeasurementFailure {
-    /// Phase 1 stops here on purpose. `CameraService` replaces this in Phase 2.
-    static let captureUnavailableInThisBuild = MeasurementFailure(
-        code: .captureUnavailableInThisBuild,
-        message: "Live capture is not part of this build.",
-        recoverySuggestion: "The AVFoundation camera and torch pipeline is added in Phase 2. Camera permission has been verified and stored."
+    /// Phase 2 stops here on purpose, once the hardware has been exercised.
+    /// The frame analyzer replaces this in Phase 3A.
+    static let analysisUnavailableInThisBuild = MeasurementFailure(
+        code: .analysisUnavailableInThisBuild,
+        message: "Frame analysis is not part of this build.",
+        recoverySuggestion: "The camera, torch and control locks all worked. Particle detection is added in Phase 3."
     )
+
+    static func cameraUnavailable(_ error: CameraError) -> MeasurementFailure {
+        MeasurementFailure(
+            code: .cameraUnavailable,
+            message: error.message,
+            recoverySuggestion: error.recoverySuggestion
+        )
+    }
 }
 
 /// Why an in-progress measurement was interrupted.

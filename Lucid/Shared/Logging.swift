@@ -8,4 +8,5 @@ enum LucidLog {
     static let app = Logger(subsystem: subsystem, category: "app")
     static let permission = Logger(subsystem: subsystem, category: "permission")
     static let measurement = Logger(subsystem: subsystem, category: "measurement")
+    static let camera = Logger(subsystem: subsystem, category: "camera")
 }
