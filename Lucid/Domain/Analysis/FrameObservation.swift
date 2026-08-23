@@ -15,6 +15,9 @@ struct FrameObservation: Equatable, Sendable {
     /// Whether this individual frame passed the per-frame gates.
     let isUsable: Bool
     let rejectionReasons: [MeasurementRejectionReason]
+    /// Detection output. Empty and `backgroundIsReady == false` outside the
+    /// measurement stage, or before the background model has been built.
+    let foreground: ForegroundObservation
 
     var contributesToResult: Bool { isUsable && stage.contributesToResult }
 }
@@ -34,6 +37,18 @@ struct FrameAggregate: Equatable, Sendable {
     private var writeIndex = 0
     private var filled = 0
     private let capacity: Int
+
+    // Running sums over measurement-stage frames only.
+    private(set) var detectionFrames = 0
+    private var totalCandidates = 0
+    private var totalComponents = 0
+    private var totalTruncated = 0
+    private var totalMeanResidual: Double = 0
+    private var totalMedianResidual: Double = 0
+    private var totalUpperExcess: Double = 0
+    private var totalActiveFraction: Double = 0
+    private var totalResidualTileShare: Double = 0
+    private var totalResidualVariation: Double = 0
 
     // Running sums over contributing frames only.
     private var totalMean: Double = 0
@@ -76,6 +91,47 @@ struct FrameAggregate: Equatable, Sendable {
         minimumSharpness = min(minimumSharpness, observation.statistics.sharpness)
         maximumSaturated = max(maximumSaturated, observation.statistics.saturatedFraction)
         maximumTileShare = max(maximumTileShare, observation.statistics.brightestTileShare)
+
+        // Detection output is only aggregated over the measurement stage. The
+        // background-acquisition frames built the model the detection is
+        // relative to, so including them would compare the model with itself.
+        guard observation.stage == .measurement,
+              observation.foreground.backgroundIsReady else { return }
+
+        detectionFrames += 1
+        totalCandidates += observation.foreground.acceptedCount
+        totalComponents += observation.foreground.componentCount
+        totalTruncated += observation.foreground.truncatedCount
+
+        let bulk = observation.foreground.bulk
+        totalMeanResidual += bulk.meanPositiveResidual
+        totalMedianResidual += bulk.medianPositiveResidual
+        totalUpperExcess += bulk.upperPercentileExcess
+        totalActiveFraction += bulk.activeForegroundFraction
+        totalResidualTileShare += bulk.residualBrightestTileShare
+        totalResidualVariation += bulk.residualSpatialVariation
+    }
+
+    /// Bulk scattering averaged over the measurement window.
+    ///
+    /// The mean across frames, not across pixels: each frame is an independent
+    /// look at the same volume, and averaging them is what reduces the
+    /// per-frame noise that a single look carries.
+    func windowScattering() -> WindowScattering {
+        guard detectionFrames > 0 else { return .empty }
+        let n = Double(detectionFrames)
+        return WindowScattering(
+            detectionFrames: detectionFrames,
+            meanPositiveResidual: totalMeanResidual / n,
+            medianPositiveResidual: totalMedianResidual / n,
+            upperPercentileExcess: totalUpperExcess / n,
+            activeForegroundFraction: totalActiveFraction / n,
+            residualBrightestTileShare: totalResidualTileShare / n,
+            residualSpatialVariation: totalResidualVariation / n,
+            totalAcceptedCandidates: totalCandidates,
+            totalComponents: totalComponents,
+            truncatedComponents: totalTruncated
+        )
     }
 
     /// Statistics representing the window as a whole.
@@ -127,5 +183,42 @@ struct FrameAggregate: Equatable, Sendable {
 
     func maximumMotion() -> Double {
         motionScores.prefix(filled).max() ?? 0
+    }
+}
+
+
+/// Bulk scattering and candidate counts aggregated over a measurement window.
+///
+/// The candidate counts are reported as **Visible particles (tracked)** in the
+/// UI, never as a particle concentration: a camera cannot resolve or count the
+/// microscopic and colloidal material that dominates real turbidity. The bulk
+/// residual quantities, not the counts, are what Phase 3D calibrates.
+struct WindowScattering: Equatable, Sendable {
+    let detectionFrames: Int
+    let meanPositiveResidual: Double
+    let medianPositiveResidual: Double
+    let upperPercentileExcess: Double
+    let activeForegroundFraction: Double
+    let residualBrightestTileShare: Double
+    let residualSpatialVariation: Double
+
+    /// Total accepted candidates summed over the window. Phase 3C turns these
+    /// into tracks; until then a candidate seen in ten frames counts ten times.
+    let totalAcceptedCandidates: Int
+    let totalComponents: Int
+    /// Components dropped because a frame hit the per-frame cap. Non-zero means
+    /// the counts above are a lower bound.
+    let truncatedComponents: Int
+
+    static let empty = WindowScattering(
+        detectionFrames: 0, meanPositiveResidual: 0, medianPositiveResidual: 0,
+        upperPercentileExcess: 0, activeForegroundFraction: 0,
+        residualBrightestTileShare: 0, residualSpatialVariation: 0,
+        totalAcceptedCandidates: 0, totalComponents: 0, truncatedComponents: 0
+    )
+
+    /// Mean accepted candidates per analysed frame.
+    var candidatesPerFrame: Double {
+        detectionFrames == 0 ? 0 : Double(totalAcceptedCandidates) / Double(detectionFrames)
     }
 }

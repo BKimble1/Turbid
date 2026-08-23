@@ -129,7 +129,16 @@ struct QualityThresholds: Equatable, Sendable, Codable {
         // At 30 fps this is one second of frames: below that the cross-frame
         // statistics are too noisy to gate on.
         minimumEvaluatedFrames: 30,
-        minimumBackgroundStability: 0.70,
+        // Calibrated against synthetic acquisitions. A still container reads
+        // 0.999 with no particles and 0.975 with twenty drifting through it;
+        // any camera drift with a structured scene drops it to 0.87 or below.
+        // The earlier value of 0.70 could not have fired in any of those cases.
+        //
+        // The reading is not monotonic in speed: a very fast pan sweeps each
+        // feature past a pixel within one sample interval and scores *higher*
+        // than a moderate one. It is a secondary check on whether the model is
+        // describable, not a motion detector — that is the motion gate's job.
+        minimumBackgroundStability: 0.93,
         marginalBand: 0.20,
         version: 1
     )

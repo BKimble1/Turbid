@@ -9,20 +9,21 @@ clarity** of a water sample.
 
 ## Build status
 
-**Phase 3A of 4 — analysis pipeline, quality gates and synthetic harness.**
+**Phase 3B of 4 — background subtraction and bright-speck detection.**
 
-On top of the Phase 2 hardware pipeline, this build adds the deterministic
-frame-analysis skeleton: an analysis region with an optical mask, a
-timestamp-driven capture protocol, luma normalization, the capture-quality
-gates, and a seeded synthetic-frame harness. It measures **capture quality
-only** — there is still no particle detection and no NTU.
+On top of the Phase 3A pipeline, this build adds the foreground stage: a
+temporal-median background model, a Difference-of-Gaussians band-pass, a
+noise-adaptive detection threshold, connected-component extraction with
+normalized features, and the bulk scattering channel. It detects moving bright
+events and measures how much light the sample scatters. There is still **no
+tracking and no NTU**.
 
 | Phase | Scope | Status |
 |-------|-------|--------|
 | 1 | SwiftUI scaffold, camera permission, state machine, tests | Complete |
 | 2 | AVFoundation capture session, camera selection, torch, control locking | Complete |
 | 3A | Analysis region, capture protocol, quality gates, synthetic harness | Complete |
-| 3B | Background subtraction and bright-speck detection | Not started |
+| 3B | Background subtraction and bright-speck detection | Complete |
 | 3C | Optical flow, vector tracking, bubble rejection | Not started |
 | 3D | Relative score, calibration, NTU gating, validation | Not started |
 | 4 | Dashboard, advanced metrics, charts, calibration UI | Not started |
@@ -85,12 +86,14 @@ Lucid/
               format selection, control-lock clamping, capture lifecycle,
               frame-timing statistics, published snapshot types
     Analysis/ Region and optical mask, luma normalization and statistics,
-              capture-protocol timeline, quality gates, frame observations
+              capture-protocol timeline, quality gates, frame observations,
+              background model, band-pass filter, connected components,
+              candidate features, bulk scattering metrics
   Services/   Camera authorization, settings, runtime environment, test fakes
   Camera/     The AVFoundation boundary: capability probing, CameraService,
               preview layer
-  Analysis/   Frame analyzer, pixel-buffer luma extraction, and the seeded
-              synthetic-frame harness
+  Analysis/   Frame analyzer, speck detector, pixel-buffer luma extraction,
+              and the seeded synthetic-frame harness
   Features/   Measurement view model and views, diagnostics, Simulator demo
   Shared/     Design tokens, reusable components, OSLog categories
   Resources/  Asset catalogue
@@ -146,6 +149,46 @@ average — a window is only as trustworthy as its weakest measurement.
 Every threshold is an engineering starting point, versioned so a measurement
 records which set produced it. None has been validated against real samples.
 They govern capture quality only and carry no health or regulatory meaning.
+
+## Detection pipeline (Phase 3B)
+
+For a normalized frame `I` and background model `B`:
+
+1. `D = I - B`, **signed**. Clipping at zero first would make the noise
+   one-sided and break the robust noise estimate everything downstream is
+   scaled by.
+2. `P = max(D, 0)` feeds the **bulk** channel — total excess light, not
+   band-passed, because that is exactly what a bulk scattering measurement
+   wants.
+3. `G = DoG(D)` feeds the **discrete** channel. The band-pass removes anything
+   varying slowly across the frame, which is why an illumination gradient or a
+   whole-frame exposure change produces no candidates at all.
+4. `sigma = 1.4826 x MAD(G)`, threshold `T = 5 sigma`. Measured from each
+   frame's own noise: a fixed pixel threshold would be far too strict at low
+   ISO and far too permissive at high ISO.
+5. Components of `G > T` are extracted and filtered on **normalized** features
+   — area, diameter and distance as fractions of the region, never pixel
+   counts, so the same configuration means the same physical thing at any
+   capture resolution.
+
+**The bulk channel, not the speck count, is what Phase 3D will calibrate.**
+Turbidity is a bulk optical measurement and a camera cannot resolve or count the
+microscopic and colloidal material that dominates it. Candidate counts are
+reported as *Visible particles (tracked)*, never as a concentration.
+
+**The background model.** A per-pixel temporal median over the acquisition
+frames, because a particle drifting through a pixel affects a minority of the
+samples and a median ignores a minority. The retained samples are **spread
+across the whole acquisition window**: nine consecutive frames at 30 fps span
+only 0.3 s, in which a slow speck barely moves, so it would sit in a majority of
+the samples at its own position and be absorbed into the very model it is meant
+to be measured against. The running update is sign-based (a stochastic median
+tracker, so one bright frame moves the model by one step rather than by its own
+brightness) and runs far more slowly at pixels currently classified as
+foreground.
+
+Calibration data for the thresholds, and the checks that they behave as claimed,
+are in `Tools/analysis_reference.py`.
 
 ## Measurement protocol (Phase 2)
 

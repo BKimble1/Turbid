@@ -316,12 +316,285 @@ def main():
     cv = (sum((x - m) ** 2 for x in means) / len(means)) ** 0.5 / m
     check("flicker scene", cv > EXPOSURE_LIMIT, f"coefficient of variation {cv:.4f}")
 
+    failures.extend(check_phase_3b())
+
     print()
     if failures:
         print(f"{len(failures)} check(s) failed: {', '.join(failures)}")
         return 1
     print("all checks passed")
     return 0
+
+
+
+
+
+# ---------------------------------------------------------------------------
+# Phase 3B: background subtraction and band-pass detection.
+# ---------------------------------------------------------------------------
+
+def gaussian_kernel(sigma):
+    if sigma <= 0:
+        return [1.0]
+    radius = max(1, int(math.ceil(sigma * 3)))
+    k = [math.exp(-(o * o) / (2 * sigma * sigma)) for o in range(-radius, radius + 1)]
+    total = sum(k)
+    return [v / total for v in k]
+
+
+def convolve_h(src, w, h, kernel):
+    r = len(kernel) // 2
+    out = [0.0] * (w * h)
+    for y in range(h):
+        row = y * w
+        for x in range(w):
+            t = 0.0
+            for i, kv in enumerate(kernel):
+                sx = min(max(x + i - r, 0), w - 1)
+                t += src[row + sx] * kv
+            out[row + x] = t
+    return out
+
+
+def convolve_v(src, w, h, kernel):
+    r = len(kernel) // 2
+    out = [0.0] * (w * h)
+    for y in range(h):
+        for x in range(w):
+            t = 0.0
+            for i, kv in enumerate(kernel):
+                sy = min(max(y + i - r, 0), h - 1)
+                t += src[sy * w + x] * kv
+            out[y * w + x] = t
+    return out
+
+
+def band_pass(src, w, h, narrow=1.0, wide=2.5):
+    kn, kw = gaussian_kernel(narrow), gaussian_kernel(wide)
+    a = convolve_v(convolve_h(src, w, h, kn), w, h, kn)
+    b = convolve_v(convolve_h(src, w, h, kw), w, h, kw)
+    return [a[i] - b[i] for i in range(len(src))]
+
+
+NOISE_TARGET = 8192
+
+
+def mad_sigma(values, mask=None):
+    """1.4826 * MAD, subsampled exactly as the Swift does."""
+    n = len(values)
+    stride = max(1, n // NOISE_TARGET)
+    sample = [values[i] for i in range(0, n, stride)
+              if mask is None or mask[i]]
+    if len(sample) < 8:
+        return 0.0
+    sample.sort()
+    med = sample[len(sample) // 2]
+    dev = sorted(abs(v - med) for v in sample)
+    return dev[len(dev) // 2] * 1.4826
+
+
+def temporal_median(frames):
+    """Per-pixel median across a list of frames."""
+    n = len(frames[0].v)
+    out = [0.0] * n
+    for i in range(n):
+        window = sorted(f.v[i] for f in frames)
+        out[i] = window[len(window) // 2]
+    return out
+
+
+def components(response, w, h, threshold, mask=None):
+    """Eight-connected flood fill; returns (area, peak) per component."""
+    labels = [0] * (w * h)
+    found = []
+    for seed in range(w * h):
+        if labels[seed] or response[seed] <= threshold:
+            continue
+        if mask is not None and not mask[seed]:
+            continue
+        stack = [seed]
+        labels[seed] = 1
+        area = 0
+        peak = 0.0
+        while stack:
+            idx = stack.pop()
+            x, y = idx % w, idx // w
+            area += 1
+            peak = max(peak, response[idx])
+            for ny in range(max(0, y - 1), min(h, y + 2)):
+                for nx in range(max(0, x - 1), min(w, x + 2)):
+                    ni = ny * w + nx
+                    if labels[ni] or response[ni] <= threshold:
+                        continue
+                    if mask is not None and not mask[ni]:
+                        continue
+                    labels[ni] = 1
+                    stack.append(ni)
+        found.append((area, peak))
+    return found
+
+
+# ---------------------------------------------------------------------------
+# Phase 3B self-check.
+# ---------------------------------------------------------------------------
+
+DETECT_W, DETECT_H = 192, 144
+DETECT_FPS = 30.0
+ACQUISITION_FRAMES = 60
+MEDIAN_SAMPLES = 9
+ACQUISITION_STRIDE = ACQUISITION_FRAMES // MEDIAN_SAMPLES
+THRESHOLD_SIGMAS = 5.0
+MIN_AREA_PIXELS = 2
+MAX_NORMALIZED_DIAMETER = 0.04
+MIN_LOCAL_CONTRAST = 1.2
+STABILITY_LIMIT_SIGMAS = 6.0
+MIN_BACKGROUND_STABILITY = 0.93
+
+
+def detect_scene(**kw):
+    scene = dict(w=DETECT_W, h=DETECT_H, base=0.30, sigma=0.01, seed=4242)
+    scene.update(kw)
+    return scene
+
+
+def acquisition_samples(scene):
+    """The frames the background model actually retains, at the real stride."""
+    frames = [render(scene, i / DETECT_FPS, i)
+              for i in range(0, ACQUISITION_FRAMES, ACQUISITION_STRIDE)]
+    return frames[-MEDIAN_SAMPLES:]
+
+
+def background_of(scene):
+    return temporal_median(acquisition_samples(scene))
+
+
+def background_stability(scene, noise=0.01):
+    kept = acquisition_samples(scene)
+    used = len(kept)
+    limit = max(noise, 1e-6) * STABILITY_LIMIT_SIGMAS
+    unstable = 0
+    for i in range(len(kept[0].v)):
+        window = sorted(f.v[i] for f in kept)
+        if window[used - 1] - window[0] > limit:
+            unstable += 1
+    return 1 - unstable / len(kept[0].v)
+
+
+def accepted_candidates(scene, background, frame_index, mask=None):
+    """Components surviving the same filters the Swift applies."""
+    img = render(scene, frame_index / DETECT_FPS, frame_index)
+    diff = [(0.0 if (mask is not None and not mask[i]) else img.v[i] - background[i])
+            for i in range(len(background))]
+    g = band_pass(diff, DETECT_W, DETECT_H)
+    sigma = mad_sigma(g, mask)
+    threshold = max(sigma * THRESHOLD_SIGMAS, 1e-7)
+    diagonal = math.hypot(DETECT_W, DETECT_H)
+
+    out = []
+    for area, peak in components(g, DETECT_W, DETECT_H, threshold, mask):
+        if area < MIN_AREA_PIXELS:
+            continue
+        if (2 * math.sqrt(area / math.pi)) / diagonal > MAX_NORMALIZED_DIAMETER:
+            continue
+        if peak / threshold < MIN_LOCAL_CONTRAST:
+            continue
+        out.append((area, peak))
+    return out, threshold
+
+
+def speck(cx, cy, orbit, omega, phase, radius, brightness):
+    return (cx, cy, orbit, omega, phase, 0.0, 0.0, radius, brightness)
+
+
+def check_phase_3b():
+    failures = []
+
+    def check(name, condition, detail):
+        print(f"  [{'ok  ' if condition else 'FAIL'}] {name}: {detail}")
+        if not condition:
+            failures.append(name)
+
+    print()
+    print("Phase 3B: background subtraction and detection")
+    print()
+
+    clean = detect_scene()
+    clean_bg = background_of(clean)
+
+    total = sum(len(accepted_candidates(clean, clean_bg, i)[0]) for i in range(200, 240))
+    check("noise alone yields nothing", total == 0, f"{total} candidates over 40 frames")
+
+    scratched = detect_scene(scratches=[(0.2, 0.3, 0.7, 0.35, 0.40, 2.0)])
+    bg = background_of(scratched)
+    total = sum(len(accepted_candidates(scratched, bg, i)[0]) for i in range(200, 220))
+    check("static scratch absorbed", total == 0, f"{total} candidates over 20 frames")
+
+    blobbed = detect_scene(blobs=[(0.5, 0.5, 3.0, 0.45)])
+    bg = background_of(blobbed)
+    total = sum(len(accepted_candidates(blobbed, bg, i)[0]) for i in range(200, 210))
+    check("stationary bubble absorbed", total == 0, f"{total} candidates over 10 frames")
+
+    moving = detect_scene(specks=[speck(0.5, 0.5, 0.25, 1.2, 0.0, 1.5, 0.35)])
+    bg = background_of(moving)
+    hits = sum(1 for i in range(200, 230) if accepted_candidates(moving, bg, i)[0])
+    check("moving speck detected", hits > 25, f"found in {hits} of 30 frames")
+
+    dim = detect_scene(specks=[speck(0.5, 0.5, 0.25, 1.2, 0.0, 1.5, 0.10)])
+    bg = background_of(dim)
+    found, threshold = accepted_candidates(dim, bg, 200)
+    ratio = found[0][1] / threshold if found else 0
+    check("dim speck detected", bool(found), f"peak/threshold {ratio:.2f}")
+
+    many = detect_scene(specks=[speck(0.2 + i * 0.15, 0.5, 0.04, 1.0, float(i), 1.5, 0.35)
+                                for i in range(5)])
+    bg = background_of(many)
+    found, _ = accepted_candidates(many, bg, 200)
+    check("five specks found separately", len(found) == 5, f"{len(found)} candidates")
+
+    flicker = detect_scene(flicker=(0.25, 2.0, 0.0))
+    total = sum(len(accepted_candidates(flicker, clean_bg, i)[0]) for i in range(200, 240))
+    check("flicker yields nothing", total == 0, f"{total} candidates over 40 frames")
+
+    vignetted = detect_scene(vignette=0.5)
+    found, _ = accepted_candidates(vignetted, clean_bg, 200)
+    check("illumination gradient yields nothing", not found, f"{len(found)} candidates")
+
+    glare = detect_scene(hotspot=(0.30, 0.30, 22, 1.6))
+    mask = []
+    for y in range(DETECT_H):
+        ny = (y + 0.5) / DETECT_H
+        for x in range(DETECT_W):
+            nx = (x + 0.5) / DETECT_W
+            dx = (nx - 0.30) / 0.24
+            dy = (ny - 0.30) / 0.24
+            mask.append(dx * dx + dy * dy > 1)
+    img = render(glare, 200 / DETECT_FPS, 200)
+    raw = band_pass([img.v[i] - clean_bg[i] for i in range(len(clean_bg))], DETECT_W, DETECT_H)
+    unmasked = components(raw, DETECT_W, DETECT_H,
+                          max(mad_sigma(raw) * THRESHOLD_SIGMAS, 1e-7))
+    masked_diff = [(0.0 if not mask[i] else img.v[i] - clean_bg[i]) for i in range(len(clean_bg))]
+    masked_g = band_pass(masked_diff, DETECT_W, DETECT_H)
+    masked = components(masked_g, DETECT_W, DETECT_H,
+                        max(mad_sigma(masked_g, mask) * THRESHOLD_SIGMAS, 1e-7), mask)
+    check("glare found without the mask", len(unmasked) > 0, f"{len(unmasked)} components")
+    check("glare removed by the mask", len(masked) == 0, f"{len(masked)} components")
+
+    specks20 = [speck(0.1 + (i % 5) * 0.2, 0.15 + (i // 5) * 0.22, 0.03, 1.0, float(i), 1.5, 0.35)
+                for i in range(20)]
+    marks = dict(
+        scratches=[(0.10, 0.20, 0.90, 0.26, 0.40, 2.0),
+                   (0.15, 0.70, 0.85, 0.62, 0.35, 2.0),
+                   (0.30, 0.10, 0.36, 0.90, 0.30, 2.0)],
+        blobs=[(0.25, 0.45, 4, 0.5), (0.70, 0.55, 5, 0.45), (0.50, 0.80, 3, 0.4)],
+    )
+    still = background_stability(detect_scene())
+    sample = background_stability(detect_scene(specks=specks20))
+    shifted = background_stability(detect_scene(tx=0.4, ty=0.2, **marks))
+    check("still background is stable", still > 0.95, f"{still:.4f}")
+    check("drifting particles stay stable", sample > MIN_BACKGROUND_STABILITY, f"{sample:.4f}")
+    check("shifted structure is unstable", shifted < MIN_BACKGROUND_STABILITY, f"{shifted:.4f}")
+
+    return failures
 
 
 if __name__ == "__main__":

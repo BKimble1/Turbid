@@ -22,7 +22,8 @@ final class FrameQualityEvaluatorTests: XCTestCase {
                 saturatedFraction: 0.0001,
                 nearBlackFraction: 0.001,
                 brightestTileShare: 0.08,
-                sharpness: 0.01
+                sharpness: 0.01,
+                noiseSigma: 0.004
             ),
             globalMotionScore: 0.0001,
             exposureVariation: 0.004,
@@ -305,6 +306,7 @@ final class FrameQualityEvaluatorTests: XCTestCase {
         var nearBlackFraction: Double
         var brightestTileShare: Double
         var sharpness: Double
+        var noiseSigma: Double
 
         init(_ statistics: LumaStatistics) {
             sampleCount = statistics.sampleCount
@@ -319,6 +321,7 @@ final class FrameQualityEvaluatorTests: XCTestCase {
             nearBlackFraction = statistics.nearBlackFraction
             brightestTileShare = statistics.brightestTileShare
             sharpness = statistics.sharpness
+            noiseSigma = statistics.noiseSigma
         }
 
         var value: LumaStatistics {
@@ -329,7 +332,8 @@ final class FrameQualityEvaluatorTests: XCTestCase {
                 percentile50: percentile50, percentile99: percentile99,
                 saturatedFraction: saturatedFraction,
                 nearBlackFraction: nearBlackFraction,
-                brightestTileShare: brightestTileShare, sharpness: sharpness
+                brightestTileShare: brightestTileShare, sharpness: sharpness,
+                noiseSigma: noiseSigma
             )
         }
     }

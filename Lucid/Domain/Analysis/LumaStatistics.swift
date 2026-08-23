@@ -27,12 +27,18 @@ struct LumaStatistics: Equatable, Sendable {
     /// Normalizing removes the dependence on overall brightness, so the same
     /// scene at two exposures scores the same. Higher is sharper.
     let sharpness: Double
+    /// Robustly estimated sensor-noise standard deviation for this frame.
+    ///
+    /// Carried on the statistics rather than recomputed by each consumer: it
+    /// costs a subsampled median, and the sharpness correction, the detection
+    /// threshold and the background update step all need the same number.
+    let noiseSigma: Double
 
     static let empty = LumaStatistics(
         sampleCount: 0, mean: 0, standardDeviation: 0, minimum: 0, maximum: 0,
         percentile01: 0, percentile50: 0, percentile99: 0,
         saturatedFraction: 0, nearBlackFraction: 0,
-        brightestTileShare: 0, sharpness: 0
+        brightestTileShare: 0, sharpness: 0, noiseSigma: 0
     )
 }
 
@@ -99,6 +105,10 @@ enum LumaStatisticsCalculator {
 
         guard count > 0 else { return .empty }
 
+        // Estimated once here and reused: sharpness needs it to subtract the
+        // noise floor, and the detector needs it for its threshold and its
+        // background update step.
+        let noiseSigma = estimateNoiseSigma(of: image, mask: mask)
         let mean = total / Double(count)
         // Population variance, floored at zero: floating-point cancellation can
         // make the difference of two near-equal sums very slightly negative.
@@ -119,7 +129,8 @@ enum LumaStatisticsCalculator {
             saturatedFraction: Double(saturated) / Double(count),
             nearBlackFraction: Double(nearBlack) / Double(count),
             brightestTileShare: tileShare,
-            sharpness: sharpness(of: image, mask: mask, mean: mean)
+            sharpness: sharpness(of: image, mask: mask, mean: mean, noiseSigma: noiseSigma),
+            noiseSigma: noiseSigma
         )
     }
 
@@ -194,7 +205,10 @@ enum LumaStatisticsCalculator {
     /// realistic sensor noise level that swamps the real detail: a completely
     /// defocused frame would otherwise score more than an order of magnitude
     /// above any usable threshold, and the focus gate could never fire.
-    static func sharpness(of image: LumaImage, mask: RasterizedMask?, mean: Double) -> Double {
+    static func sharpness(of image: LumaImage,
+                          mask: RasterizedMask?,
+                          mean: Double,
+                          noiseSigma: Double? = nil) -> Double {
         guard image.width >= 3, image.height >= 3, mean > 0 else { return 0 }
 
         var count = 0
@@ -230,7 +244,7 @@ enum LumaStatisticsCalculator {
         let laplacianMean = total / Double(count)
         let variance = max(0, totalOfSquares / Double(count) - laplacianMean * laplacianMean)
 
-        let sigma = estimateNoiseSigma(of: image, mask: mask)
+        let sigma = noiseSigma ?? estimateNoiseSigma(of: image, mask: mask)
         let noiseVariance = 20 * sigma * sigma
         return max(0, variance - noiseVariance) / (mean * mean)
     }

@@ -375,6 +375,121 @@ final class FrameAnalyzerTests: XCTestCase {
         XCTAssertEqual(observation.stage, .ambientReference)
     }
 
+    // MARK: - Detection is stage-gated
+
+    /// A scene with drifting specks, so detection has something to find.
+    private var samplingScene: SyntheticScene {
+        var scene = goodScene
+        scene.specks = (0..<8).map { index in
+            SyntheticSpeck(center: CGPoint(x: 0.2 + Double(index % 4) * 0.2,
+                                           y: 0.25 + Double(index / 4) * 0.35),
+                           orbitRadius: 0.06,
+                           angularSpeed: 1.4,
+                           initialPhase: Double(index),
+                           drift: .zero,
+                           radiusPixels: 1.5,
+                           brightness: 0.35)
+        }
+        return scene
+    }
+
+    func testDetectionRunsOnlyDuringTheMeasurementStage() {
+        let analyzer = makeAnalyzer()
+        let observations = run(analyzer, scene: samplingScene,
+                               timestamps: SyntheticTimestamps.regular(count: 400, frameRate: 30))
+
+        for observation in observations where observation.stage != .measurement {
+            XCTAssertFalse(observation.foreground.backgroundIsReady,
+                           "\(observation.stage) must not produce detection output")
+            XCTAssertTrue(observation.foreground.candidates.isEmpty)
+        }
+
+        let measuring = observations.filter { $0.stage == .measurement }
+        XCTAssertFalse(measuring.isEmpty)
+        XCTAssertTrue(measuring.allSatisfy(\.foreground.backgroundIsReady),
+                      "the model must be built by the time measurement starts")
+    }
+
+    func testTheBackgroundModelIsBuiltAndReportedAsStable() {
+        let analyzer = makeAnalyzer()
+        _ = run(analyzer, scene: samplingScene,
+                timestamps: SyntheticTimestamps.regular(count: 400, frameRate: 30))
+
+        XCTAssertTrue(analyzer.backgroundIsReady)
+        XCTAssertGreaterThan(analyzer.backgroundStability,
+                             QualityThresholds.screening.minimumBackgroundStability)
+    }
+
+    func testTheBackgroundStabilityGateIsSuppliedToTheQualityVerdict() {
+        let analyzer = makeAnalyzer()
+        _ = run(analyzer, scene: samplingScene,
+                timestamps: SyntheticTimestamps.regular(count: 400, frameRate: 30))
+        let quality = analyzer.quality(thermal: .nominal, systemPressure: .nominal,
+                                       controlsRemainedLocked: true,
+                                       timing: healthyTiming(frames: 400))
+
+        XCTAssertNotNil(quality.backgroundStability,
+                        "Phase 3B measures this, so the gate must no longer see nil")
+        XCTAssertTrue(quality.isUsable, "rejected because: \(quality.explanations)")
+    }
+
+    func testScatteringIsAggregatedOverTheMeasurementWindowOnly() {
+        let analyzer = makeAnalyzer()
+        let observations = run(analyzer, scene: samplingScene,
+                               timestamps: SyntheticTimestamps.regular(count: 400, frameRate: 30))
+        let scattering = analyzer.scattering()
+
+        let measurementFrames = observations.filter { $0.stage == .measurement }.count
+        XCTAssertEqual(scattering.detectionFrames, measurementFrames)
+        XCTAssertGreaterThan(scattering.totalAcceptedCandidates, 0)
+        XCTAssertGreaterThan(scattering.meanPositiveResidual, 0)
+        XCTAssertEqual(scattering.truncatedComponents, 0)
+    }
+
+    func testACleanSampleScattersLessThanALoadedOne() {
+        // The bulk channel, not the speck count, is what Phase 3D calibrates,
+        // so it has to move in the right direction with particle load.
+        func meanResidual(speckCount: Int) -> Double {
+            var scene = goodScene
+            scene.specks = (0..<speckCount).map { index in
+                SyntheticSpeck(center: CGPoint(x: 0.1 + Double(index % 8) * 0.11,
+                                               y: 0.15 + Double(index / 8) * 0.12),
+                               orbitRadius: 0.04,
+                               angularSpeed: 1.4,
+                               initialPhase: Double(index),
+                               drift: .zero,
+                               radiusPixels: 1.5,
+                               brightness: 0.35)
+            }
+            let analyzer = makeAnalyzer()
+            _ = run(analyzer, scene: scene,
+                    timestamps: SyntheticTimestamps.regular(count: 400, frameRate: 30))
+            return analyzer.scattering().meanPositiveResidual
+        }
+
+        let sparse = meanResidual(speckCount: 4)
+        let dense = meanResidual(speckCount: 40)
+        XCTAssertGreaterThan(dense, sparse,
+                             "more suspended material must scatter more light")
+    }
+
+    func testRejectedFramesNeverEnterTheBackgroundModel() {
+        // A run whose background-acquisition frames are all too dark to pass
+        // the gates must not produce a model built from them.
+        var dark = goodScene
+        dark.baseLevel = 0.004
+        dark.noiseSigma = 0.0005
+        dark.specks = []
+
+        let analyzer = makeAnalyzer()
+        _ = run(analyzer, scene: dark,
+                timestamps: SyntheticTimestamps.regular(count: 400, frameRate: 30))
+
+        XCTAssertFalse(analyzer.backgroundIsReady,
+                       "every acquisition frame failed a gate, so there is nothing to build from")
+        XCTAssertEqual(analyzer.scattering().detectionFrames, 0)
+    }
+
     // MARK: - Determinism
 
     func testTheSameSceneAlwaysProducesTheSameObservations() {

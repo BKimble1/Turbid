@@ -26,4 +26,7 @@ protocol FrameAnalyzing: AnyObject {
                  systemPressure: SystemPressureLevel,
                  controlsRemainedLocked: Bool,
                  timing: FrameTimingStatistics) -> CaptureQuality
+
+    /// Bulk scattering and candidate counts for the measurement window.
+    func scattering() -> WindowScattering
 }

@@ -7,16 +7,19 @@ import Foundation
 /// processing queue and touched from nowhere else. All of its buffers are
 /// reused between frames.
 ///
-/// Phase 3A stops here: the observations describe capture *quality*, not
-/// particle content. Background subtraction (3B) and tracking (3C) plug into
-/// `analyze(luma:presentationSeconds:)` after the quality gates have run, so
-/// they never see a frame the gates rejected.
+/// Detection runs only on frames that passed the per-frame quality gates, and
+/// only inside the stages it belongs to: background-acquisition frames build
+/// the model, measurement frames are compared against it. A rejected frame
+/// never enters the background model and never produces candidates.
+///
+/// Phase 3C adds tracking on top of the candidates produced here.
 final class FrameAnalyzer: FrameAnalyzing {
 
     let region: AnalysisRegion
     let captureProtocol: CaptureProtocol
     private let thresholds: QualityThresholds
     private let evaluator: FrameQualityEvaluator
+    private let detector: SpeckDetector
 
     // Reused buffers.
     private let extractor = PixelBufferLumaExtractor()
@@ -30,14 +33,21 @@ final class FrameAnalyzer: FrameAnalyzing {
     private var timeline: CaptureProtocolTimeline?
     private var aggregate = FrameAggregate()
     private var sequenceNumber = 0
+    private var backgroundFinalized = false
+    /// Estimated from the measured delivery rate, so the background samples
+    /// spread across the acquisition window whatever rate the camera achieves.
+    private var expectedAcquisitionFrames = 0
+    private var firstTimestamp: Double?
 
     init(region: AnalysisRegion = .screeningDefault,
          captureProtocol: CaptureProtocol = .screening,
-         thresholds: QualityThresholds = .screening) {
+         thresholds: QualityThresholds = .screening,
+         detector: SpeckDetector.Configuration = .screening) {
         self.region = region
         self.captureProtocol = captureProtocol
         self.thresholds = thresholds
         self.evaluator = FrameQualityEvaluator(thresholds: thresholds)
+        self.detector = SpeckDetector(configuration: detector)
     }
 
     func begin(atTimestamp presentationSeconds: Double) {
@@ -46,6 +56,10 @@ final class FrameAnalyzer: FrameAnalyzing {
         aggregate = FrameAggregate()
         sequenceNumber = 0
         hasPreviousCoarse = false
+        backgroundFinalized = false
+        expectedAcquisitionFrames = 0
+        firstTimestamp = nil
+        detector.reset()
     }
 
     func analyze(pixelBuffer: CVPixelBuffer, presentationSeconds: Double) -> FrameObservation? {
@@ -87,6 +101,21 @@ final class FrameAnalyzer: FrameAnalyzing {
 
         let stage = timeline.stage(at: presentationSeconds)
         let reasons = perFrameRejections(statistics: statistics, motion: motion)
+        let isUsable = reasons.isEmpty
+
+        if expectedAcquisitionFrames == 0, aggregate.evaluatedFrames >= 2,
+           let first = firstTimestamp, presentationSeconds > first {
+            let rate = Double(aggregate.evaluatedFrames) / (presentationSeconds - first)
+            expectedAcquisitionFrames = timeline.expectedFrameCount(
+                for: .backgroundAcquisition, atFrameRate: rate
+            )
+        }
+        if firstTimestamp == nil { firstTimestamp = presentationSeconds }
+
+        let foreground = runDetection(on: image,
+                                      stage: stage,
+                                      isUsable: isUsable,
+                                      noiseSigma: statistics.noiseSigma)
 
         let observation = FrameObservation(
             sequenceNumber: sequenceNumber,
@@ -94,12 +123,50 @@ final class FrameAnalyzer: FrameAnalyzing {
             stage: stage,
             statistics: statistics,
             globalMotionScore: motion,
-            isUsable: reasons.isEmpty,
-            rejectionReasons: reasons
+            isUsable: isUsable,
+            rejectionReasons: reasons,
+            foreground: foreground
         )
         sequenceNumber += 1
         aggregate.record(observation)
         return observation
+    }
+
+    /// Feeds the detector according to the stage, and only with frames that
+    /// passed the gates.
+    private func runDetection(on image: LumaImage,
+                              stage: CaptureStage,
+                              isUsable: Bool,
+                              noiseSigma: Double) -> ForegroundObservation {
+        detector.prepare(
+            width: image.width,
+            height: image.height,
+            mask: rasterizedMask(width: image.width, height: image.height),
+            expectedAcquisitionFrames: expectedAcquisitionFrames
+        )
+
+        switch stage {
+        case .backgroundAcquisition:
+            // A frame that failed a gate must never enter the model every
+            // later frame is measured against.
+            if isUsable { detector.ingestBackgroundFrame(image) }
+            return .notReady
+
+        case .measurement:
+            if !backgroundFinalized {
+                backgroundFinalized = detector.finalizeBackground(noiseSigma: noiseSigma)
+                if !backgroundFinalized {
+                    LucidLog.analysis.notice(
+                        "Background model could not be built; too few usable acquisition frames."
+                    )
+                }
+            }
+            guard isUsable, detector.backgroundIsReady else { return .notReady }
+            return detector.detect(in: image, frameNoiseSigma: noiseSigma)
+
+        case .ambientReference, .torchSettling, .complete:
+            return .notReady
+        }
     }
 
     /// Gates that can be decided from a single frame.
@@ -147,15 +214,24 @@ final class FrameAnalyzer: FrameAnalyzing {
             frameDeliveryIsContinuous: timing.isContinuous(),
             thermal: thermal,
             systemPressure: systemPressure,
-            // Phase 3B supplies background stability; Phase 3D supplies
-            // calibration compatibility. `nil` means this build cannot measure
-            // it, so the gate does not fire either way.
-            backgroundStability: nil,
+            // `nil` until the model has actually been built: an unbuilt model
+            // has no stability, and reporting zero would fire the gate for a
+            // measurement that simply has not reached that stage yet.
+            // Phase 3D supplies calibration compatibility.
+            backgroundStability: detector.backgroundIsReady ? detector.backgroundStability : nil,
             calibrationProfileIsCompatible: nil,
             analysisRegionVersion: region.version,
             captureProtocolVersion: captureProtocol.version
         ))
     }
+
+    /// Bulk scattering and candidate counts for the measurement window.
+    func scattering() -> WindowScattering {
+        aggregate.windowScattering()
+    }
+
+    var backgroundIsReady: Bool { detector.backgroundIsReady }
+    var backgroundStability: Double { detector.backgroundStability }
 
     /// Progress through the run, for the UI.
     func progress(at presentationSeconds: Double) -> Double {
@@ -220,7 +296,8 @@ final class FrameAnalyzer: FrameAnalyzing {
             statistics: .empty,
             globalMotionScore: 0,
             isUsable: false,
-            rejectionReasons: [.insufficientUsableFrames]
+            rejectionReasons: [.insufficientUsableFrames],
+            foreground: .notReady
         )
         sequenceNumber += 1
         aggregate.record(observation)

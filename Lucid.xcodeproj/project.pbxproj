@@ -23,6 +23,18 @@
 			isa = PBXBuildFile;
 			fileRef = 03905479DF4711F02F74B131 /* Assets.xcassets */;
 		};
+		CCE3FFCC1C9A375B2835A1D4 /* BackgroundModel.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 004F6DE8897F3BC786D9CF5C /* BackgroundModel.swift */;
+		};
+		CE64061146C06E89BF0F363F /* BandPassFilter.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 0C292AF5AAB6FEF9DAE50EDE /* BandPassFilter.swift */;
+		};
+		87EA21AD84B738AB6556E831 /* BulkScatteringMetrics.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 45BE79E7B4A791CF5F1FCDF9 /* BulkScatteringMetrics.swift */;
+		};
 		120C089D46FD7367B0386607 /* CameraAuthorization.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = C46EB88070D748D4DB17C844 /* CameraAuthorization.swift */;
@@ -134,6 +146,10 @@
 		9F1940E90F0FD532273E4A11 /* Components.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = 9E69F57EBA529470F6486C32 /* Components.swift */;
+		};
+		D56F4C01EFF8FCBA7FFC2509 /* ConnectedComponents.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = BBC5CA1A356747E082107ABA /* ConnectedComponents.swift */;
 		};
 		575B16D5A3C21493637DA62D /* DemoScenario.swift in Sources */ = {
 			isa = PBXBuildFile;
@@ -271,6 +287,18 @@
 			isa = PBXBuildFile;
 			fileRef = 5F78619A987272BED1A3ECFD /* SettingsOpening.swift */;
 		};
+		FC8E1E9AA3D777967A7D8978 /* SpeckCandidate.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 942A2AFC1E917B958B3FE5F9 /* SpeckCandidate.swift */;
+		};
+		A0D1C251026DC01BA6921671 /* SpeckDetector.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = C8CA043EA7ACD6FE857534F7 /* SpeckDetector.swift */;
+		};
+		B66FF76EE641ED2F32209DF2 /* SpeckDetectorTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 3E69C11BE6C2401C943B670B /* SpeckDetectorTests.swift */;
+		};
 		D2346959A0B2963E9A356859 /* StubCameraAuthorizationService.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = 14FFC9FD0A0F84E1E89CB4FF /* StubCameraAuthorizationService.swift */;
@@ -338,6 +366,24 @@
 			isa = PBXFileReference;
 			lastKnownFileType = folder.assetcatalog;
 			path = Assets.xcassets;
+			sourceTree = "<group>";
+		};
+		004F6DE8897F3BC786D9CF5C /* BackgroundModel.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = BackgroundModel.swift;
+			sourceTree = "<group>";
+		};
+		0C292AF5AAB6FEF9DAE50EDE /* BandPassFilter.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = BandPassFilter.swift;
+			sourceTree = "<group>";
+		};
+		45BE79E7B4A791CF5F1FCDF9 /* BulkScatteringMetrics.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = BulkScatteringMetrics.swift;
 			sourceTree = "<group>";
 		};
 		C46EB88070D748D4DB17C844 /* CameraAuthorization.swift */ = {
@@ -506,6 +552,12 @@
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
 			path = Components.swift;
+			sourceTree = "<group>";
+		};
+		BBC5CA1A356747E082107ABA /* ConnectedComponents.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = ConnectedComponents.swift;
 			sourceTree = "<group>";
 		};
 		B32E301A7A25E83A39AA7E04 /* DemoScenario.swift */ = {
@@ -726,6 +778,24 @@
 			path = SettingsOpening.swift;
 			sourceTree = "<group>";
 		};
+		942A2AFC1E917B958B3FE5F9 /* SpeckCandidate.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = SpeckCandidate.swift;
+			sourceTree = "<group>";
+		};
+		C8CA043EA7ACD6FE857534F7 /* SpeckDetector.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = SpeckDetector.swift;
+			sourceTree = "<group>";
+		};
+		3E69C11BE6C2401C943B670B /* SpeckDetectorTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = SpeckDetectorTests.swift;
+			sourceTree = "<group>";
+		};
 		14FFC9FD0A0F84E1E89CB4FF /* StubCameraAuthorizationService.swift */ = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -807,13 +877,18 @@
 			isa = PBXGroup;
 			children = (
 				57AE9974ECABC9331CFDB9B8 /* AnalysisRegion.swift */,
+				004F6DE8897F3BC786D9CF5C /* BackgroundModel.swift */,
+				0C292AF5AAB6FEF9DAE50EDE /* BandPassFilter.swift */,
+				45BE79E7B4A791CF5F1FCDF9 /* BulkScatteringMetrics.swift */,
 				E979E22AF93182784A67F1BE /* CaptureProtocolTimeline.swift */,
 				9C25394541C3DFE79E2F5DD3 /* CaptureQuality.swift */,
+				BBC5CA1A356747E082107ABA /* ConnectedComponents.swift */,
 				40C51F67D2FFDA423D575C74 /* FrameNormalization.swift */,
 				ED68D7A51277BB29DEBD5168 /* FrameObservation.swift */,
 				50BBE0BF6A636791F3E7B4FE /* FrameQualityEvaluator.swift */,
 				97DE7CEFB049403F2AA89224 /* LumaImage.swift */,
 				69F496E2ED4360E69BE16D36 /* LumaStatistics.swift */,
+				942A2AFC1E917B958B3FE5F9 /* SpeckCandidate.swift */,
 			);
 			path = Analysis;
 			sourceTree = "<group>";
@@ -825,6 +900,7 @@
 				67A4A329898DE84724BA0008 /* FrameAnalyzer.swift */,
 				57EC1A02D27C1562747BBE33 /* FrameAnalyzing.swift */,
 				1F0C3932914F5548DA9A15E7 /* PixelBufferLumaExtractor.swift */,
+				C8CA043EA7ACD6FE857534F7 /* SpeckDetector.swift */,
 			);
 			path = Analysis;
 			sourceTree = "<group>";
@@ -947,6 +1023,7 @@
 				5DB012690CAC81A0C26B9B7B /* LumaStatisticsTests.swift */,
 				D149B3CA57B1D3CB11BA0158 /* MeasurementStateMachineTests.swift */,
 				6F0BAFE650D8D86F7CF43245 /* MeasurementViewModelTests.swift */,
+				3E69C11BE6C2401C943B670B /* SpeckDetectorTests.swift */,
 				EB066563FB30328FA2ECFF8F /* SyntheticFrameFactoryTests.swift */,
 			);
 			path = LucidTests;
@@ -1123,6 +1200,7 @@
 				D3A7000B414D1DF5DD99C976 /* FrameAnalyzer.swift in Sources */,
 				6E50095D6BE3117CA5D06517 /* FrameAnalyzing.swift in Sources */,
 				C097ABDD3A996E1AD51D8180 /* PixelBufferLumaExtractor.swift in Sources */,
+				A0D1C251026DC01BA6921671 /* SpeckDetector.swift in Sources */,
 				6A37D1C178139AB5BB768291 /* DeterministicRandom.swift in Sources */,
 				02F19C935BCBB574E54AFAD9 /* SyntheticFrameFactory.swift in Sources */,
 				F7C071574F68DA3C265FAD19 /* SyntheticScene.swift in Sources */,
@@ -1133,13 +1211,18 @@
 				44D6F0114D6BEEDB19CCCF03 /* CameraPreviewView.swift in Sources */,
 				2962D041B8396E23CD8C1276 /* CameraService.swift in Sources */,
 				73F27FC60983BEB9211FB330 /* AnalysisRegion.swift in Sources */,
+				CCE3FFCC1C9A375B2835A1D4 /* BackgroundModel.swift in Sources */,
+				CE64061146C06E89BF0F363F /* BandPassFilter.swift in Sources */,
+				87EA21AD84B738AB6556E831 /* BulkScatteringMetrics.swift in Sources */,
 				6F1C3E9C5450A2EBE86083C5 /* CaptureProtocolTimeline.swift in Sources */,
 				7775AC87688364E6F7839F3E /* CaptureQuality.swift in Sources */,
+				D56F4C01EFF8FCBA7FFC2509 /* ConnectedComponents.swift in Sources */,
 				8C3AC586B20C14390C322E5E /* FrameNormalization.swift in Sources */,
 				63403CD239E24F90CEC4E7B1 /* FrameObservation.swift in Sources */,
 				5BCD6ED2056FE25F3BC3045A /* FrameQualityEvaluator.swift in Sources */,
 				A49E3B7F166D7CF7A87E7632 /* LumaImage.swift in Sources */,
 				D0F0D44DBF29B7CAFD40471D /* LumaStatistics.swift in Sources */,
+				FC8E1E9AA3D777967A7D8978 /* SpeckCandidate.swift in Sources */,
 				120C089D46FD7367B0386607 /* CameraAuthorization.swift in Sources */,
 				FF7BDDFA8C19B96B067D0507 /* CameraCapabilities.swift in Sources */,
 				28BC32080315E79A51CA3696 /* CameraControlLock.swift in Sources */,
@@ -1198,6 +1281,7 @@
 				3FAEB2BF2208B5A67DF96FBD /* LumaStatisticsTests.swift in Sources */,
 				3502FB2F740897483E550D14 /* MeasurementStateMachineTests.swift in Sources */,
 				9328C3C886021D85059E7F74 /* MeasurementViewModelTests.swift in Sources */,
+				B66FF76EE641ED2F32209DF2 /* SpeckDetectorTests.swift in Sources */,
 				737437E6C3EEAC2D294357FA /* CapabilityFactory.swift in Sources */,
 				61CEB272B99C0979463BFEFA /* SyntheticFrameFactoryTests.swift in Sources */,
 			);
