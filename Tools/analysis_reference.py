@@ -318,6 +318,7 @@ def main():
 
     failures.extend(check_phase_3b())
     failures.extend(check_phase_3c())
+    failures.extend(check_phase_3d())
 
     print()
     if failures:
@@ -810,6 +811,196 @@ def check_phase_3c():
                           observations=12, in_plane=0.05)[1]
     check("confidence falls when gravity leaves the image plane",
           flat_phone < upright, f"{upright:.3f} upright vs {flat_phone:.3f} flat")
+
+    return failures
+
+
+
+# ---------------------------------------------------------------------------
+# Phase 3D: index, curve fitting and the NTU gate.
+# ---------------------------------------------------------------------------
+
+INDEX_WEIGHTS = dict(bulk=0.55, excess=0.25, active=0.15, specks=0.05, speckScale=0.0002)
+INDEX_SCALE = 1000.0
+
+
+def scattering_index(residual, speck_rate_per_megapixel, weights=None):
+    """Mirrors RelativeScatteringIndex.make, with the summary's derived terms."""
+    w = weights or INDEX_WEIGHTS
+    excess = residual * 1.6
+    active = residual * 0.4
+    return INDEX_SCALE * (w["bulk"] * max(0.0, residual)
+                          + w["excess"] * max(0.0, excess)
+                          + w["active"] * max(0.0, active)
+                          + w["specks"] * w["speckScale"] * max(0.0, speck_rate_per_megapixel))
+
+
+def monotone_hermite_slopes(knots):
+    n = len(knots)
+    if n < 2:
+        return [0.0] * n
+    h = [knots[i + 1][0] - knots[i][0] for i in range(n - 1)]
+    d = [(knots[i + 1][1] - knots[i][1]) / h[i] if h[i] > 0 else 0.0 for i in range(n - 1)]
+    m = [0.0] * n
+    m[0] = d[0]
+    m[n - 1] = d[n - 2]
+    for i in range(1, n - 1):
+        if d[i - 1] * d[i] <= 0:
+            m[i] = 0.0
+        else:
+            w1 = 2 * h[i] + h[i - 1]
+            w2 = h[i] + 2 * h[i - 1]
+            m[i] = (w1 + w2) / (w1 / d[i - 1] + w2 / d[i])
+    for i in (0, n - 1):
+        s = d[0] if i == 0 else d[n - 2]
+        if s == 0:
+            m[i] = 0.0
+        elif m[i] / s > 3:
+            m[i] = 3 * s
+        elif m[i] < 0:
+            m[i] = 0.0
+    return m
+
+
+def evaluate_cubic(x, knots, slopes):
+    if x <= knots[0][0]:
+        return knots[0][1]
+    if x >= knots[-1][0]:
+        return knots[-1][1]
+    for i in range(1, len(knots)):
+        if x <= knots[i][0]:
+            lo, hi = knots[i - 1], knots[i]
+            h = hi[0] - lo[0]
+            if h <= 0:
+                return lo[1]
+            t = (x - lo[0]) / h
+            t2, t3 = t * t, t * t * t
+            return ((2 * t3 - 3 * t2 + 1) * lo[1] + (t3 - 2 * t2 + t) * h * slopes[i - 1]
+                    + (-2 * t3 + 3 * t2) * hi[1] + (t3 - t2) * h * slopes[i])
+    return knots[-1][1]
+
+
+def evaluate_linear(x, knots):
+    if x <= knots[0][0]:
+        return knots[0][1]
+    if x >= knots[-1][0]:
+        return knots[-1][1]
+    for i in range(1, len(knots)):
+        if x <= knots[i][0]:
+            lo, hi = knots[i - 1], knots[i]
+            span = hi[0] - lo[0]
+            return lo[1] + (hi[1] - lo[1]) * (x - lo[0]) / span if span > 0 else lo[1]
+    return knots[-1][1]
+
+
+def fit_power_law(knots):
+    usable = [(x, y) for x, y in knots if x > 0 and y > 0]
+    if len(usable) < 2:
+        return None
+    lx = [math.log(p[0]) for p in usable]
+    ly = [math.log(p[1]) for p in usable]
+    n = len(usable)
+    mx, my = sum(lx) / n, sum(ly) / n
+    cov = sum((lx[i] - mx) * (ly[i] - my) for i in range(n))
+    var = sum((lx[i] - mx) ** 2 for i in range(n))
+    if var <= 0:
+        return None
+    slope = cov / var
+    return (my - slope * mx, slope) if slope > 0 else None
+
+
+CURVE_BUILDERS = [
+    ("piecewise linear", lambda k: k, lambda x, f: evaluate_linear(x, f)),
+    ("monotone cubic", lambda k: (k, monotone_hermite_slopes(k)),
+     lambda x, f: evaluate_cubic(x, f[0], f[1])),
+    ("power law", fit_power_law,
+     lambda x, f: math.exp(f[0] + f[1] * math.log(x)) if x > 0 else 0.0),
+]
+
+
+def leave_one_concentration_out(knots):
+    """Cross-validated RMSE per candidate. Interpolation only, as the Swift does."""
+    scores = {}
+    for name, build, evaluate in CURVE_BUILDERS:
+        residuals = []
+        for held in range(len(knots)):
+            remaining = [k for i, k in enumerate(knots) if i != held]
+            fitted = build(remaining)
+            if fitted is None:
+                continue
+            x = knots[held][0]
+            if not (remaining[0][0] < x < remaining[-1][0]):
+                continue
+            residuals.append(evaluate(x, fitted) - knots[held][1])
+        scores[name] = ((sum(r * r for r in residuals) / len(residuals)) ** 0.5
+                        if residuals else None)
+    return scores
+
+
+def check_phase_3d():
+    failures = []
+
+    def check(name, condition, detail):
+        print(f"  [{'ok  ' if condition else 'FAIL'}] {name}: {detail}")
+        if not condition:
+            failures.append(name)
+
+    print()
+    print("Phase 3D: index, calibration and the NTU gate")
+    print()
+
+    # The index must rise with scattering and never be dominated by the counts.
+    values = [scattering_index(r * 0.001, 2 / 0.456) for r in range(0, 200)]
+    check("index rises monotonically", all(values[i] >= values[i - 1] for i in range(1, len(values))),
+          f"{values[0]:.3f} to {values[-1]:.3f}")
+
+    clear_many = scattering_index(0.001, 500 / 0.456)
+    cloudy_none = scattering_index(0.05, 0)
+    check("counts cannot outrank the bulk channel", clear_many < cloudy_none,
+          f"clear sample with 500 specks/s reads {clear_many:.1f}, "
+          f"cloudy with none reads {cloudy_none:.1f}")
+
+    shares = []
+    for residual, rate in [(0.001, 1), (0.012, 12), (0.12, 60)]:
+        total = scattering_index(residual, rate / 0.456)
+        speck = INDEX_SCALE * INDEX_WEIGHTS["specks"] * INDEX_WEIGHTS["speckScale"] * rate / 0.456
+        shares.append(speck / total)
+    check("the speck term stays secondary", max(shares) < 0.05,
+          f"largest share {max(shares) * 100:.1f}%")
+
+    # Curve selection.
+    saturating = [(2, 0), (22, 1), (92, 5), (160, 10), (265, 20), (520, 50)]
+    scores = leave_one_concentration_out(saturating)
+    best = min((v, n) for n, v in scores.items() if v is not None)
+    check("saturating data selects the monotone cubic", best[1] == "monotone cubic",
+          ", ".join(f"{n} {v:.3f}" for n, v in scores.items() if v is not None))
+
+    power = [(1, 0)] + [(40 * (n ** 0.8), n) for n in (1, 5, 10, 20, 50)]
+    scores = leave_one_concentration_out(power)
+    best = min((v, n) for n, v in scores.items() if v is not None)
+    check("power-law data selects the power law", best[1] == "power law",
+          ", ".join(f"{n} {v:.4f}" for n, v in scores.items() if v is not None))
+
+    # Monotone cubic must not overshoot on awkward spacing.
+    awkward = [(2, 0), (22, 1), (92, 5), (95, 5.2), (520, 50)]
+    slopes = monotone_hermite_slopes(awkward)
+    samples = [evaluate_cubic(2 + (520 - 2) * i / 500, awkward, slopes) for i in range(501)]
+    check("monotone cubic never overshoots the data",
+          min(samples) >= -1e-9 and max(samples) <= 50 + 1e-9
+          and all(samples[i] >= samples[i - 1] - 1e-9 for i in range(1, len(samples))),
+          f"range [{min(samples):.4f}, {max(samples):.4f}]")
+
+    # Clamping, not extrapolation.
+    slopes = monotone_hermite_slopes(saturating)
+    check("evaluation clamps outside the fitted range",
+          evaluate_cubic(-100, saturating, slopes) == 0
+          and evaluate_cubic(10_000, saturating, slopes) == 50,
+          "below reads 0 NTU, above reads 50 NTU, neither is reported as a measurement")
+
+    # An estimate inside the range lands between the bracketing standards.
+    estimate = evaluate_cubic(150, saturating, slopes)
+    check("an in-range index interpolates between its neighbours", 5 < estimate < 10,
+          f"index 150 -> {estimate:.3f} NTU (between the 5 and 10 NTU standards)")
 
     return failures
 

@@ -9,14 +9,13 @@ clarity** of a water sample.
 
 ## Build status
 
-**Phase 3C of 4 — optical flow, vector tracking and bubble rejection.**
+**Phase 3D of 4 — relative score, calibration, NTU gating and validation.**
 
-On top of the Phase 3B detector, this build adds motion: robust global-motion
-estimation, a bounded multi-object tracker with per-axis Kalman filters,
-multi-feature track classification, and temporal aggregation over overlapping
-windows with a repeatability figure. It distinguishes stationary defects,
-rising bubbles and suspended specks — imperfectly, and says so. There is still
-**no NTU**.
+Completes the measurement model: a versioned Relative Scattering Index, a
+calibration workflow against certified standards with cross-validated curve
+selection, an uncertainty model, the gate that decides whether NTU may exist at
+all, the category engine, and versioned persistence. The analysis pipeline is
+complete; Phase 4 is the user interface.
 
 | Phase | Scope | Status |
 |-------|-------|--------|
@@ -25,7 +24,7 @@ rising bubbles and suspended specks — imperfectly, and says so. There is still
 | 3A | Analysis region, capture protocol, quality gates, synthetic harness | Complete |
 | 3B | Background subtraction and bright-speck detection | Complete |
 | 3C | Optical flow, vector tracking, bubble rejection | Complete |
-| 3D | Relative score, calibration, NTU gating, validation | Not started |
+| 3D | Relative score, calibration, NTU gating, validation | Complete |
 | 4 | Dashboard, advanced metrics, charts, calibration UI | Not started |
 
 ## Requirements
@@ -91,6 +90,10 @@ Lucid/
               candidate features, bulk scattering metrics
       Tracking/ Global flow and gravity, constant-velocity filter, track model,
                 multi-object tracker, classifier, metrics, window aggregation
+   Calibration/ Relative scattering index, certified standards and replicates,
+                monotone mappings, cross-validated fitter, uncertainty model,
+                hardware binding and compatibility, NTU gate, clarity policy,
+                turbidity reading, versioned persistence
   Services/   Camera authorization, settings, runtime environment, test fakes
   Camera/     The AVFoundation boundary: capability probing, CameraService,
               preview layer
@@ -151,6 +154,58 @@ average — a window is only as trustworthy as its weakest measurement.
 Every threshold is an engineering starting point, versioned so a measurement
 records which set produced it. None has been validated against real samples.
 They govern capture quality only and carry no health or regulatory meaning.
+
+## Calibration and the NTU gate (Phase 3D)
+
+**NTU is not an optional number — it is an enumeration.** `NTUAvailability` is
+either a value with its uncertainty and validated range, or one of eight
+reasons there is none. There is no code path that can produce a zero reading
+like very clear water, and exactly one function in the app turns an index into
+NTU. It requires *all* of:
+
+1. Calibrated Fixture Mode selected;
+2. a profile that exists, matches this app version's schema, and has not
+   expired;
+3. every critical capture parameter matching — camera, format, algorithm
+   versions, region and fixture exactly; focus, exposure, ISO, white balance,
+   torch level and working distance within documented tolerances;
+4. capture quality passing;
+5. the index inside the calibrated range — outside it the curve *clamps*, and a
+   clamped value presented as a measurement would be a fabrication, so "below"
+   or "above validated range" is reported instead;
+6. an uncertainty that can actually be computed.
+
+**Curve selection is by prediction, not by fit.** Three monotone candidates are
+fitted — piecewise linear, Fritsch–Carlson monotone cubic, and a power law
+fitted on logarithms — and chosen by **leave-one-concentration-out** cross
+validation. Fit quality measures how well a curve reproduces the points it was
+built from, which every candidate does almost perfectly and which predicts
+nothing. There is no high-degree polynomial: a quartic through six points fits
+them beautifully and says nothing about anything in between.
+
+Every candidate is monotone *by construction*. A mapping that can wiggle would
+let a slightly larger index give a smaller NTU — not a calibration error but a
+nonsense result — and with six standards an unconstrained fit wiggles readily.
+
+**Uncertainty** combines the cross-validated model error with the replicate
+spread converted through the curve's local slope, floored by the standards'
+own certificate tolerance, at a coverage factor of two. A calibration can never
+be more certain than the standards it was made from.
+
+**Lucid never describes how to prepare a standard.** Formazin is made from
+hydrazine sulfate; calibration uses commercially prepared certified standards
+used according to the manufacturer's own safety instructions.
+
+**Category thresholds are Lucid's own presentation bands**, versioned and
+recorded on every reading. They are not health thresholds, not regulatory
+limits, and not a potability determination. In Screening Mode they describe
+*observed scattering*; a test asserts no label contains "safe", "drink",
+"potable", "pure", "clean" or "healthy".
+
+**A profile in an older format is discarded, not migrated.** A calibration is an
+empirical claim about a specific instrument; a format change that alters what a
+field means invalidates the claim, so the app asks for the standards to be run
+again rather than guessing.
 
 ## Tracking (Phase 3C)
 

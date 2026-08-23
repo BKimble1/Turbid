@@ -35,6 +35,38 @@
 			isa = PBXBuildFile;
 			fileRef = 45BE79E7B4A791CF5F1FCDF9 /* BulkScatteringMetrics.swift */;
 		};
+		92E73D567946A7B10492E2E9 /* CalibrationBinding.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 73BBA31A7B5E58131D86DA05 /* CalibrationBinding.swift */;
+		};
+		7C1621324FB183FB3BF9B6DF /* CalibrationFactory.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = F9C5E2CC38AEF01EE772DC4B /* CalibrationFactory.swift */;
+		};
+		C4F2EFCB3D56964DFF705D4C /* CalibrationFit.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 9FD75B7F84E897E68FDCF77F /* CalibrationFit.swift */;
+		};
+		4AB7C90E34171624005672BC /* CalibrationFitterTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 220D470F2741B559FD9D516A /* CalibrationFitterTests.swift */;
+		};
+		EB821B158AEA14F182A72224 /* CalibrationProfile.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = C1EFDE0D6AB2F6882599E794 /* CalibrationProfile.swift */;
+		};
+		9C8B3ACF89EFA7867DC66580 /* CalibrationStandard.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 4416F1A872B0B25B1A40E510 /* CalibrationStandard.swift */;
+		};
+		85D43108AB1A997474780549 /* CalibrationStore.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = C6B5D4E7992D8D5C1DA142F6 /* CalibrationStore.swift */;
+		};
+		E6574BCFF3448E0F5B384818 /* CalibrationStoreTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 6551235B5A2033DDAAABC094 /* CalibrationStoreTests.swift */;
+		};
 		120C089D46FD7367B0386607 /* CameraAuthorization.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = C46EB88070D748D4DB17C844 /* CameraAuthorization.swift */;
@@ -142,6 +174,14 @@
 		1BF464E8802FB462051D2465 /* CaptureSnapshot.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = C3254964D14848F651FABC17 /* CaptureSnapshot.swift */;
+		};
+		51B44129CF9D85767983E284 /* ClarityCategoryEngineTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = B472182837AA6E9B597E4671 /* ClarityCategoryEngineTests.swift */;
+		};
+		44847DE6EF3B1AAEB88FF2CC /* ClarityPolicy.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 9E9FA28CD0D64AE547A831C7 /* ClarityPolicy.swift */;
 		};
 		9F1940E90F0FD532273E4A11 /* Components.swift in Sources */ = {
 			isa = PBXBuildFile;
@@ -283,6 +323,14 @@
 			isa = PBXBuildFile;
 			fileRef = 6F0BAFE650D8D86F7CF43245 /* MeasurementViewModelTests.swift */;
 		};
+		3A5671A0F81761921F3C67F8 /* MonotonicMapping.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 6006B3FD28A027E4E70434D4 /* MonotonicMapping.swift */;
+		};
+		885632DEB8634F0CFD676DDF /* MonotonicMappingTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = C46139A7FBB068686739220C /* MonotonicMappingTests.swift */;
+		};
 		C65C617E30EB8794012D1CBB /* MultiObjectTracker.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = 09189ABFD36CDD52FAE10CC6 /* MultiObjectTracker.swift */;
@@ -290,6 +338,10 @@
 		513A63A92F934E6454102462 /* MultiObjectTrackerTests.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = 8A00890B8FB87F7F59E3E2F0 /* MultiObjectTrackerTests.swift */;
+		};
+		E2F1E9FE793A80CEAB85BA8B /* NTUGateTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 6E3FB881605D892FBE97E87E /* NTUGateTests.swift */;
 		};
 		C4655A0C4C9A2C17EA66704D /* OpticalClarityClass.swift in Sources */ = {
 			isa = PBXBuildFile;
@@ -306,6 +358,14 @@
 		C097ABDD3A996E1AD51D8180 /* PixelBufferLumaExtractor.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = 1F0C3932914F5548DA9A15E7 /* PixelBufferLumaExtractor.swift */;
+		};
+		B2D785A10789777C46914757 /* RelativeScatteringIndex.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 350627FA5398B793F9995A67 /* RelativeScatteringIndex.swift */;
+		};
+		F8522882996165CD33473470 /* RelativeScatteringIndexTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = FF82DAC9CF708DAFBB91CC04 /* RelativeScatteringIndexTests.swift */;
 		};
 		7296C93BE7AB50290D023AF7 /* RootView.swift in Sources */ = {
 			isa = PBXBuildFile;
@@ -387,6 +447,10 @@
 			isa = PBXBuildFile;
 			fileRef = DCC4C693C6BA7B48AB4D7287 /* TrackingMetrics.swift */;
 		};
+		2DF10F51509B4830052B0087 /* TurbidityReading.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = C6D1DD5F4340FED513C90BC5 /* TurbidityReading.swift */;
+		};
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -440,6 +504,54 @@
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
 			path = BulkScatteringMetrics.swift;
+			sourceTree = "<group>";
+		};
+		73BBA31A7B5E58131D86DA05 /* CalibrationBinding.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CalibrationBinding.swift;
+			sourceTree = "<group>";
+		};
+		F9C5E2CC38AEF01EE772DC4B /* CalibrationFactory.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CalibrationFactory.swift;
+			sourceTree = "<group>";
+		};
+		9FD75B7F84E897E68FDCF77F /* CalibrationFit.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CalibrationFit.swift;
+			sourceTree = "<group>";
+		};
+		220D470F2741B559FD9D516A /* CalibrationFitterTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CalibrationFitterTests.swift;
+			sourceTree = "<group>";
+		};
+		C1EFDE0D6AB2F6882599E794 /* CalibrationProfile.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CalibrationProfile.swift;
+			sourceTree = "<group>";
+		};
+		4416F1A872B0B25B1A40E510 /* CalibrationStandard.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CalibrationStandard.swift;
+			sourceTree = "<group>";
+		};
+		C6B5D4E7992D8D5C1DA142F6 /* CalibrationStore.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CalibrationStore.swift;
+			sourceTree = "<group>";
+		};
+		6551235B5A2033DDAAABC094 /* CalibrationStoreTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CalibrationStoreTests.swift;
 			sourceTree = "<group>";
 		};
 		C46EB88070D748D4DB17C844 /* CameraAuthorization.swift */ = {
@@ -602,6 +714,18 @@
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
 			path = CaptureSnapshot.swift;
+			sourceTree = "<group>";
+		};
+		B472182837AA6E9B597E4671 /* ClarityCategoryEngineTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = ClarityCategoryEngineTests.swift;
+			sourceTree = "<group>";
+		};
+		9E9FA28CD0D64AE547A831C7 /* ClarityPolicy.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = ClarityPolicy.swift;
 			sourceTree = "<group>";
 		};
 		9E69F57EBA529470F6486C32 /* Components.swift */ = {
@@ -828,6 +952,18 @@
 			path = MeasurementViewModelTests.swift;
 			sourceTree = "<group>";
 		};
+		6006B3FD28A027E4E70434D4 /* MonotonicMapping.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = MonotonicMapping.swift;
+			sourceTree = "<group>";
+		};
+		C46139A7FBB068686739220C /* MonotonicMappingTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = MonotonicMappingTests.swift;
+			sourceTree = "<group>";
+		};
 		09189ABFD36CDD52FAE10CC6 /* MultiObjectTracker.swift */ = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -838,6 +974,12 @@
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
 			path = MultiObjectTrackerTests.swift;
+			sourceTree = "<group>";
+		};
+		6E3FB881605D892FBE97E87E /* NTUGateTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = NTUGateTests.swift;
 			sourceTree = "<group>";
 		};
 		CC7C8C65C7EF55801FA16DA8 /* OpticalClarityClass.swift */ = {
@@ -862,6 +1004,18 @@
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
 			path = PixelBufferLumaExtractor.swift;
+			sourceTree = "<group>";
+		};
+		350627FA5398B793F9995A67 /* RelativeScatteringIndex.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = RelativeScatteringIndex.swift;
+			sourceTree = "<group>";
+		};
+		FF82DAC9CF708DAFBB91CC04 /* RelativeScatteringIndexTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = RelativeScatteringIndexTests.swift;
 			sourceTree = "<group>";
 		};
 		4C946787984C4C0C998A3BCE /* RootView.swift */ = {
@@ -984,6 +1138,12 @@
 			path = TrackingMetrics.swift;
 			sourceTree = "<group>";
 		};
+		C6D1DD5F4340FED513C90BC5 /* TurbidityReading.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = TurbidityReading.swift;
+			sourceTree = "<group>";
+		};
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1056,6 +1216,22 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		75FCE041142C29C774187305 /* Calibration */ = {
+			isa = PBXGroup;
+			children = (
+				73BBA31A7B5E58131D86DA05 /* CalibrationBinding.swift */,
+				9FD75B7F84E897E68FDCF77F /* CalibrationFit.swift */,
+				C1EFDE0D6AB2F6882599E794 /* CalibrationProfile.swift */,
+				4416F1A872B0B25B1A40E510 /* CalibrationStandard.swift */,
+				C6B5D4E7992D8D5C1DA142F6 /* CalibrationStore.swift */,
+				9E9FA28CD0D64AE547A831C7 /* ClarityPolicy.swift */,
+				6006B3FD28A027E4E70434D4 /* MonotonicMapping.swift */,
+				350627FA5398B793F9995A67 /* RelativeScatteringIndex.swift */,
+				C6D1DD5F4340FED513C90BC5 /* TurbidityReading.swift */,
+			);
+			path = Calibration;
+			sourceTree = "<group>";
+		};
 		D7611D5769FA0E1867BE2968 /* Camera */ = {
 			isa = PBXGroup;
 			children = (
@@ -1088,6 +1264,7 @@
 			isa = PBXGroup;
 			children = (
 				15CD0945DE906D4F490082F6 /* Analysis */,
+				75FCE041142C29C774187305 /* Calibration */,
 				C46EB88070D748D4DB17C844 /* CameraAuthorization.swift */,
 				BB2667D7BF86612F2CABE0EA /* CameraCapabilities.swift */,
 				FD76F1C408F4A479E6AC27F8 /* CameraControlLock.swift */,
@@ -1150,6 +1327,8 @@
 			children = (
 				00074C8E381543C714BF4ED0 /* Support */,
 				FFF1FDF7EFF832E9F4ADA4A1 /* AnalysisRegionTests.swift */,
+				220D470F2741B559FD9D516A /* CalibrationFitterTests.swift */,
+				6551235B5A2033DDAAABC094 /* CalibrationStoreTests.swift */,
 				B4F32B2356F5475F6EFBAAAF /* CameraAuthorizationMappingTests.swift */,
 				172E75A874EAF7C64D612636 /* CameraControlLockPlannerTests.swift */,
 				83BC6EADA442787876FC9DB9 /* CameraPipelineIntegrationTests.swift */,
@@ -1158,6 +1337,7 @@
 				F53D5AE6F26FCF61E3A19057 /* CaptureHardwareTeardownTests.swift */,
 				CD7C4AF9FEE92AD549FC18D7 /* CaptureLifecycleTests.swift */,
 				71B90D49A4D9A190F0EEBF71 /* CaptureProtocolTimelineTests.swift */,
+				B472182837AA6E9B597E4671 /* ClarityCategoryEngineTests.swift */,
 				06351C6B5B95339D8EB706F2 /* ConstantVelocityFilterTests.swift */,
 				A51DD2E766212E32609AF7EE /* FrameAnalyzerTests.swift */,
 				EF3D074A15BFA4052854455E /* FrameQualityEvaluatorTests.swift */,
@@ -1166,8 +1346,11 @@
 				5DB012690CAC81A0C26B9B7B /* LumaStatisticsTests.swift */,
 				D149B3CA57B1D3CB11BA0158 /* MeasurementStateMachineTests.swift */,
 				6F0BAFE650D8D86F7CF43245 /* MeasurementViewModelTests.swift */,
+				C46139A7FBB068686739220C /* MonotonicMappingTests.swift */,
 				8A00890B8FB87F7F59E3E2F0 /* MultiObjectTrackerTests.swift */,
+				6E3FB881605D892FBE97E87E /* NTUGateTests.swift */,
 				BCDAED706FBCAC5E2D3864D4 /* PatchFlowEstimatorTests.swift */,
+				FF82DAC9CF708DAFBB91CC04 /* RelativeScatteringIndexTests.swift */,
 				706A68BC7EB3BE6F6E664523 /* ScatteringWindowAggregatorTests.swift */,
 				3E69C11BE6C2401C943B670B /* SpeckDetectorTests.swift */,
 				EB066563FB30328FA2ECFF8F /* SyntheticFrameFactoryTests.swift */,
@@ -1229,6 +1412,7 @@
 		00074C8E381543C714BF4ED0 /* Support */ = {
 			isa = PBXGroup;
 			children = (
+				F9C5E2CC38AEF01EE772DC4B /* CalibrationFactory.swift */,
 				521422119DBEE162F754E08F /* CapabilityFactory.swift */,
 			);
 			path = Support;
@@ -1394,6 +1578,15 @@
 				941C34D728634615E15AB543 /* Track.swift in Sources */,
 				1EBA60086570DC22845D76C6 /* TrackClassifier.swift in Sources */,
 				FD710EA5DFBA05E27D7CAD07 /* TrackingMetrics.swift in Sources */,
+				92E73D567946A7B10492E2E9 /* CalibrationBinding.swift in Sources */,
+				C4F2EFCB3D56964DFF705D4C /* CalibrationFit.swift in Sources */,
+				EB821B158AEA14F182A72224 /* CalibrationProfile.swift in Sources */,
+				9C8B3ACF89EFA7867DC66580 /* CalibrationStandard.swift in Sources */,
+				85D43108AB1A997474780549 /* CalibrationStore.swift in Sources */,
+				44847DE6EF3B1AAEB88FF2CC /* ClarityPolicy.swift in Sources */,
+				3A5671A0F81761921F3C67F8 /* MonotonicMapping.swift in Sources */,
+				B2D785A10789777C46914757 /* RelativeScatteringIndex.swift in Sources */,
+				2DF10F51509B4830052B0087 /* TurbidityReading.swift in Sources */,
 				120C089D46FD7367B0386607 /* CameraAuthorization.swift in Sources */,
 				FF7BDDFA8C19B96B067D0507 /* CameraCapabilities.swift in Sources */,
 				28BC32080315E79A51CA3696 /* CameraControlLock.swift in Sources */,
@@ -1437,6 +1630,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				D8394BB111E9B07A2B427985 /* AnalysisRegionTests.swift in Sources */,
+				4AB7C90E34171624005672BC /* CalibrationFitterTests.swift in Sources */,
+				E6574BCFF3448E0F5B384818 /* CalibrationStoreTests.swift in Sources */,
 				C47C827F3E23A33A54BC594C /* CameraAuthorizationMappingTests.swift in Sources */,
 				8D180AFECF53AE948F2E6B80 /* CameraControlLockPlannerTests.swift in Sources */,
 				2ABBF7531516A0A2E67D095E /* CameraPipelineIntegrationTests.swift in Sources */,
@@ -1445,6 +1640,7 @@
 				F36E51F5D4A9BBBAB6054647 /* CaptureHardwareTeardownTests.swift in Sources */,
 				2DF57DBC294B80DAC2C9F7AB /* CaptureLifecycleTests.swift in Sources */,
 				BFD42DB7A70A574D1BC33354 /* CaptureProtocolTimelineTests.swift in Sources */,
+				51B44129CF9D85767983E284 /* ClarityCategoryEngineTests.swift in Sources */,
 				374408B6835ED229DBAE07A8 /* ConstantVelocityFilterTests.swift in Sources */,
 				4F3B60EF0DA4FC918D9A788D /* FrameAnalyzerTests.swift in Sources */,
 				F1E504F7FE367A2CBA3AB7AB /* FrameQualityEvaluatorTests.swift in Sources */,
@@ -1453,10 +1649,14 @@
 				3FAEB2BF2208B5A67DF96FBD /* LumaStatisticsTests.swift in Sources */,
 				3502FB2F740897483E550D14 /* MeasurementStateMachineTests.swift in Sources */,
 				9328C3C886021D85059E7F74 /* MeasurementViewModelTests.swift in Sources */,
+				885632DEB8634F0CFD676DDF /* MonotonicMappingTests.swift in Sources */,
 				513A63A92F934E6454102462 /* MultiObjectTrackerTests.swift in Sources */,
+				E2F1E9FE793A80CEAB85BA8B /* NTUGateTests.swift in Sources */,
 				FC33FC590A6C6340BB1EAC93 /* PatchFlowEstimatorTests.swift in Sources */,
+				F8522882996165CD33473470 /* RelativeScatteringIndexTests.swift in Sources */,
 				EFDAC0E3D791434117B794AF /* ScatteringWindowAggregatorTests.swift in Sources */,
 				B66FF76EE641ED2F32209DF2 /* SpeckDetectorTests.swift in Sources */,
+				7C1621324FB183FB3BF9B6DF /* CalibrationFactory.swift in Sources */,
 				737437E6C3EEAC2D294357FA /* CapabilityFactory.swift in Sources */,
 				61CEB272B99C0979463BFEFA /* SyntheticFrameFactoryTests.swift in Sources */,
 				1D370D95623252B0AD9DDC69 /* TrackClassifierTests.swift in Sources */,

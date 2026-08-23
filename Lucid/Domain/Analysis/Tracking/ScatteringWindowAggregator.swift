@@ -1,7 +1,7 @@
 import Foundation
 
 /// One completed sub-window of a measurement.
-struct ScatteringWindow: Equatable, Sendable {
+struct ScatteringWindow: Equatable, Sendable, Codable {
     let startSeconds: Double
     let endSeconds: Double
     let frameCount: Int
@@ -14,7 +14,7 @@ struct ScatteringWindow: Equatable, Sendable {
 }
 
 /// Robust summary across the sub-windows, plus a repeatability figure.
-struct ScatteringSummary: Equatable, Sendable {
+struct ScatteringSummary: Equatable, Sendable, Codable {
     let windowCount: Int
     /// Medians across windows, not across frames: each window is a small
     /// independent measurement, and a median over them is unmoved by one

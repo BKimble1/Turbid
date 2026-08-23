@@ -6,7 +6,7 @@ import Foundation
 /// particle concentration: a camera cannot resolve or count the microscopic and
 /// colloidal material that dominates real turbidity. Phase 3D calibrates the
 /// bulk scattering channel, not these counts.
-struct TrackingMetrics: Equatable, Sendable {
+struct TrackingMetrics: Equatable, Sendable, Codable {
     let confirmedSpeckCount: Int
     let speckEventsPerSecond: Double
     /// Rate per second per million region pixels, so runs made with different
