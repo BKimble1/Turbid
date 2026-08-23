@@ -7,6 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		73F27FC60983BEB9211FB330 /* AnalysisRegion.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 57AE9974ECABC9331CFDB9B8 /* AnalysisRegion.swift */;
+		};
+		D8394BB111E9B07A2B427985 /* AnalysisRegionTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = FFF1FDF7EFF832E9F4ADA4A1 /* AnalysisRegionTests.swift */;
+		};
 		85DE2793CE67B3F35E7FC77F /* AppEnvironment.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = E5DBC5F3BD3BA34EDF8F802C /* AppEnvironment.swift */;
@@ -103,6 +111,18 @@
 			isa = PBXBuildFile;
 			fileRef = CD7C4AF9FEE92AD549FC18D7 /* CaptureLifecycleTests.swift */;
 		};
+		6F1C3E9C5450A2EBE86083C5 /* CaptureProtocolTimeline.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = E979E22AF93182784A67F1BE /* CaptureProtocolTimeline.swift */;
+		};
+		BFD42DB7A70A574D1BC33354 /* CaptureProtocolTimelineTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 71B90D49A4D9A190F0EEBF71 /* CaptureProtocolTimelineTests.swift */;
+		};
+		7775AC87688364E6F7839F3E /* CaptureQuality.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 9C25394541C3DFE79E2F5DD3 /* CaptureQuality.swift */;
+		};
 		ED06CF816633122B8445E172 /* CaptureRequirements.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = 8DE170A5D3B3871F0FC3263C /* CaptureRequirements.swift */;
@@ -123,6 +143,38 @@
 			isa = PBXBuildFile;
 			fileRef = FDFDF74C5ACBC61B70AA732A /* DemoShowcaseView.swift */;
 		};
+		6A37D1C178139AB5BB768291 /* DeterministicRandom.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = C2993B285496277F63F6B7A5 /* DeterministicRandom.swift */;
+		};
+		D3A7000B414D1DF5DD99C976 /* FrameAnalyzer.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 67A4A329898DE84724BA0008 /* FrameAnalyzer.swift */;
+		};
+		4F3B60EF0DA4FC918D9A788D /* FrameAnalyzerTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = A51DD2E766212E32609AF7EE /* FrameAnalyzerTests.swift */;
+		};
+		6E50095D6BE3117CA5D06517 /* FrameAnalyzing.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 57EC1A02D27C1562747BBE33 /* FrameAnalyzing.swift */;
+		};
+		8C3AC586B20C14390C322E5E /* FrameNormalization.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 40C51F67D2FFDA423D575C74 /* FrameNormalization.swift */;
+		};
+		63403CD239E24F90CEC4E7B1 /* FrameObservation.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = ED68D7A51277BB29DEBD5168 /* FrameObservation.swift */;
+		};
+		5BCD6ED2056FE25F3BC3045A /* FrameQualityEvaluator.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 50BBE0BF6A636791F3E7B4FE /* FrameQualityEvaluator.swift */;
+		};
+		F1E504F7FE367A2CBA3AB7AB /* FrameQualityEvaluatorTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = EF3D074A15BFA4052854455E /* FrameQualityEvaluatorTests.swift */;
+		};
 		2A7BB037B60608518BCEDD76 /* FrameTiming.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = B22CA0B12A81F63F28FA2B3B /* FrameTiming.swift */;
@@ -142,6 +194,18 @@
 		E74072B2F3CA4FD53015AD22 /* LucidApp.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = 0D8EF28127B6DEC07003D437 /* LucidApp.swift */;
+		};
+		A49E3B7F166D7CF7A87E7632 /* LumaImage.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 97DE7CEFB049403F2AA89224 /* LumaImage.swift */;
+		};
+		D0F0D44DBF29B7CAFD40471D /* LumaStatistics.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 69F496E2ED4360E69BE16D36 /* LumaStatistics.swift */;
+		};
+		3FAEB2BF2208B5A67DF96FBD /* LumaStatisticsTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 5DB012690CAC81A0C26B9B7B /* LumaStatisticsTests.swift */;
 		};
 		8BD856687C00AD50EE995F58 /* MeasurementEvent.swift in Sources */ = {
 			isa = PBXBuildFile;
@@ -191,6 +255,10 @@
 			isa = PBXBuildFile;
 			fileRef = CC7C8C65C7EF55801FA16DA8 /* OpticalClarityClass.swift */;
 		};
+		C097ABDD3A996E1AD51D8180 /* PixelBufferLumaExtractor.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 1F0C3932914F5548DA9A15E7 /* PixelBufferLumaExtractor.swift */;
+		};
 		7296C93BE7AB50290D023AF7 /* RootView.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = 4C946787984C4C0C998A3BCE /* RootView.swift */;
@@ -215,6 +283,18 @@
 			isa = PBXBuildFile;
 			fileRef = F3B3F2FDC8C68AAB866F7E21 /* StubSettingsOpener.swift */;
 		};
+		02F19C935BCBB574E54AFAD9 /* SyntheticFrameFactory.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = D4D1FFA84B8DD918236E01E1 /* SyntheticFrameFactory.swift */;
+		};
+		61CEB272B99C0979463BFEFA /* SyntheticFrameFactoryTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = EB066563FB30328FA2ECFF8F /* SyntheticFrameFactoryTests.swift */;
+		};
+		F7C071574F68DA3C265FAD19 /* SyntheticScene.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 83A326D8063312E7CAFCE9EE /* SyntheticScene.swift */;
+		};
 		E9599D7DF1E7A9EFAAAC961D /* SystemCameraAuthorizationService.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = A59AAA412CF3059C4F74428E /* SystemCameraAuthorizationService.swift */;
@@ -236,6 +316,18 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		57AE9974ECABC9331CFDB9B8 /* AnalysisRegion.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = AnalysisRegion.swift;
+			sourceTree = "<group>";
+		};
+		FFF1FDF7EFF832E9F4ADA4A1 /* AnalysisRegionTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = AnalysisRegionTests.swift;
+			sourceTree = "<group>";
+		};
 		E5DBC5F3BD3BA34EDF8F802C /* AppEnvironment.swift */ = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -380,6 +472,24 @@
 			path = CaptureLifecycleTests.swift;
 			sourceTree = "<group>";
 		};
+		E979E22AF93182784A67F1BE /* CaptureProtocolTimeline.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CaptureProtocolTimeline.swift;
+			sourceTree = "<group>";
+		};
+		71B90D49A4D9A190F0EEBF71 /* CaptureProtocolTimelineTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CaptureProtocolTimelineTests.swift;
+			sourceTree = "<group>";
+		};
+		9C25394541C3DFE79E2F5DD3 /* CaptureQuality.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CaptureQuality.swift;
+			sourceTree = "<group>";
+		};
 		8DE170A5D3B3871F0FC3263C /* CaptureRequirements.swift */ = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -408,6 +518,54 @@
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
 			path = DemoShowcaseView.swift;
+			sourceTree = "<group>";
+		};
+		C2993B285496277F63F6B7A5 /* DeterministicRandom.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = DeterministicRandom.swift;
+			sourceTree = "<group>";
+		};
+		67A4A329898DE84724BA0008 /* FrameAnalyzer.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = FrameAnalyzer.swift;
+			sourceTree = "<group>";
+		};
+		A51DD2E766212E32609AF7EE /* FrameAnalyzerTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = FrameAnalyzerTests.swift;
+			sourceTree = "<group>";
+		};
+		57EC1A02D27C1562747BBE33 /* FrameAnalyzing.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = FrameAnalyzing.swift;
+			sourceTree = "<group>";
+		};
+		40C51F67D2FFDA423D575C74 /* FrameNormalization.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = FrameNormalization.swift;
+			sourceTree = "<group>";
+		};
+		ED68D7A51277BB29DEBD5168 /* FrameObservation.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = FrameObservation.swift;
+			sourceTree = "<group>";
+		};
+		50BBE0BF6A636791F3E7B4FE /* FrameQualityEvaluator.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = FrameQualityEvaluator.swift;
+			sourceTree = "<group>";
+		};
+		EF3D074A15BFA4052854455E /* FrameQualityEvaluatorTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = FrameQualityEvaluatorTests.swift;
 			sourceTree = "<group>";
 		};
 		B22CA0B12A81F63F28FA2B3B /* FrameTiming.swift */ = {
@@ -453,6 +611,24 @@
 			includeInIndex = 0;
 			path = LucidTests.xctest;
 			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		97DE7CEFB049403F2AA89224 /* LumaImage.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = LumaImage.swift;
+			sourceTree = "<group>";
+		};
+		69F496E2ED4360E69BE16D36 /* LumaStatistics.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = LumaStatistics.swift;
+			sourceTree = "<group>";
+		};
+		5DB012690CAC81A0C26B9B7B /* LumaStatisticsTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = LumaStatisticsTests.swift;
+			sourceTree = "<group>";
 		};
 		BAAFD0C08F7A0809DD84EBDD /* MeasurementEvent.swift */ = {
 			isa = PBXFileReference;
@@ -526,6 +702,12 @@
 			path = OpticalClarityClass.swift;
 			sourceTree = "<group>";
 		};
+		1F0C3932914F5548DA9A15E7 /* PixelBufferLumaExtractor.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = PixelBufferLumaExtractor.swift;
+			sourceTree = "<group>";
+		};
 		4C946787984C4C0C998A3BCE /* RootView.swift */ = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -560,6 +742,24 @@
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
 			path = StubSettingsOpener.swift;
+			sourceTree = "<group>";
+		};
+		D4D1FFA84B8DD918236E01E1 /* SyntheticFrameFactory.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = SyntheticFrameFactory.swift;
+			sourceTree = "<group>";
+		};
+		EB066563FB30328FA2ECFF8F /* SyntheticFrameFactoryTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = SyntheticFrameFactoryTests.swift;
+			sourceTree = "<group>";
+		};
+		83A326D8063312E7CAFCE9EE /* SyntheticScene.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = SyntheticScene.swift;
 			sourceTree = "<group>";
 		};
 		A59AAA412CF3059C4F74428E /* SystemCameraAuthorizationService.swift */ = {
@@ -603,6 +803,32 @@
 			);
 			sourceTree = "<group>";
 		};
+		15CD0945DE906D4F490082F6 /* Analysis */ = {
+			isa = PBXGroup;
+			children = (
+				57AE9974ECABC9331CFDB9B8 /* AnalysisRegion.swift */,
+				E979E22AF93182784A67F1BE /* CaptureProtocolTimeline.swift */,
+				9C25394541C3DFE79E2F5DD3 /* CaptureQuality.swift */,
+				40C51F67D2FFDA423D575C74 /* FrameNormalization.swift */,
+				ED68D7A51277BB29DEBD5168 /* FrameObservation.swift */,
+				50BBE0BF6A636791F3E7B4FE /* FrameQualityEvaluator.swift */,
+				97DE7CEFB049403F2AA89224 /* LumaImage.swift */,
+				69F496E2ED4360E69BE16D36 /* LumaStatistics.swift */,
+			);
+			path = Analysis;
+			sourceTree = "<group>";
+		};
+		92F15C2242EBBD70F9DF790E /* Analysis */ = {
+			isa = PBXGroup;
+			children = (
+				95817169B5662436DD6715FB /* Synthetic */,
+				67A4A329898DE84724BA0008 /* FrameAnalyzer.swift */,
+				57EC1A02D27C1562747BBE33 /* FrameAnalyzing.swift */,
+				1F0C3932914F5548DA9A15E7 /* PixelBufferLumaExtractor.swift */,
+			);
+			path = Analysis;
+			sourceTree = "<group>";
+		};
 		ED281E20FB4178D9D58F352E /* App */ = {
 			isa = PBXGroup;
 			children = (
@@ -643,6 +869,7 @@
 		1C3B362E39A8D4907EBC1D8E /* Domain */ = {
 			isa = PBXGroup;
 			children = (
+				15CD0945DE906D4F490082F6 /* Analysis */,
 				C46EB88070D748D4DB17C844 /* CameraAuthorization.swift */,
 				BB2667D7BF86612F2CABE0EA /* CameraCapabilities.swift */,
 				FD76F1C408F4A479E6AC27F8 /* CameraControlLock.swift */,
@@ -688,6 +915,7 @@
 		8428F225ED5615094951C695 /* Lucid */ = {
 			isa = PBXGroup;
 			children = (
+				92F15C2242EBBD70F9DF790E /* Analysis */,
 				ED281E20FB4178D9D58F352E /* App */,
 				D7611D5769FA0E1867BE2968 /* Camera */,
 				1C3B362E39A8D4907EBC1D8E /* Domain */,
@@ -703,6 +931,7 @@
 			isa = PBXGroup;
 			children = (
 				00074C8E381543C714BF4ED0 /* Support */,
+				FFF1FDF7EFF832E9F4ADA4A1 /* AnalysisRegionTests.swift */,
 				B4F32B2356F5475F6EFBAAAF /* CameraAuthorizationMappingTests.swift */,
 				172E75A874EAF7C64D612636 /* CameraControlLockPlannerTests.swift */,
 				83BC6EADA442787876FC9DB9 /* CameraPipelineIntegrationTests.swift */,
@@ -710,10 +939,15 @@
 				383AAE45520BBEA8AAAB1EA3 /* CaptureFormatSelectorTests.swift */,
 				F53D5AE6F26FCF61E3A19057 /* CaptureHardwareTeardownTests.swift */,
 				CD7C4AF9FEE92AD549FC18D7 /* CaptureLifecycleTests.swift */,
+				71B90D49A4D9A190F0EEBF71 /* CaptureProtocolTimelineTests.swift */,
+				A51DD2E766212E32609AF7EE /* FrameAnalyzerTests.swift */,
+				EF3D074A15BFA4052854455E /* FrameQualityEvaluatorTests.swift */,
 				139B200C6B3615B16E2FC310 /* FrameTimingCollectorTests.swift */,
 				C994A2D7C14DF57C15AF3A4D /* InfoPlistTests.swift */,
+				5DB012690CAC81A0C26B9B7B /* LumaStatisticsTests.swift */,
 				D149B3CA57B1D3CB11BA0158 /* MeasurementStateMachineTests.swift */,
 				6F0BAFE650D8D86F7CF43245 /* MeasurementViewModelTests.swift */,
+				EB066563FB30328FA2ECFF8F /* SyntheticFrameFactoryTests.swift */,
 			);
 			path = LucidTests;
 			sourceTree = "<group>";
@@ -774,6 +1008,16 @@
 				521422119DBEE162F754E08F /* CapabilityFactory.swift */,
 			);
 			path = Support;
+			sourceTree = "<group>";
+		};
+		95817169B5662436DD6715FB /* Synthetic */ = {
+			isa = PBXGroup;
+			children = (
+				C2993B285496277F63F6B7A5 /* DeterministicRandom.swift */,
+				D4D1FFA84B8DD918236E01E1 /* SyntheticFrameFactory.swift */,
+				83A326D8063312E7CAFCE9EE /* SyntheticScene.swift */,
+			);
+			path = Synthetic;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -876,12 +1120,26 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D3A7000B414D1DF5DD99C976 /* FrameAnalyzer.swift in Sources */,
+				6E50095D6BE3117CA5D06517 /* FrameAnalyzing.swift in Sources */,
+				C097ABDD3A996E1AD51D8180 /* PixelBufferLumaExtractor.swift in Sources */,
+				6A37D1C178139AB5BB768291 /* DeterministicRandom.swift in Sources */,
+				02F19C935BCBB574E54AFAD9 /* SyntheticFrameFactory.swift in Sources */,
+				F7C071574F68DA3C265FAD19 /* SyntheticScene.swift in Sources */,
 				85DE2793CE67B3F35E7FC77F /* AppEnvironment.swift in Sources */,
 				E74072B2F3CA4FD53015AD22 /* LucidApp.swift in Sources */,
 				A3800AEB380ABE7D96746E3D /* CameraCapabilityReporter.swift in Sources */,
 				63BF5C33CA6C78E72B3A25F2 /* CameraControlling.swift in Sources */,
 				44D6F0114D6BEEDB19CCCF03 /* CameraPreviewView.swift in Sources */,
 				2962D041B8396E23CD8C1276 /* CameraService.swift in Sources */,
+				73F27FC60983BEB9211FB330 /* AnalysisRegion.swift in Sources */,
+				6F1C3E9C5450A2EBE86083C5 /* CaptureProtocolTimeline.swift in Sources */,
+				7775AC87688364E6F7839F3E /* CaptureQuality.swift in Sources */,
+				8C3AC586B20C14390C322E5E /* FrameNormalization.swift in Sources */,
+				63403CD239E24F90CEC4E7B1 /* FrameObservation.swift in Sources */,
+				5BCD6ED2056FE25F3BC3045A /* FrameQualityEvaluator.swift in Sources */,
+				A49E3B7F166D7CF7A87E7632 /* LumaImage.swift in Sources */,
+				D0F0D44DBF29B7CAFD40471D /* LumaStatistics.swift in Sources */,
 				120C089D46FD7367B0386607 /* CameraAuthorization.swift in Sources */,
 				FF7BDDFA8C19B96B067D0507 /* CameraCapabilities.swift in Sources */,
 				28BC32080315E79A51CA3696 /* CameraControlLock.swift in Sources */,
@@ -924,6 +1182,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D8394BB111E9B07A2B427985 /* AnalysisRegionTests.swift in Sources */,
 				C47C827F3E23A33A54BC594C /* CameraAuthorizationMappingTests.swift in Sources */,
 				8D180AFECF53AE948F2E6B80 /* CameraControlLockPlannerTests.swift in Sources */,
 				2ABBF7531516A0A2E67D095E /* CameraPipelineIntegrationTests.swift in Sources */,
@@ -931,11 +1190,16 @@
 				496BA99541AC5193AC098AC4 /* CaptureFormatSelectorTests.swift in Sources */,
 				F36E51F5D4A9BBBAB6054647 /* CaptureHardwareTeardownTests.swift in Sources */,
 				2DF57DBC294B80DAC2C9F7AB /* CaptureLifecycleTests.swift in Sources */,
+				BFD42DB7A70A574D1BC33354 /* CaptureProtocolTimelineTests.swift in Sources */,
+				4F3B60EF0DA4FC918D9A788D /* FrameAnalyzerTests.swift in Sources */,
+				F1E504F7FE367A2CBA3AB7AB /* FrameQualityEvaluatorTests.swift in Sources */,
 				174C3261644B6690E1645D48 /* FrameTimingCollectorTests.swift in Sources */,
 				14E26BDFF25429CA4C95C30E /* InfoPlistTests.swift in Sources */,
+				3FAEB2BF2208B5A67DF96FBD /* LumaStatisticsTests.swift in Sources */,
 				3502FB2F740897483E550D14 /* MeasurementStateMachineTests.swift in Sources */,
 				9328C3C886021D85059E7F74 /* MeasurementViewModelTests.swift in Sources */,
 				737437E6C3EEAC2D294357FA /* CapabilityFactory.swift in Sources */,
+				61CEB272B99C0979463BFEFA /* SyntheticFrameFactoryTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -9,18 +9,22 @@ clarity** of a water sample.
 
 ## Build status
 
-**Phase 2 of 4 — AVFoundation hardware control.**
+**Phase 3A of 4 — analysis pipeline, quality gates and synthetic harness.**
 
-This build selects a camera, configures a capture session, shows a live
-preview, warms up and locks focus/exposure/white balance, drives the torch at
-the maximum currently available level, and reports frame timing. It contains
-**no image analysis and no NTU calculation**. Those arrive in Phases 3–4.
+On top of the Phase 2 hardware pipeline, this build adds the deterministic
+frame-analysis skeleton: an analysis region with an optical mask, a
+timestamp-driven capture protocol, luma normalization, the capture-quality
+gates, and a seeded synthetic-frame harness. It measures **capture quality
+only** — there is still no particle detection and no NTU.
 
 | Phase | Scope | Status |
 |-------|-------|--------|
 | 1 | SwiftUI scaffold, camera permission, state machine, tests | Complete |
 | 2 | AVFoundation capture session, camera selection, torch, control locking | Complete |
-| 3 | Frame analysis (3A quality gates, 3B detection, 3C tracking, 3D calibration) | Not started |
+| 3A | Analysis region, capture protocol, quality gates, synthetic harness | Complete |
+| 3B | Background subtraction and bright-speck detection | Not started |
+| 3C | Optical flow, vector tracking, bubble rejection | Not started |
+| 3D | Relative score, calibration, NTU gating, validation | Not started |
 | 4 | Dashboard, advanced metrics, charts, calibration UI | Not started |
 
 ## Requirements
@@ -80,20 +84,68 @@ Lucid/
   Domain/     Pure, hardware-free logic: measurement state machine, camera and
               format selection, control-lock clamping, capture lifecycle,
               frame-timing statistics, published snapshot types
+    Analysis/ Region and optical mask, luma normalization and statistics,
+              capture-protocol timeline, quality gates, frame observations
   Services/   Camera authorization, settings, runtime environment, test fakes
   Camera/     The AVFoundation boundary: capability probing, CameraService,
               preview layer
+  Analysis/   Frame analyzer, pixel-buffer luma extraction, and the seeded
+              synthetic-frame harness
   Features/   Measurement view model and views, diagnostics, Simulator demo
   Shared/     Design tokens, reusable components, OSLog categories
   Resources/  Asset catalogue
 LucidTests/   Unit tests
-Tools/        Project generator, project validator, source checks
+Tools/        Project generator, project validator, source checks,
+              Python cross-check of the analysis numerics
 ```
 
 Selection, clamping, lifecycle and timing logic all live in `Domain/` as plain
 values, so they are unit-tested without hardware. `Camera/` is the only place
 that touches AVFoundation, and it publishes value types only — no
 `CMSampleBuffer` or `CVPixelBuffer` crosses that boundary.
+
+## Analysis pipeline (Phase 3A)
+
+**No transfer function is inverted.** A video buffer is the output of the
+camera's image-signal processor, not a radiance measurement: demosaicing, black
+level, lens shading, noise reduction and a possibly scene-dependent tone curve
+all sit between the photons and the pixel. Applying a nominal inverse would
+produce numbers that *look* like linear radiance while being wrong by an
+unknown factor. Lucid treats the normalized value as a repeatable **relative**
+signal and gets absolute meaning from end-to-end calibration (Phase 3D). The
+one property this requires is monotonicity, which is why clipping is a hard
+rejection rather than a warning.
+
+**Two working scales.** Statistics and motion run on a heavily box-averaged
+64-pixel plane, where individual specks are averaged away and what remains is
+whole-frame behaviour. Detection will run on the region at capture resolution:
+downscaling before speck detection would destroy exactly the point-like signal
+the measurement depends on.
+
+**Both cross-frame metrics subtract a noise floor**, and neither works without
+it:
+
+- Sensor noise of standard deviation σ produces a Laplacian variance of `20σ²`
+  on its own. At realistic noise levels that is more than an order of magnitude
+  above any usable focus threshold, so an uncorrected focus gate can never fire
+  — a completely defocused frame scores as sharp.
+- Two consecutive frames of a perfectly still scene differ by their independent
+  noise, with mean absolute difference `1.128σ`. That floor is larger than the
+  signal from a visible camera pan, so an uncorrected motion gate cannot tell a
+  still phone from a moving one.
+
+`Tools/analysis_reference.py` is a Python port of these numerics that checks the
+thresholds actually behave as claimed. Run it with `sh Tools/check.sh`.
+
+**Three verdicts, not two.** A window is `usable`, `usableWithLowConfidence`, or
+`invalid`. Low confidence and invalid are different things: a low-confidence
+window produced a number that should be trusted less, an invalid one produced no
+number at all. Confidence is the *minimum* headroom across the gates, not an
+average — a window is only as trustworthy as its weakest measurement.
+
+Every threshold is an engineering starting point, versioned so a measurement
+records which set produced it. None has been validated against real samples.
+They govern capture quality only and carry no health or regulatory meaning.
 
 ## Measurement protocol (Phase 2)
 

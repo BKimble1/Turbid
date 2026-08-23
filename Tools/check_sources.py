@@ -95,6 +95,10 @@ def check_balance(code: str) -> str | None:
 
 
 FORCE_UNWRAP = re.compile(r"[A-Za-z0-9_\)\]]\s*!\s*(?:\.|,|\)|$|\s)")
+# A hex literal may only contain hex digits and underscores. Anything else is a
+# placeholder that was never filled in.
+BAD_HEX = re.compile(r"\b0[xX](?![0-9a-fA-F])|\b0[xX][0-9a-fA-F_]*[G-Zg-z][A-Za-z0-9_]*")
+BAD_BINARY = re.compile(r"\b0[bB][01_]*[2-9A-Za-z][A-Za-z0-9_]*")
 FORCE_CAST = re.compile(r"\bas!\s")
 TRY_BANG = re.compile(r"\btry!\s")
 
@@ -139,6 +143,10 @@ def main() -> int:
                         fail(f"placeholder ellipsis at line {number}")
                     if re.search(r"\bprint\s*\(", line):
                         fail(f"print() at line {number}; use OSLog")
+                    if BAD_HEX.search(line):
+                        fail(f"malformed hex literal at line {number}: {stripped}")
+                    if BAD_BINARY.search(line):
+                        fail(f"malformed binary literal at line {number}: {stripped}")
                     if relative.replace(os.sep, "/").startswith(STRICT_DIRS):
                         if FORCE_UNWRAP.search(line):
                             fail(f"force unwrap at line {number}: {stripped}")
