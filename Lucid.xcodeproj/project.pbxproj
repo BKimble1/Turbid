@@ -1,0 +1,910 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		85DE2793CE67B3F35E7FC77F /* AppEnvironment.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = E5DBC5F3BD3BA34EDF8F802C /* AppEnvironment.swift */;
+		};
+		1C2BAB2F52B3CAD4B0838EE0 /* Assets.xcassets in Resources */ = {
+			isa = PBXBuildFile;
+			fileRef = 03905479DF4711F02F74B131 /* Assets.xcassets */;
+		};
+		120C089D46FD7367B0386607 /* CameraAuthorization.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = C46EB88070D748D4DB17C844 /* CameraAuthorization.swift */;
+		};
+		C47C827F3E23A33A54BC594C /* CameraAuthorizationMappingTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = B4F32B2356F5475F6EFBAAAF /* CameraAuthorizationMappingTests.swift */;
+		};
+		5B5E8409B9299E1C6F0E668F /* CameraAuthorizing.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = F7F69CCD362D9A309E23F7B6 /* CameraAuthorizing.swift */;
+		};
+		44D6F0114D6BEEDB19CCCF03 /* CameraPreviewView.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 25C22C3A1CAF624F73136437 /* CameraPreviewView.swift */;
+		};
+		F36E51F5D4A9BBBAB6054647 /* CaptureHardwareTeardownTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = F53D5AE6F26FCF61E3A19057 /* CaptureHardwareTeardownTests.swift */;
+		};
+		9F1940E90F0FD532273E4A11 /* Components.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 9E69F57EBA529470F6486C32 /* Components.swift */;
+		};
+		575B16D5A3C21493637DA62D /* DemoScenario.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = B32E301A7A25E83A39AA7E04 /* DemoScenario.swift */;
+		};
+		6D6A921C85E548BB73CAD1F3 /* DemoShowcaseView.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = FDFDF74C5ACBC61B70AA732A /* DemoShowcaseView.swift */;
+		};
+		14E26BDFF25429CA4C95C30E /* InfoPlistTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = C994A2D7C14DF57C15AF3A4D /* InfoPlistTests.swift */;
+		};
+		E0DC30EC5BC40F2A759C06EC /* Logging.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 1C38E5659C8437AF63038026 /* Logging.swift */;
+		};
+		E74072B2F3CA4FD53015AD22 /* LucidApp.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 0D8EF28127B6DEC07003D437 /* LucidApp.swift */;
+		};
+		8BD856687C00AD50EE995F58 /* MeasurementEvent.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = BAAFD0C08F7A0809DD84EBDD /* MeasurementEvent.swift */;
+		};
+		BAE963BEE26FE794B21E542A /* MeasurementFailure.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 595E8BA9CE091833C7410B2D /* MeasurementFailure.swift */;
+		};
+		662CDEF16D911BA2A7E9B1ED /* MeasurementMode.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = A8CFEE438CB1450ECEF2EA3A /* MeasurementMode.swift */;
+		};
+		26D8FD3FCA18D6C6E6A59B5C /* MeasurementRejectionReason.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 0717E2D960126AD5B297D2E6 /* MeasurementRejectionReason.swift */;
+		};
+		4A53CC916703056A9BA7148F /* MeasurementState.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = C3FFA0204A0689D56725F1A5 /* MeasurementState.swift */;
+		};
+		FDD46B34F31AA27B2DC78EC7 /* MeasurementStateMachine.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = AE06069A36CC68FD8F0F967E /* MeasurementStateMachine.swift */;
+		};
+		3502FB2F740897483E550D14 /* MeasurementStateMachineTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = D149B3CA57B1D3CB11BA0158 /* MeasurementStateMachineTests.swift */;
+		};
+		13526630101D52C38813EED4 /* MeasurementStatePresentation.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 0B85B9E36040B6A1430E2CCD /* MeasurementStatePresentation.swift */;
+		};
+		EF61CF0772EB0FB7A711A642 /* MeasurementViewModel.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 8174C917387B3E067BE15050 /* MeasurementViewModel.swift */;
+		};
+		9328C3C886021D85059E7F74 /* MeasurementViewModelTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 6F0BAFE650D8D86F7CF43245 /* MeasurementViewModelTests.swift */;
+		};
+		C4655A0C4C9A2C17EA66704D /* OpticalClarityClass.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = CC7C8C65C7EF55801FA16DA8 /* OpticalClarityClass.swift */;
+		};
+		7296C93BE7AB50290D023AF7 /* RootView.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 4C946787984C4C0C998A3BCE /* RootView.swift */;
+		};
+		9E7DE44CFA0C064E0B11FF34 /* RuntimeEnvironment.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 86E811EF9B39BFDC6D2975F5 /* RuntimeEnvironment.swift */;
+		};
+		7252BFF01C661D135E1FC957 /* SettingsOpening.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 5F78619A987272BED1A3ECFD /* SettingsOpening.swift */;
+		};
+		D2346959A0B2963E9A356859 /* StubCameraAuthorizationService.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 14FFC9FD0A0F84E1E89CB4FF /* StubCameraAuthorizationService.swift */;
+		};
+		279CC9131E3A6E55868B1769 /* StubSettingsOpener.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = F3B3F2FDC8C68AAB866F7E21 /* StubSettingsOpener.swift */;
+		};
+		E9599D7DF1E7A9EFAAAC961D /* SystemCameraAuthorizationService.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = A59AAA412CF3059C4F74428E /* SystemCameraAuthorizationService.swift */;
+		};
+		EB4659D9C04D96401130777F /* Theme.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = D10467EB36802B3577E3A1F7 /* Theme.swift */;
+		};
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		43C02BBB36ABB6EE58969E77 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 244210E48437B6556980A702 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8C1A045E96B998B40533C7FF /* Lucid */;
+			remoteInfo = Lucid;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		E5DBC5F3BD3BA34EDF8F802C /* AppEnvironment.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = AppEnvironment.swift;
+			sourceTree = "<group>";
+		};
+		03905479DF4711F02F74B131 /* Assets.xcassets */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = folder.assetcatalog;
+			path = Assets.xcassets;
+			sourceTree = "<group>";
+		};
+		C46EB88070D748D4DB17C844 /* CameraAuthorization.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CameraAuthorization.swift;
+			sourceTree = "<group>";
+		};
+		B4F32B2356F5475F6EFBAAAF /* CameraAuthorizationMappingTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CameraAuthorizationMappingTests.swift;
+			sourceTree = "<group>";
+		};
+		F7F69CCD362D9A309E23F7B6 /* CameraAuthorizing.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CameraAuthorizing.swift;
+			sourceTree = "<group>";
+		};
+		25C22C3A1CAF624F73136437 /* CameraPreviewView.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CameraPreviewView.swift;
+			sourceTree = "<group>";
+		};
+		F53D5AE6F26FCF61E3A19057 /* CaptureHardwareTeardownTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CaptureHardwareTeardownTests.swift;
+			sourceTree = "<group>";
+		};
+		9E69F57EBA529470F6486C32 /* Components.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = Components.swift;
+			sourceTree = "<group>";
+		};
+		B32E301A7A25E83A39AA7E04 /* DemoScenario.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = DemoScenario.swift;
+			sourceTree = "<group>";
+		};
+		FDFDF74C5ACBC61B70AA732A /* DemoShowcaseView.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = DemoShowcaseView.swift;
+			sourceTree = "<group>";
+		};
+		C994A2D7C14DF57C15AF3A4D /* InfoPlistTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = InfoPlistTests.swift;
+			sourceTree = "<group>";
+		};
+		1C38E5659C8437AF63038026 /* Logging.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = Logging.swift;
+			sourceTree = "<group>";
+		};
+		81F31879437340D5CD6ED968 /* Lucid.app */ = {
+			isa = PBXFileReference;
+			explicitFileType = wrapper.application;
+			includeInIndex = 0;
+			path = Lucid.app;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		0D8EF28127B6DEC07003D437 /* LucidApp.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = LucidApp.swift;
+			sourceTree = "<group>";
+		};
+		70F09BF32F6D77A92FF191B4 /* LucidTests.xctest */ = {
+			isa = PBXFileReference;
+			explicitFileType = wrapper.cfbundle;
+			includeInIndex = 0;
+			path = LucidTests.xctest;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		BAAFD0C08F7A0809DD84EBDD /* MeasurementEvent.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = MeasurementEvent.swift;
+			sourceTree = "<group>";
+		};
+		595E8BA9CE091833C7410B2D /* MeasurementFailure.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = MeasurementFailure.swift;
+			sourceTree = "<group>";
+		};
+		A8CFEE438CB1450ECEF2EA3A /* MeasurementMode.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = MeasurementMode.swift;
+			sourceTree = "<group>";
+		};
+		0717E2D960126AD5B297D2E6 /* MeasurementRejectionReason.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = MeasurementRejectionReason.swift;
+			sourceTree = "<group>";
+		};
+		C3FFA0204A0689D56725F1A5 /* MeasurementState.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = MeasurementState.swift;
+			sourceTree = "<group>";
+		};
+		AE06069A36CC68FD8F0F967E /* MeasurementStateMachine.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = MeasurementStateMachine.swift;
+			sourceTree = "<group>";
+		};
+		D149B3CA57B1D3CB11BA0158 /* MeasurementStateMachineTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = MeasurementStateMachineTests.swift;
+			sourceTree = "<group>";
+		};
+		0B85B9E36040B6A1430E2CCD /* MeasurementStatePresentation.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = MeasurementStatePresentation.swift;
+			sourceTree = "<group>";
+		};
+		8174C917387B3E067BE15050 /* MeasurementViewModel.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = MeasurementViewModel.swift;
+			sourceTree = "<group>";
+		};
+		6F0BAFE650D8D86F7CF43245 /* MeasurementViewModelTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = MeasurementViewModelTests.swift;
+			sourceTree = "<group>";
+		};
+		CC7C8C65C7EF55801FA16DA8 /* OpticalClarityClass.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = OpticalClarityClass.swift;
+			sourceTree = "<group>";
+		};
+		4C946787984C4C0C998A3BCE /* RootView.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = RootView.swift;
+			sourceTree = "<group>";
+		};
+		86E811EF9B39BFDC6D2975F5 /* RuntimeEnvironment.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = RuntimeEnvironment.swift;
+			sourceTree = "<group>";
+		};
+		5F78619A987272BED1A3ECFD /* SettingsOpening.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = SettingsOpening.swift;
+			sourceTree = "<group>";
+		};
+		14FFC9FD0A0F84E1E89CB4FF /* StubCameraAuthorizationService.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = StubCameraAuthorizationService.swift;
+			sourceTree = "<group>";
+		};
+		F3B3F2FDC8C68AAB866F7E21 /* StubSettingsOpener.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = StubSettingsOpener.swift;
+			sourceTree = "<group>";
+		};
+		A59AAA412CF3059C4F74428E /* SystemCameraAuthorizationService.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = SystemCameraAuthorizationService.swift;
+			sourceTree = "<group>";
+		};
+		D10467EB36802B3577E3A1F7 /* Theme.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = Theme.swift;
+			sourceTree = "<group>";
+		};
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		C25DC3525EBCD84E8B43FB04 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F97331A9E6A9834471DF72E6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		AA0596BBDB4DCC95D5D4F10C = {
+			isa = PBXGroup;
+			children = (
+				8428F225ED5615094951C695 /* Lucid */,
+				068BADD57312115245030AB1 /* LucidTests */,
+				AE7805B56D1DCAFAA071416F /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		ED281E20FB4178D9D58F352E /* App */ = {
+			isa = PBXGroup;
+			children = (
+				E5DBC5F3BD3BA34EDF8F802C /* AppEnvironment.swift */,
+				0D8EF28127B6DEC07003D437 /* LucidApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		D7611D5769FA0E1867BE2968 /* Camera */ = {
+			isa = PBXGroup;
+			children = (
+				25C22C3A1CAF624F73136437 /* CameraPreviewView.swift */,
+			);
+			path = Camera;
+			sourceTree = "<group>";
+		};
+		EB369D1973798ECCC7893B5B /* Demo */ = {
+			isa = PBXGroup;
+			children = (
+				B32E301A7A25E83A39AA7E04 /* DemoScenario.swift */,
+				FDFDF74C5ACBC61B70AA732A /* DemoShowcaseView.swift */,
+			);
+			path = Demo;
+			sourceTree = "<group>";
+		};
+		1C3B362E39A8D4907EBC1D8E /* Domain */ = {
+			isa = PBXGroup;
+			children = (
+				C46EB88070D748D4DB17C844 /* CameraAuthorization.swift */,
+				BAAFD0C08F7A0809DD84EBDD /* MeasurementEvent.swift */,
+				595E8BA9CE091833C7410B2D /* MeasurementFailure.swift */,
+				A8CFEE438CB1450ECEF2EA3A /* MeasurementMode.swift */,
+				0717E2D960126AD5B297D2E6 /* MeasurementRejectionReason.swift */,
+				C3FFA0204A0689D56725F1A5 /* MeasurementState.swift */,
+				AE06069A36CC68FD8F0F967E /* MeasurementStateMachine.swift */,
+				CC7C8C65C7EF55801FA16DA8 /* OpticalClarityClass.swift */,
+			);
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		8F837CFDD9304B8C653F32DE /* Fakes */ = {
+			isa = PBXGroup;
+			children = (
+				14FFC9FD0A0F84E1E89CB4FF /* StubCameraAuthorizationService.swift */,
+				F3B3F2FDC8C68AAB866F7E21 /* StubSettingsOpener.swift */,
+			);
+			path = Fakes;
+			sourceTree = "<group>";
+		};
+		AB1FDBBE6AFBF1583816CEA0 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				EB369D1973798ECCC7893B5B /* Demo */,
+				1CF2E6C0DF85D596CC4C9C6A /* Measurement */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		8428F225ED5615094951C695 /* Lucid */ = {
+			isa = PBXGroup;
+			children = (
+				ED281E20FB4178D9D58F352E /* App */,
+				D7611D5769FA0E1867BE2968 /* Camera */,
+				1C3B362E39A8D4907EBC1D8E /* Domain */,
+				AB1FDBBE6AFBF1583816CEA0 /* Features */,
+				4D05B2CE43B929EA9DD72D7E /* Resources */,
+				024126E5633DCDF99D11AEB4 /* Services */,
+				C96B4151893CA00DA6E023AC /* Shared */,
+			);
+			path = Lucid;
+			sourceTree = "<group>";
+		};
+		068BADD57312115245030AB1 /* LucidTests */ = {
+			isa = PBXGroup;
+			children = (
+				B4F32B2356F5475F6EFBAAAF /* CameraAuthorizationMappingTests.swift */,
+				F53D5AE6F26FCF61E3A19057 /* CaptureHardwareTeardownTests.swift */,
+				C994A2D7C14DF57C15AF3A4D /* InfoPlistTests.swift */,
+				D149B3CA57B1D3CB11BA0158 /* MeasurementStateMachineTests.swift */,
+				6F0BAFE650D8D86F7CF43245 /* MeasurementViewModelTests.swift */,
+			);
+			path = LucidTests;
+			sourceTree = "<group>";
+		};
+		1CF2E6C0DF85D596CC4C9C6A /* Measurement */ = {
+			isa = PBXGroup;
+			children = (
+				0B85B9E36040B6A1430E2CCD /* MeasurementStatePresentation.swift */,
+				8174C917387B3E067BE15050 /* MeasurementViewModel.swift */,
+				4C946787984C4C0C998A3BCE /* RootView.swift */,
+			);
+			path = Measurement;
+			sourceTree = "<group>";
+		};
+		AE7805B56D1DCAFAA071416F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				81F31879437340D5CD6ED968 /* Lucid.app */,
+				70F09BF32F6D77A92FF191B4 /* LucidTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		4D05B2CE43B929EA9DD72D7E /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				03905479DF4711F02F74B131 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		024126E5633DCDF99D11AEB4 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				8F837CFDD9304B8C653F32DE /* Fakes */,
+				F7F69CCD362D9A309E23F7B6 /* CameraAuthorizing.swift */,
+				86E811EF9B39BFDC6D2975F5 /* RuntimeEnvironment.swift */,
+				5F78619A987272BED1A3ECFD /* SettingsOpening.swift */,
+				A59AAA412CF3059C4F74428E /* SystemCameraAuthorizationService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		C96B4151893CA00DA6E023AC /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				9E69F57EBA529470F6486C32 /* Components.swift */,
+				1C38E5659C8437AF63038026 /* Logging.swift */,
+				D10467EB36802B3577E3A1F7 /* Theme.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8C1A045E96B998B40533C7FF /* Lucid */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 144DB5708AC133F6CCE398E7 /* Build configuration list for "Lucid" target */;
+			buildPhases = (
+				A57DBEF0299370AF343399FB /* Sources */,
+				C25DC3525EBCD84E8B43FB04 /* Frameworks */,
+				CF9B8749C645137D46661EC8 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Lucid;
+			productName = Lucid;
+			productReference = 81F31879437340D5CD6ED968 /* Lucid.app */;
+			productType = "com.apple.product-type.application";
+		};
+		2ADDEE89B29C55E11126D89F /* LucidTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 22FF52207CD3CC4C77BEE4EB /* Build configuration list for "LucidTests" target */;
+			buildPhases = (
+				E97D282A6B71BE0E60D42ECE /* Sources */,
+				F97331A9E6A9834471DF72E6 /* Frameworks */,
+				6F0027E825DFC31B07D545C7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B44B5DFF7A4013DAA45163F8 /* PBXTargetDependency */,
+			);
+			name = LucidTests;
+			productName = LucidTests;
+			productReference = 70F09BF32F6D77A92FF191B4 /* LucidTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		244210E48437B6556980A702 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				ORGANIZATIONNAME = Lucid;
+				TargetAttributes = {
+					2ADDEE89B29C55E11126D89F = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = 8C1A045E96B998B40533C7FF /* Lucid */;
+					};
+					8C1A045E96B998B40533C7FF = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = 68AE2A984E4FBC56370520EE /* Build configuration list for "Lucid" project */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = AA0596BBDB4DCC95D5D4F10C;
+			productRefGroup = AE7805B56D1DCAFAA071416F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8C1A045E96B998B40533C7FF /* Lucid */,
+				2ADDEE89B29C55E11126D89F /* LucidTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		6F0027E825DFC31B07D545C7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CF9B8749C645137D46661EC8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1C2BAB2F52B3CAD4B0838EE0 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A57DBEF0299370AF343399FB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				85DE2793CE67B3F35E7FC77F /* AppEnvironment.swift in Sources */,
+				E74072B2F3CA4FD53015AD22 /* LucidApp.swift in Sources */,
+				44D6F0114D6BEEDB19CCCF03 /* CameraPreviewView.swift in Sources */,
+				120C089D46FD7367B0386607 /* CameraAuthorization.swift in Sources */,
+				8BD856687C00AD50EE995F58 /* MeasurementEvent.swift in Sources */,
+				BAE963BEE26FE794B21E542A /* MeasurementFailure.swift in Sources */,
+				662CDEF16D911BA2A7E9B1ED /* MeasurementMode.swift in Sources */,
+				26D8FD3FCA18D6C6E6A59B5C /* MeasurementRejectionReason.swift in Sources */,
+				4A53CC916703056A9BA7148F /* MeasurementState.swift in Sources */,
+				FDD46B34F31AA27B2DC78EC7 /* MeasurementStateMachine.swift in Sources */,
+				C4655A0C4C9A2C17EA66704D /* OpticalClarityClass.swift in Sources */,
+				575B16D5A3C21493637DA62D /* DemoScenario.swift in Sources */,
+				6D6A921C85E548BB73CAD1F3 /* DemoShowcaseView.swift in Sources */,
+				13526630101D52C38813EED4 /* MeasurementStatePresentation.swift in Sources */,
+				EF61CF0772EB0FB7A711A642 /* MeasurementViewModel.swift in Sources */,
+				7296C93BE7AB50290D023AF7 /* RootView.swift in Sources */,
+				5B5E8409B9299E1C6F0E668F /* CameraAuthorizing.swift in Sources */,
+				D2346959A0B2963E9A356859 /* StubCameraAuthorizationService.swift in Sources */,
+				279CC9131E3A6E55868B1769 /* StubSettingsOpener.swift in Sources */,
+				9E7DE44CFA0C064E0B11FF34 /* RuntimeEnvironment.swift in Sources */,
+				7252BFF01C661D135E1FC957 /* SettingsOpening.swift in Sources */,
+				E9599D7DF1E7A9EFAAAC961D /* SystemCameraAuthorizationService.swift in Sources */,
+				9F1940E90F0FD532273E4A11 /* Components.swift in Sources */,
+				E0DC30EC5BC40F2A759C06EC /* Logging.swift in Sources */,
+				EB4659D9C04D96401130777F /* Theme.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E97D282A6B71BE0E60D42ECE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C47C827F3E23A33A54BC594C /* CameraAuthorizationMappingTests.swift in Sources */,
+				F36E51F5D4A9BBBAB6054647 /* CaptureHardwareTeardownTests.swift in Sources */,
+				14E26BDFF25429CA4C95C30E /* InfoPlistTests.swift in Sources */,
+				3502FB2F740897483E550D14 /* MeasurementStateMachineTests.swift in Sources */,
+				9328C3C886021D85059E7F74 /* MeasurementViewModelTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B44B5DFF7A4013DAA45163F8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8C1A045E96B998B40533C7FF /* Lucid */;
+			targetProxy = 43C02BBB36ABB6EE58969E77 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		3BB19B87128E73A9A7A00692 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = (
+					DEBUG,
+					"$(inherited)",
+				);
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		B9A3DC7652A550118B07EBD3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Lucid uses the camera and torch to analyze light scattering in a water sample. Video is processed on this iPhone and is not saved unless you explicitly export diagnostics.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lucid.Lucid;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		FE6A554BE351582F1A96A7A4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lucid.LucidTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Lucid.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Lucid";
+			};
+			name = Debug;
+		};
+		1AD3E8B1A012AA9B9F40EECB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lucid.LucidTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Lucid.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Lucid";
+			};
+			name = Release;
+		};
+		2D8DF2930439C7614A93279B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		3A21F6865A35C94494C728AA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Lucid uses the camera and torch to analyze light scattering in a water sample. Video is processed on this iPhone and is not saved unless you explicitly export diagnostics.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lucid.Lucid;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		68AE2A984E4FBC56370520EE /* Build configuration list for "Lucid" project */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3BB19B87128E73A9A7A00692 /* Debug */,
+				2D8DF2930439C7614A93279B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		144DB5708AC133F6CCE398E7 /* Build configuration list for "Lucid" target */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B9A3DC7652A550118B07EBD3 /* Debug */,
+				3A21F6865A35C94494C728AA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		22FF52207CD3CC4C77BEE4EB /* Build configuration list for "LucidTests" target */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FE6A554BE351582F1A96A7A4 /* Debug */,
+				1AD3E8B1A012AA9B9F40EECB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 244210E48437B6556980A702 /* Project object */;
+}
