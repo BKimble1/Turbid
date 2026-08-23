@@ -490,6 +490,77 @@ final class FrameAnalyzerTests: XCTestCase {
         XCTAssertEqual(analyzer.scattering().detectionFrames, 0)
     }
 
+    // MARK: - Tracking end to end
+
+    /// A container with marks on it plus drifting particles: enough texture for
+    /// camera motion to be measurable, and something to track.
+    private func trackedScene(translationX: Double = 0) -> SyntheticScene {
+        var scene = samplingScene
+        scene.scratches = [
+            SyntheticScratch(start: CGPoint(x: 0.10, y: 0.12), end: CGPoint(x: 0.90, y: 0.18),
+                             brightness: 0.40, widthPixels: 2),
+            SyntheticScratch(start: CGPoint(x: 0.20, y: 0.10), end: CGPoint(x: 0.26, y: 0.90),
+                             brightness: 0.30, widthPixels: 2)
+        ]
+        scene.stationaryBlobs = [
+            SyntheticStationaryBlob(center: CGPoint(x: 0.80, y: 0.75), radiusPixels: 4, brightness: 0.45)
+        ]
+        scene.globalTranslation = CGVector(dx: translationX, dy: 0)
+        return scene
+    }
+
+    func testAStillRunMeasuresNoGlobalMotion() {
+        let analyzer = makeAnalyzer()
+        _ = run(analyzer, scene: trackedScene(),
+                timestamps: SyntheticTimestamps.regular(count: 400, frameRate: 30))
+
+        XCTAssertLessThan(analyzer.globalMotion.flow.speedPixelsPerSecond, 4,
+                          "a still phone must read as still")
+    }
+
+    func testAPanIsEitherCompensatedOrInvalidatesTheWindow() {
+        // The required outcome is one or the other, never a result computed as
+        // though the phone had been still.
+        let analyzer = makeAnalyzer()
+        _ = run(analyzer, scene: trackedScene(translationX: 0.05),
+                timestamps: SyntheticTimestamps.regular(count: 400, frameRate: 30))
+        let quality = analyzer.quality(thermal: .nominal, systemPressure: .nominal,
+                                       controlsRemainedLocked: true,
+                                       timing: healthyTiming(frames: 400))
+        let motion = analyzer.globalMotion
+
+        let compensated = motion.isTrustworthy && motion.flow.speedPixelsPerSecond > 2
+        let invalidated = !quality.isUsable && quality.verdict.reasons.contains(.cameraMoved)
+
+        XCTAssertTrue(compensated || invalidated,
+                      "pan neither measured (\(motion.flow.speedPixelsPerSecond) px/s, "
+                          + "trustworthy \(motion.isTrustworthy)) nor rejected")
+    }
+
+    func testTrackingProducesMetricsOverTheMeasurementWindow() {
+        let analyzer = makeAnalyzer()
+        _ = run(analyzer, scene: trackedScene(),
+                timestamps: SyntheticTimestamps.regular(count: 400, frameRate: 30))
+        let metrics = analyzer.tracking()
+
+        XCTAssertGreaterThan(metrics.confirmedSpeckCount + metrics.ambiguousCount
+                                 + metrics.staticDefectCount + metrics.bubbleRejectionCount, 0,
+                             "something moving in the sample must be tracked")
+        XCTAssertEqual(metrics.tracksDroppedForCapacity, 0)
+    }
+
+    func testTheWindowSummaryReportsRepeatability() {
+        let analyzer = makeAnalyzer()
+        _ = run(analyzer, scene: trackedScene(),
+                timestamps: SyntheticTimestamps.regular(count: 400, frameRate: 30))
+        let summary = analyzer.scatteringSummary()
+
+        XCTAssertGreaterThan(summary.windowCount, 0)
+        XCTAssertGreaterThan(summary.medianPositiveResidual, 0)
+        XCTAssertFalse(analyzer.scatteringWindows().isEmpty,
+                       "the raw windows are kept for validation, not just the summary")
+    }
+
     // MARK: - Determinism
 
     func testTheSameSceneAlwaysProducesTheSameObservations() {

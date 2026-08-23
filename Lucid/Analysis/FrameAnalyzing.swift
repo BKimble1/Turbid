@@ -29,4 +29,10 @@ protocol FrameAnalyzing: AnyObject {
 
     /// Bulk scattering and candidate counts for the measurement window.
     func scattering() -> WindowScattering
+
+    /// Tracking results for the measurement window.
+    func tracking() -> TrackingMetrics
+
+    /// Robust summary across the overlapping sub-windows, with repeatability.
+    func scatteringSummary() -> ScatteringSummary
 }

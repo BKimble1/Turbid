@@ -9,14 +9,14 @@ clarity** of a water sample.
 
 ## Build status
 
-**Phase 3B of 4 — background subtraction and bright-speck detection.**
+**Phase 3C of 4 — optical flow, vector tracking and bubble rejection.**
 
-On top of the Phase 3A pipeline, this build adds the foreground stage: a
-temporal-median background model, a Difference-of-Gaussians band-pass, a
-noise-adaptive detection threshold, connected-component extraction with
-normalized features, and the bulk scattering channel. It detects moving bright
-events and measures how much light the sample scatters. There is still **no
-tracking and no NTU**.
+On top of the Phase 3B detector, this build adds motion: robust global-motion
+estimation, a bounded multi-object tracker with per-axis Kalman filters,
+multi-feature track classification, and temporal aggregation over overlapping
+windows with a repeatability figure. It distinguishes stationary defects,
+rising bubbles and suspended specks — imperfectly, and says so. There is still
+**no NTU**.
 
 | Phase | Scope | Status |
 |-------|-------|--------|
@@ -24,7 +24,7 @@ tracking and no NTU**.
 | 2 | AVFoundation capture session, camera selection, torch, control locking | Complete |
 | 3A | Analysis region, capture protocol, quality gates, synthetic harness | Complete |
 | 3B | Background subtraction and bright-speck detection | Complete |
-| 3C | Optical flow, vector tracking, bubble rejection | Not started |
+| 3C | Optical flow, vector tracking, bubble rejection | Complete |
 | 3D | Relative score, calibration, NTU gating, validation | Not started |
 | 4 | Dashboard, advanced metrics, charts, calibration UI | Not started |
 
@@ -89,11 +89,13 @@ Lucid/
               capture-protocol timeline, quality gates, frame observations,
               background model, band-pass filter, connected components,
               candidate features, bulk scattering metrics
+      Tracking/ Global flow and gravity, constant-velocity filter, track model,
+                multi-object tracker, classifier, metrics, window aggregation
   Services/   Camera authorization, settings, runtime environment, test fakes
   Camera/     The AVFoundation boundary: capability probing, CameraService,
               preview layer
-  Analysis/   Frame analyzer, speck detector, pixel-buffer luma extraction,
-              and the seeded synthetic-frame harness
+  Analysis/   Frame analyzer, speck detector, gravity provider, pixel-buffer
+              luma extraction, and the seeded synthetic-frame harness
   Features/   Measurement view model and views, diagnostics, Simulator demo
   Shared/     Design tokens, reusable components, OSLog categories
   Resources/  Asset catalogue
@@ -149,6 +151,56 @@ average — a window is only as trustworthy as its weakest measurement.
 Every threshold is an engineering starting point, versioned so a measurement
 records which set produced it. None has been validated against real samples.
 They govern capture quality only and carry no health or regulatory meaning.
+
+## Tracking (Phase 3C)
+
+**Global motion is measured by sparse block matching, not by Vision.** The
+design calls for `VNGenerateOpticalFlowRequest`, and this deviates from it
+deliberately. A dense flow field is far more than the pipeline consumes — the
+only thing taken from it is one robust median vector — and, more importantly,
+Vision's optical-flow request is a *targeted* request whose result sign depends
+on which of the two frames is the targeted one. That convention cannot be
+confirmed without running it on a device, and a sign error would not fail
+loudly: compensation would **double** the apparent camera motion instead of
+removing it, and every velocity downstream would be wrong in a way that still
+looked plausible. The block matcher's sign is pinned by a test. Adopting Vision
+remains reasonable once it can be measured on hardware against this baseline;
+the estimator sits behind a protocol so it can be swapped without touching the
+tracker.
+
+Three things make the matcher work, and it does not work without any of them:
+
+- **A multi-frame baseline.** Camera drift is sub-pixel *per frame* — a 10 px/s
+  drift moves the scene by a third of a pixel between consecutive frames, below
+  what block matching can resolve. Matching against a reference held for several
+  frames turns that into a few pixels. Measured accuracy on synthetic pans is
+  within 3% of truth; per-frame matching was off by 30% and, for vertical
+  motion, produced nonsense.
+- **A Shi-Tomasi gate.** A patch containing only a horizontal scratch cannot say
+  anything about horizontal displacement — the aperture problem — and unchecked
+  it votes with an arbitrary value.
+- **A robust median with an inlier count.** Patches spoiled by a passing
+  particle are a minority. The fraction agreeing with the median is the
+  confidence, and a low-confidence estimate is never subtracted from anything.
+
+A clean container in a dark shroud may have too little texture for any patch to
+pass the gate. That is reported as zero confidence, not guessed at.
+
+**Classification uses several graded features, never one cutoff.** Bubbles and
+particles overlap in every individual feature: there are small slow bubbles and
+large fast specks. Speed, size, straightness and direction each contribute a
+graded score; the winner must beat the runner-up by a margin, and anything that
+does not is called **ambiguous** and counted separately. No separation is
+claimed to be clean, because there is not one.
+
+Direction only means something if gravity lies in the image plane. With the
+phone flat and the camera looking down, a rising bubble barely moves in frame,
+so the direction term is blended towards neutral by exactly how much of gravity
+projects into the plane, and the confidence is reduced with it.
+
+**Counts are events, not concentrations.** A speck visible for fifty frames is
+one event. These are reported as *Visible particles (tracked)*; Phase 3D
+calibrates the bulk scattering channel, not these counts.
 
 ## Detection pipeline (Phase 3B)
 

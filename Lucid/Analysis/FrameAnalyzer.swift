@@ -20,6 +20,11 @@ final class FrameAnalyzer: FrameAnalyzing {
     private let thresholds: QualityThresholds
     private let evaluator: FrameQualityEvaluator
     private let detector: SpeckDetector
+    private let flowEstimator: GlobalFlowEstimating
+    private let tracker: MultiObjectTracker
+    private let classifier: TrackClassifier
+    private let gravityProvider: GravityProviding
+    private var aggregator: ScatteringWindowAggregator
 
     // Reused buffers.
     private let extractor = PixelBufferLumaExtractor()
@@ -38,16 +43,32 @@ final class FrameAnalyzer: FrameAnalyzing {
     /// spread across the acquisition window whatever rate the camera achieves.
     private var expectedAcquisitionFrames = 0
     private var firstTimestamp: Double?
+    private var lastMotion = GlobalMotion.none
+    /// Track identifiers already counted, so a speck visible for fifty frames
+    /// contributes one event rather than fifty.
+    private var seenTrackIdentifiers = Set<Int>()
+    private var measurementStart: Double?
+    private var measurementEnd: Double?
 
     init(region: AnalysisRegion = .screeningDefault,
          captureProtocol: CaptureProtocol = .screening,
          thresholds: QualityThresholds = .screening,
-         detector: SpeckDetector.Configuration = .screening) {
+         detector: SpeckDetector.Configuration = .screening,
+         flow: PatchFlowEstimator.Configuration = .screening,
+         tracker: MultiObjectTracker.Configuration = .screening,
+         classifier: TrackClassifier.Configuration = .screening,
+         aggregation: ScatteringWindowAggregator.Configuration = .screening,
+         gravityProvider: GravityProviding = AssumedPortraitGravityProvider()) {
         self.region = region
         self.captureProtocol = captureProtocol
         self.thresholds = thresholds
         self.evaluator = FrameQualityEvaluator(thresholds: thresholds)
         self.detector = SpeckDetector(configuration: detector)
+        self.flowEstimator = PatchFlowEstimator(configuration: flow)
+        self.tracker = MultiObjectTracker(configuration: tracker)
+        self.classifier = TrackClassifier(configuration: classifier)
+        self.aggregator = ScatteringWindowAggregator(configuration: aggregation)
+        self.gravityProvider = gravityProvider
     }
 
     func begin(atTimestamp presentationSeconds: Double) {
@@ -60,6 +81,13 @@ final class FrameAnalyzer: FrameAnalyzing {
         expectedAcquisitionFrames = 0
         firstTimestamp = nil
         detector.reset()
+        flowEstimator.reset()
+        tracker.reset()
+        aggregator.reset()
+        lastMotion = .none
+        seenTrackIdentifiers.removeAll(keepingCapacity: true)
+        measurementStart = nil
+        measurementEnd = nil
     }
 
     func analyze(pixelBuffer: CVPixelBuffer, presentationSeconds: Double) -> FrameObservation? {
@@ -116,6 +144,14 @@ final class FrameAnalyzer: FrameAnalyzing {
                                       stage: stage,
                                       isUsable: isUsable,
                                       noiseSigma: statistics.noiseSigma)
+
+        if stage == .measurement, isUsable, foreground.backgroundIsReady {
+            runTracking(on: image,
+                        candidates: foreground.candidates,
+                        bulk: foreground.bulk,
+                        timestampSeconds: presentationSeconds,
+                        noiseSigma: statistics.noiseSigma)
+        }
 
         let observation = FrameObservation(
             sequenceNumber: sequenceNumber,
@@ -230,8 +266,74 @@ final class FrameAnalyzer: FrameAnalyzing {
         aggregate.windowScattering()
     }
 
+    /// Tracking results for the measurement window.
+    func tracking() -> TrackingMetrics {
+        guard let start = measurementStart, let end = measurementEnd else { return .empty }
+        tracker.classifyAll(using: classifier, gravity: gravityProvider.currentGravity())
+        return TrackingMetrics.make(
+            tracks: tracker.tracks,
+            regionWidth: regionPixelWidth,
+            regionHeight: regionPixelHeight,
+            windowSeconds: max(0, end - start),
+            motion: lastMotion,
+            tracksDroppedForCapacity: tracker.droppedForCapacity
+        )
+    }
+
+    /// Robust summary across the overlapping sub-windows, with repeatability.
+    func scatteringSummary() -> ScatteringSummary {
+        var closing = aggregator
+        closing.finish()
+        return closing.summary()
+    }
+
+    /// The raw per-window results, kept for validation rather than display.
+    func scatteringWindows() -> [ScatteringWindow] {
+        var closing = aggregator
+        closing.finish()
+        return closing.windows
+    }
+
+    /// Runs flow estimation, tracking and window aggregation for one
+    /// measurement frame.
+    private func runTracking(on image: LumaImage,
+                             candidates: [SpeckCandidate],
+                             bulk: BulkScatteringMetrics,
+                             timestampSeconds: Double,
+                             noiseSigma: Double) {
+        regionPixelWidth = image.width
+        regionPixelHeight = image.height
+        flowEstimator.prepare(regionWidth: image.width, regionHeight: image.height)
+        tracker.prepare(regionWidth: image.width, regionHeight: image.height)
+
+        lastMotion = flowEstimator.update(with: image,
+                                          timestampSeconds: timestampSeconds,
+                                          noiseSigma: noiseSigma)
+
+        let tracks = tracker.update(candidates: candidates,
+                                    timestampSeconds: timestampSeconds,
+                                    motion: lastMotion)
+
+        // A speck counts once, on the frame its track is first confirmed.
+        var newEvents = 0
+        for track in tracks where track.state.isCountable {
+            if seenTrackIdentifiers.insert(track.id).inserted { newEvents += 1 }
+        }
+
+        aggregator.record(timestampSeconds: timestampSeconds,
+                          bulk: bulk,
+                          newSpeckEvents: newEvents)
+
+        if measurementStart == nil { measurementStart = timestampSeconds }
+        measurementEnd = timestampSeconds
+    }
+
     var backgroundIsReady: Bool { detector.backgroundIsReady }
     var backgroundStability: Double { detector.backgroundStability }
+    var globalMotion: GlobalMotion { lastMotion }
+
+    private var regionPixelWidth = 0
+    private var regionPixelHeight = 0
 
     /// Progress through the run, for the UI.
     func progress(at presentationSeconds: Double) -> Double {

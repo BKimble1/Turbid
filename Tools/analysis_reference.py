@@ -317,6 +317,7 @@ def main():
     check("flicker scene", cv > EXPOSURE_LIMIT, f"coefficient of variation {cv:.4f}")
 
     failures.extend(check_phase_3b())
+    failures.extend(check_phase_3c())
 
     print()
     if failures:
@@ -593,6 +594,222 @@ def check_phase_3b():
     check("still background is stable", still > 0.95, f"{still:.4f}")
     check("drifting particles stay stable", sample > MIN_BACKGROUND_STABILITY, f"{sample:.4f}")
     check("shifted structure is unstable", shifted < MIN_BACKGROUND_STABILITY, f"{shifted:.4f}")
+
+    return failures
+
+
+
+# ---------------------------------------------------------------------------
+# Phase 3C: flow, tracking and classification.
+# ---------------------------------------------------------------------------
+
+FLOW_GRID, FLOW_PATCH, FLOW_RADIUS = 7, 21, 6
+FLOW_EIGENVALUE_SIGMAS, FLOW_INLIER_TOLERANCE, FLOW_MIN_PATCHES = 4.0, 0.6, 3
+
+
+def _sad(cur, ref, cx, cy, half, ox, oy, cutoff=float("inf")):
+    total = 0.0
+    for y in range(cy - half, cy + half + 1):
+        cr = y * cur.w
+        rr = (y + oy) * ref.w
+        for x in range(cx - half, cx + half + 1):
+            total += abs(cur.v[cr + x] - ref.v[rr + x + ox])
+        if total > cutoff:
+            return total
+    return total
+
+
+def parabolic_offset(left, centre, right):
+    d = left - 2 * centre + right
+    if d <= 0:
+        return 0.0
+    o = 0.5 * (left - right) / d
+    return o if abs(o) <= 1 else 0.0
+
+
+def structure_min_eigenvalue(img, cx, cy, half):
+    """Shi-Tomasi. Near zero when the patch has gradient in only one direction."""
+    gxx = gyy = gxy = 0.0
+    n = 0
+    for y in range(cy - half + 1, cy + half):
+        for x in range(cx - half + 1, cx + half):
+            i = y * img.w + x
+            gx = (img.v[i + 1] - img.v[i - 1]) * 0.5
+            gy = (img.v[i + img.w] - img.v[i - img.w]) * 0.5
+            gxx += gx * gx
+            gyy += gy * gy
+            gxy += gx * gy
+            n += 1
+    gxx /= n; gyy /= n; gxy /= n
+    trace = gxx + gyy
+    root = math.sqrt(max(0.0, (gxx - gyy) ** 2 + 4 * gxy * gxy))
+    return (trace - root) / 2
+
+
+def measure_displacement(current, reference, noise):
+    half = FLOW_PATCH // 2
+    margin = half + FLOW_RADIUS
+    uw, uh = current.w - 2 * margin, current.h - 2 * margin
+    limit = FLOW_EIGENVALUE_SIGMAS * noise * noise
+    dxs, dys = [], []
+    for gy in range(FLOW_GRID):
+        cy = margin + (uh * (2 * gy + 1)) // (2 * FLOW_GRID)
+        for gx in range(FLOW_GRID):
+            cx = margin + (uw * (2 * gx + 1)) // (2 * FLOW_GRID)
+            if structure_min_eigenvalue(current, cx, cy, half) <= limit:
+                continue
+            best, bx, by = float("inf"), 0, 0
+            for oy in range(-FLOW_RADIUS, FLOW_RADIUS + 1):
+                for ox in range(-FLOW_RADIUS, FLOW_RADIUS + 1):
+                    c = _sad(current, reference, cx, cy, half, ox, oy, best)
+                    if c < best:
+                        best, bx, by = c, ox, oy
+            if abs(bx) >= FLOW_RADIUS or abs(by) >= FLOW_RADIUS:
+                continue
+            sx = parabolic_offset(_sad(current, reference, cx, cy, half, bx - 1, by), best,
+                                  _sad(current, reference, cx, cy, half, bx + 1, by))
+            sy = parabolic_offset(_sad(current, reference, cx, cy, half, bx, by - 1), best,
+                                  _sad(current, reference, cx, cy, half, bx, by + 1))
+            dxs.append(-(bx + sx))
+            dys.append(-(by + sy))
+    if len(dxs) < FLOW_MIN_PATCHES:
+        return None, 0.0, len(dxs)
+    mx = sorted(dxs)[len(dxs) // 2]
+    my = sorted(dys)[len(dys) // 2]
+    inliers = sum(1 for i in range(len(dxs))
+                  if math.hypot(dxs[i] - mx, dys[i] - my) <= FLOW_INLIER_TOLERANCE)
+    return (mx, my), inliers / len(dxs), len(dxs)
+
+
+# --- Classifier -------------------------------------------------------------
+
+CLASSIFIER = dict(staticSpeedLow=0.004, staticSpeedHigh=0.012,
+                  bubbleSpeedLow=0.05, bubbleSpeedHigh=0.15,
+                  bubbleDiameterLow=0.010, bubbleDiameterHigh=0.025,
+                  upwardLow=0.35, upwardHigh=0.80,
+                  straightnessLow=0.55, straightnessHigh=0.90,
+                  minimumObservations=5, minimumConfidenceMargin=0.12)
+
+
+def ramp(value, low, high):
+    if high <= low:
+        return 1.0 if value >= high else 0.0
+    return min(1.0, max(0.0, (value - low) / (high - low)))
+
+
+def fuzzy_and(values):
+    return min(max(0.0, min(1.0, v)) for v in values) if values else 0.0
+
+
+def classify(speed, diameter, straightness, upward, observations, in_plane=1.0):
+    c = CLASSIFIER
+    obs = ramp(observations, c["minimumObservations"], c["minimumObservations"] * 2)
+    reliability = min(1.0, max(0.0, in_plane))
+    up = 0.5 + (ramp(upward, c["upwardLow"], c["upwardHigh"]) - 0.5) * reliability
+    static = 1 - ramp(speed, c["staticSpeedLow"], c["staticSpeedHigh"])
+    size = ramp(diameter, c["bubbleDiameterLow"], c["bubbleDiameterHigh"])
+    fast = ramp(speed, c["bubbleSpeedLow"], c["bubbleSpeedHigh"])
+    straight = ramp(straightness, c["straightnessLow"], c["straightnessHigh"])
+
+    scores = {
+        "staticDefect": static,
+        "risingBubble": fuzzy_and([up, straight, max(size, fast), 1 - static]),
+        "suspendedSpeck": fuzzy_and([1 - up, 1 - size, 1 - straight, 1 - static, obs]),
+    }
+    ranked = sorted(scores.items(), key=lambda kv: (-kv[1], kv[0]))
+    best, second = ranked[0], ranked[1][1]
+    margin = best[1] - second
+    if best[0] in ("risingBubble", "suspendedSpeck"):
+        margin *= 0.5 + 0.5 * reliability
+    if margin < c["minimumConfidenceMargin"] or best[1] <= 0:
+        return "ambiguous", margin
+    return best[0], margin
+
+
+def check_phase_3c():
+    failures = []
+
+    def check(name, condition, detail):
+        print(f"  [{'ok  ' if condition else 'FAIL'}] {name}: {detail}")
+        if not condition:
+            failures.append(name)
+
+    print()
+    print("Phase 3C: flow, tracking and classification")
+    print()
+
+    width, height, fps = 192, 144, 30.0
+    marks = dict(
+        scratches=[(0.10, 0.20, 0.90, 0.26, 0.40, 2.0),
+                   (0.15, 0.70, 0.85, 0.62, 0.35, 2.0),
+                   (0.30, 0.10, 0.36, 0.90, 0.30, 2.0)],
+        blobs=[(0.25, 0.45, 4, 0.5), (0.70, 0.55, 5, 0.45), (0.50, 0.80, 3, 0.4)],
+    )
+
+    def scene(**kw):
+        s = dict(w=width, h=height, base=0.30, sigma=0.01, seed=77)
+        s.update(marks)
+        s.update(kw)
+        return s
+
+    baseline = 9
+    reference = render(scene(), 2.0, 60)
+
+    # Sign: content moving right must read as positive.
+    right = render(scene(tx=0.05), 2.0 + baseline / fps, 60 + baseline)
+    ref_right = render(scene(tx=0.05), 2.0, 60)
+    got, confidence, used = measure_displacement(right, ref_right, 0.01)
+    check("pan right reads positive", got is not None and got[0] > 0,
+          f"dx {got[0]:+.2f} px over {baseline} frames" if got else "refused")
+
+    left = render(scene(tx=-0.05), 2.0 + baseline / fps, 60 + baseline)
+    ref_left = render(scene(tx=-0.05), 2.0, 60)
+    got_left, _, _ = measure_displacement(left, ref_left, 0.01)
+    check("pan left reads negative", got_left is not None and got_left[0] < 0,
+          f"dx {got_left[0]:+.2f} px" if got_left else "refused")
+
+    # Accuracy over a multi-frame baseline.
+    truth = 0.05 * width * baseline / fps
+    error = abs(got[0] - truth) / truth if got else 1
+    check("pan magnitude within 15%", error < 0.15,
+          f"measured {got[0]:.2f} px vs {truth:.2f} px ({error * 100:.1f}%)")
+
+    still = render(scene(), 2.0 + baseline / fps, 60 + baseline)
+    got_still, conf_still, _ = measure_displacement(still, reference, 0.01)
+    check("still scene reads still",
+          got_still is not None and math.hypot(*got_still) < 0.5,
+          f"{got_still} confidence {conf_still:.2f}")
+
+    # A featureless sample has nothing to match, and must say so.
+    flat = dict(w=width, h=height, base=0.30, sigma=0.01, seed=77, tx=0.05)
+    got_flat, _, used_flat = measure_displacement(
+        render(flat, 2.0 + baseline / fps, 60 + baseline), render(flat, 2.0, 60), 0.01
+    )
+    check("featureless scene refuses", got_flat is None,
+          f"{used_flat} patches passed the gate")
+
+    # Classification, at the shipping region size.
+    print()
+    cases = [
+        ("static scratch",           "staticDefect",   dict(speed=0.001, diameter=0.004, straightness=0.3,  upward=0.0,  observations=20)),
+        ("stationary bubble",        "staticDefect",   dict(speed=0.002, diameter=0.020, straightness=0.2,  upward=0.1,  observations=20)),
+        ("large fast rising bubble", "risingBubble",   dict(speed=0.150, diameter=0.028, straightness=0.98, upward=0.97, observations=15)),
+        ("small slow rising bubble", "risingBubble",   dict(speed=0.060, diameter=0.014, straightness=0.95, upward=0.92, observations=12)),
+        ("small slow curved speck",  "suspendedSpeck", dict(speed=0.020, diameter=0.003, straightness=0.45, upward=0.05, observations=20)),
+        ("sinking speck",            "suspendedSpeck", dict(speed=0.025, diameter=0.004, straightness=0.80, upward=-0.9, observations=15)),
+        ("small slow upward drift",  "ambiguous",      dict(speed=0.030, diameter=0.009, straightness=0.85, upward=0.75, observations=12)),
+        ("too few sightings",        "ambiguous",      dict(speed=0.020, diameter=0.003, straightness=0.4,  upward=0.0,  observations=3)),
+    ]
+    for name, expected, kw in cases:
+        verdict, margin = classify(**kw)
+        check(name, verdict == expected, f"{verdict} (confidence {margin:.3f})")
+
+    upright = classify(speed=0.060, diameter=0.014, straightness=0.95, upward=0.92,
+                       observations=12, in_plane=1.0)[1]
+    flat_phone = classify(speed=0.060, diameter=0.014, straightness=0.95, upward=0.92,
+                          observations=12, in_plane=0.05)[1]
+    check("confidence falls when gravity leaves the image plane",
+          flat_phone < upright, f"{upright:.3f} upright vs {flat_phone:.3f} flat")
 
     return failures
 
