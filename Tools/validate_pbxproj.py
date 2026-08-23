@@ -282,6 +282,8 @@ def main() -> int:
             require("torch" in value.lower(), "camera purpose string does not mention the torch")
             require("not saved" in value.lower(),
                     "camera purpose string does not say video is not saved")
+            require("export" not in value.lower(),
+                    "camera purpose string describes an export feature that does not exist")
     require(app_settings_ok, "INFOPLIST_KEY_NSCameraUsageDescription is not set on any configuration")
 
     # 7. No unnecessary privacy keys anywhere.
@@ -292,6 +294,39 @@ def main() -> int:
         for key in entry["buildSettings"]:
             for word in forbidden:
                 require(word not in key, f"unexpected privacy build setting: {key}")
+
+    # 8. The privacy manifest must actually reach the app bundle, and say what
+    #    Lucid actually does. A manifest that is not in a Resources build phase
+    #    is a file in the repository, not something App Store Connect will see.
+    manifest_path = os.path.join("Lucid", "Resources", "PrivacyInfo.xcprivacy")
+    copied: set[str] = set()
+    for phase_id in app["buildPhases"]:
+        phase = objects[phase_id]
+        if phase["isa"] != "PBXResourcesBuildPhase":
+            continue
+        for build_file_id in phase["files"]:
+            path = paths.get(objects[build_file_id]["fileRef"])
+            if path:
+                copied.add(path)
+    require(manifest_path in copied,
+            "PrivacyInfo.xcprivacy is not copied into the app bundle")
+
+    manifest = open(os.path.join(ROOT, manifest_path), encoding="utf-8").read()
+    require("<key>NSPrivacyTracking</key>\n\t<false/>" in manifest,
+            "the privacy manifest does not declare NSPrivacyTracking false")
+    require("<key>NSPrivacyTrackingDomains</key>\n\t<array/>" in manifest,
+            "the privacy manifest declares tracking domains")
+    require("<key>NSPrivacyCollectedDataTypes</key>\n\t<array/>" in manifest,
+            "the privacy manifest declares collected data types")
+    require("NSPrivacyAccessedAPICategoryUserDefaults" in manifest,
+            "the privacy manifest does not declare its UserDefaults use")
+    # The element, not the comment beside it: matching the prose would let the
+    # actual reason code change without anything noticing.
+    require("<string>CA92.1</string>" in manifest,
+            "the UserDefaults reason code is missing or is not CA92.1")
+    for category in ("FileTimestamp", "DiskSpace", "ActiveKeyboards", "SystemBootTime"):
+        require(f"NSPrivacyAccessedAPICategory{category}" not in manifest,
+                f"the privacy manifest declares {category}, which Lucid does not use")
 
     if failures:
         for failure in failures:

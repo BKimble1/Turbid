@@ -8,6 +8,11 @@ struct AppEnvironment: Sendable {
     let settingsOpener: SettingsOpening
     let disclosure: DisclosureRecording
     let calibrationStore: any CalibrationStoring
+    /// Which way is up, for bubble rejection. Owned here rather than by the
+    /// analyzer so it can be started when the camera starts: device motion
+    /// takes a moment to produce its first sample, and a measurement that began
+    /// before then would classify under an assumption instead of a measurement.
+    let gravity: GravityProviding
     /// Builds the analysis pipeline for one run. A factory rather than a shared
     /// instance: each run gets a clean analyzer, and nothing from a previous
     /// measurement can survive into the next one.
@@ -23,6 +28,7 @@ struct AppEnvironment: Sendable {
          settingsOpener: SettingsOpening,
          disclosure: DisclosureRecording = InMemoryDisclosureRecorder(acknowledged: true),
          calibrationStore: any CalibrationStoring = InMemoryCalibrationStore(),
+         gravity: GravityProviding = AssumedPortraitGravityProvider(),
          makePipeline: @escaping @Sendable () -> MeasurementPipeline = { MeasurementPipeline() },
          initialMode: MeasurementMode = .screening,
          allowsSimulatedData: Bool) {
@@ -31,6 +37,7 @@ struct AppEnvironment: Sendable {
         self.settingsOpener = settingsOpener
         self.disclosure = disclosure
         self.calibrationStore = calibrationStore
+        self.gravity = gravity
         self.makePipeline = makePipeline
         self.initialMode = initialMode
         self.allowsSimulatedData = allowsSimulatedData
@@ -49,13 +56,20 @@ struct AppEnvironment: Sendable {
             ? StubCameraService(summary: .simulatedFeed, frameSource: SimulatedFrameSource())
             : CameraService()
 
+        // The measured provider, not the assumed one. Bubble rejection depends
+        // on knowing how much of gravity lies in the image plane: with the
+        // phone flat, a rising bubble barely moves in frame, and assuming
+        // otherwise would report a confident direction that means nothing.
+        let gravity = CoreMotionGravityProvider()
+
         return AppEnvironment(
             cameraAuthorization: SystemCameraAuthorizationService(),
             camera: camera,
             settingsOpener: SystemSettingsOpener(),
             disclosure: DefaultsDisclosureRecorder(),
             calibrationStore: Self.calibrationStore(),
-            makePipeline: { MeasurementPipeline() },
+            gravity: gravity,
+            makePipeline: { MeasurementPipeline(analyzer: FrameAnalyzer(gravityProvider: gravity)) },
             allowsSimulatedData: simulated
         )
     }

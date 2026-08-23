@@ -113,6 +113,21 @@ final class MeasurementProgressTests: XCTestCase {
                        "duplicate checklist identifiers would break the list's identity")
     }
 
+    /// The working distance the checklist quotes is the one the camera was
+    /// selected against. If they ever disagree, the app is asking for a
+    /// distance the chosen optics were not picked for.
+    func testTheChecklistQuotesTheWorkingDistanceTheCameraWasChosenFor() {
+        let millimetres = CaptureRequirements.measurement.workingDistanceMillimetres
+        XCTAssertEqual(SetupChecklist.workingDistanceText, "\(millimetres / 10) cm")
+
+        let instruction = SetupChecklist.items
+            .first { $0.id == "working-distance" }?
+            .instruction
+        XCTAssertNotNil(instruction)
+        XCTAssertEqual(instruction?.contains(SetupChecklist.workingDistanceText), true,
+                       "the instruction must name the distance, not imply it")
+    }
+
     func testEveryStageIsDescribedInPlainLanguage() {
         for stage in CaptureStage.allCases {
             let progress = MeasurementProgress(

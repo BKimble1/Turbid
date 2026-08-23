@@ -8,13 +8,15 @@ final class CameraPipelineIntegrationTests: XCTestCase {
 
     private func makeViewModel(
         authorization: CameraAuthorization = .authorized,
-        camera: StubCameraService = StubCameraService()
+        camera: StubCameraService = StubCameraService(),
+        gravity: GravityProviding = AssumedPortraitGravityProvider()
     ) -> (MeasurementViewModel, StubCameraService) {
         let viewModel = MeasurementViewModel(
             environment: AppEnvironment(
                 cameraAuthorization: StubCameraAuthorizationService(initialStatus: authorization),
                 camera: camera,
                 settingsOpener: StubSettingsOpener(),
+                gravity: gravity,
                 allowsSimulatedData: false
             ),
             // These stubs deliver no frames, so the run is meant to stall. A
@@ -155,6 +157,25 @@ final class CameraPipelineIntegrationTests: XCTestCase {
         XCTAssertEqual(viewModel.state, .failed(.frameDeliveryStopped))
         let calls = await camera.calls
         XCTAssertTrue(calls.contains(.lockControls))
+    }
+
+    // MARK: - Gravity
+
+    /// Bubble rejection depends on how much of gravity lies in the image plane.
+    /// Device motion takes a moment to produce its first sample, so it has to be
+    /// running before the window starts, and it must not be left running after.
+    func testGravityIsMeasuredWhileTheCameraIsOnAndStoppedWithIt() async {
+        let gravity = SpyGravityProvider()
+        let (viewModel, _) = makeViewModel(gravity: gravity)
+
+        await viewModel.startSetup()
+        XCTAssertEqual(gravity.starts, 1,
+                       "gravity must be measured from alignment, not from the first frame")
+        XCTAssertEqual(gravity.stops, 0)
+
+        await viewModel.cancel()
+        XCTAssertGreaterThanOrEqual(gravity.stops, 1,
+                                    "device motion must not outlive the session")
     }
 
     // MARK: - Teardown

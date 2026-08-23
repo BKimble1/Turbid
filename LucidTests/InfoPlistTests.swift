@@ -45,4 +45,47 @@ final class InfoPlistTests: XCTestCase {
         XCTAssertNil(appBundle.object(forInfoDictionaryKey: "NSTorchUsageDescription"))
         XCTAssertNil(appBundle.object(forInfoDictionaryKey: "NSFlashlightUsageDescription"))
     }
+
+    // MARK: - Privacy manifest
+
+    /// The manifest has to be *in the bundle* to mean anything. A file sitting
+    /// in the repository that never made it into a Resources build phase is
+    /// something App Store Connect will never see.
+    private func privacyManifest() throws -> [String: Any] {
+        let url = try XCTUnwrap(
+            appBundle.url(forResource: "PrivacyInfo", withExtension: "xcprivacy"),
+            "PrivacyInfo.xcprivacy is not in the built app bundle"
+        )
+        let data = try Data(contentsOf: url)
+        let plist = try PropertyListSerialization.propertyList(from: data,
+                                                               format: nil)
+        return try XCTUnwrap(plist as? [String: Any],
+                             "the privacy manifest is not a dictionary")
+    }
+
+    func testThePrivacyManifestDeclaresNoTrackingAndNoCollection() throws {
+        let manifest = try privacyManifest()
+
+        XCTAssertEqual(manifest["NSPrivacyTracking"] as? Bool, false)
+        XCTAssertEqual((manifest["NSPrivacyTrackingDomains"] as? [String])?.isEmpty, true,
+                       "Lucid has no network code, so it can have no tracking domains")
+        XCTAssertEqual((manifest["NSPrivacyCollectedDataTypes"] as? [Any])?.isEmpty, true,
+                       "nothing leaves the device, so nothing is collected")
+    }
+
+    func testTheOnlyRequiredReasonAPIDeclaredIsUserDefaults() throws {
+        let manifest = try privacyManifest()
+        let accessed = try XCTUnwrap(
+            manifest["NSPrivacyAccessedAPITypes"] as? [[String: Any]],
+            "NSPrivacyAccessedAPITypes is missing"
+        )
+
+        let categories = accessed.compactMap { $0["NSPrivacyAccessedAPIType"] as? String }
+        XCTAssertEqual(categories, ["NSPrivacyAccessedAPICategoryUserDefaults"],
+                       "Lucid reads no file metadata, no disk space, no keyboards and no boot time")
+
+        let reasons = accessed.flatMap { $0["NSPrivacyAccessedAPITypeReasons"] as? [String] ?? [] }
+        XCTAssertEqual(reasons, ["CA92.1"],
+                       "CA92.1 is 'information accessible only to the app itself', which is the one flag Lucid stores")
+    }
 }

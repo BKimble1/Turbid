@@ -92,6 +92,9 @@ enum UITestConfiguration {
                 acknowledged: scenario.acknowledgesDisclosure
             ),
             calibrationStore: InMemoryCalibrationStore(profiles: profiles),
+            // The default assumed-portrait gravity, not Core Motion: a
+            // Simulator has no accelerometer, so measuring would fall back to
+            // the assumption anyway, more slowly.
             makePipeline: { MeasurementPipeline() },
             initialMode: scenario.mode,
             allowsSimulatedData: true

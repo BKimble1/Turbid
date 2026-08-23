@@ -175,6 +175,10 @@ final class MeasurementViewModel {
             if !torch.isActive {
                 LucidLog.camera.notice("Torch did not come on for alignment.")
             }
+            // Started now rather than when the run begins: device motion takes
+            // a moment to produce its first sample, and the classifier would
+            // otherwise spend the first frames on the assumed orientation.
+            environment.gravity.start()
             startAlignmentMonitor()
         } catch let error as CameraError {
             await handleCameraFailure(error, whilePreparing: true)
@@ -448,6 +452,7 @@ final class MeasurementViewModel {
 
     /// Always turns the torch off and stops the session, whatever went wrong.
     private func shutdownCapture() async {
+        environment.gravity.stop()
         stopAlignmentMonitor()
         environment.camera.setFrameConsumer(nil)
         pipeline?.stop()

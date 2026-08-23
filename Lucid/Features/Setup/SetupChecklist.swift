@@ -56,7 +56,22 @@ enum SetupChecklist {
             id: "fill-region",
             instruction: "Fill the outlined region with liquid only — no rim, no meniscus, no label.",
             symbolName: "viewfinder",
+            guards: .saturatedRegion
+        ),
+        SetupChecklistItem(
+            id: "working-distance",
+            instruction: "Hold the phone about \(Self.workingDistanceText) from the container. The camera was chosen to focus at that distance.",
+            symbolName: "ruler",
             guards: .outOfFocus
         )
     ]
+
+    /// Read from the requirement the camera was selected against, so the
+    /// instruction cannot drift from the distance the optics were chosen for.
+    static var workingDistanceText: String {
+        let millimetres = CaptureRequirements.measurement.workingDistanceMillimetres
+        return millimetres >= 10 && millimetres % 10 == 0
+            ? "\(millimetres / 10) cm"
+            : "\(millimetres) mm"
+    }
 }

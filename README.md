@@ -26,11 +26,23 @@ calibration workflow against certified standards.
 | 3C | Optical flow, vector tracking, bubble rejection | Complete |
 | 3D | Relative score, calibration, NTU gating, validation | Complete |
 | 4 | Onboarding, setup, measurement, results, charts, calibration UI | Complete |
+| — | Release readiness (see `docs/RELEASE.md`) | 5 of 11 done, 6 blocked on hardware |
 
 **Nothing in this repository has been compiled or run.** There is no Swift
 toolchain and no Xcode on the machine it was written on. What that means, and
 what stands in for a compiler, is set out under *What has and has not been
 verified* below.
+
+## Documentation
+
+- **`docs/MEASUREMENT.md`** — supported devices and fallback behaviour, the
+  capture protocol, what a valid calibration requires and over what range, the
+  known interferences, how uncertainty is built, and the limitations.
+- **`docs/ARCHITECTURE.md`** — how the pieces fit, where a frame goes, what is
+  bounded by construction, and the full file inventory.
+- **`docs/RELEASE.md`** — the release-quality checklist item by item, the App
+  Store privacy and copy review, and exactly what to do on a Mac with a device
+  and certified standards.
 
 ## Requirements
 
@@ -143,11 +155,12 @@ Lucid/
     Demo/        Simulator-only illustration of the three result states
   Shared/     Design tokens, reusable components, accessibility identifiers,
               OSLog categories
-  Resources/  Asset catalogue
+  Resources/  Asset catalogue, privacy manifest
 LucidTests/     Unit tests
 LucidUITests/   Interface tests, driven by launch-argument scenarios
 Tools/        Project generator, project validator, source checks,
               Python cross-check of the analysis numerics
+docs/         Measurement protocol, architecture, release readiness
 ```
 
 Selection, clamping, lifecycle and timing logic all live in `Domain/` as plain
@@ -430,12 +443,16 @@ in for a compiler:
 - `Tools/check_sources.py` — balanced delimiters, no force unwraps or force
   casts in hardware and measurement code, no placeholders or `TODO`, Apple
   frameworks only, malformed numeric literals, memberwise initializer calls
-  that name properties the struct actually declares in declaration order, and
+  that name properties the struct actually declares in declaration order,
   agreement between the app's accessibility identifiers and the UI tests' copy
-  of them.
+  of them, **no networking anywhere and no file writing on the frame path**, and
+  **no user-facing copy claiming accuracy nobody has measured**. Each of those
+  last two was self-tested by introducing a violation and confirming it fails.
 - `Tools/generate_xcodeproj.py` and `Tools/validate_pbxproj.py` — the project
   file is generated from the file tree and then parsed back and checked, so it
-  cannot drift from the sources.
+  cannot drift from the sources. The validator also confirms the privacy
+  manifest is actually copied into the app bundle and declares what Lucid
+  actually does.
 - `Tools/analysis_reference.py` — a Python port of every analysis calculation,
   run against the same synthetic scenes. This is what has actually caught
   defects: gates that could never have fired, a classifier whose combination
@@ -467,6 +484,9 @@ specifications until they do.
 - **Every threshold is unvalidated.** The quality gates, the index weights and
   the clarity bands are engineering starting points. None has been checked
   against real samples on real hardware.
+- **The measured gravity reference has never been read from a real
+  accelerometer.** It is wired in and its lifecycle is tested, but only the
+  assumed-portrait fallback has ever produced a value here.
 - **SF Symbol names have not been rendered.** They are drawn from the iOS 17
   set but have not been seen on a device; a wrong name renders as nothing.
 - **Only the rear camera, portrait, on iOS 17 or later.** Orientation is pinned
@@ -477,5 +497,12 @@ specifications until they do.
 The only privacy permission Lucid declares is `NSCameraUsageDescription`. iOS
 has no separate torch permission — the torch is covered by camera access. Video
 is processed on device; nothing is written to disk or transmitted. The only
-thing Lucid stores is its calibration profiles, in the app's own support
-directory, and whether the disclosure has been acknowledged.
+things Lucid stores are its calibration profiles, in the app's own support
+directory, and one boolean recording that the disclosure has been read.
+
+`Lucid/Resources/PrivacyInfo.xcprivacy` declares no tracking, no tracking
+domains, no collected data types, and one required-reason API: `UserDefaults`,
+for reason `CA92.1`. Lucid has no network code at all, and that is enforced —
+`check_sources.py` fails the build if `URLSession`, `Network` or any of their
+relatives appear, or if anything under `Lucid/Camera` or `Lucid/Analysis` writes
+a file. See `docs/RELEASE.md` for the full review.

@@ -459,6 +459,10 @@
 			isa = PBXBuildFile;
 			fileRef = 1F0C3932914F5548DA9A15E7 /* PixelBufferLumaExtractor.swift */;
 		};
+		27A7D8D4E3491E3E202DCC95 /* PrivacyInfo.xcprivacy in Resources */ = {
+			isa = PBXBuildFile;
+			fileRef = 4EF055DDF1ABEEE6D3D573D3 /* PrivacyInfo.xcprivacy */;
+		};
 		748897E370C2F1B9AA1487E7 /* QuickViewResultView.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = 6194C5E27B1C20414D63BA45 /* QuickViewResultView.swift */;
@@ -522,6 +526,10 @@
 		B66FF76EE641ED2F32209DF2 /* SpeckDetectorTests.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = 3E69C11BE6C2401C943B670B /* SpeckDetectorTests.swift */;
+		};
+		833AE4730881521E07AE7F05 /* SpyGravityProvider.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 78E61FC7506D436C680043F2 /* SpyGravityProvider.swift */;
 		};
 		D2346959A0B2963E9A356859 /* StubCameraAuthorizationService.swift in Sources */ = {
 			isa = PBXBuildFile;
@@ -1302,6 +1310,12 @@
 			path = PixelBufferLumaExtractor.swift;
 			sourceTree = "<group>";
 		};
+		4EF055DDF1ABEEE6D3D573D3 /* PrivacyInfo.xcprivacy */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = text.plist.xml;
+			path = PrivacyInfo.xcprivacy;
+			sourceTree = "<group>";
+		};
 		6194C5E27B1C20414D63BA45 /* QuickViewResultView.swift */ = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -1396,6 +1410,12 @@
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
 			path = SpeckDetectorTests.swift;
+			sourceTree = "<group>";
+		};
+		78E61FC7506D436C680043F2 /* SpyGravityProvider.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = SpyGravityProvider.swift;
 			sourceTree = "<group>";
 		};
 		14FFC9FD0A0F84E1E89CB4FF /* StubCameraAuthorizationService.swift */ = {
@@ -1786,6 +1806,7 @@
 			isa = PBXGroup;
 			children = (
 				03905479DF4711F02F74B131 /* Assets.xcassets */,
+				4EF055DDF1ABEEE6D3D573D3 /* PrivacyInfo.xcprivacy */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -1839,6 +1860,7 @@
 			children = (
 				F9C5E2CC38AEF01EE772DC4B /* CalibrationFactory.swift */,
 				521422119DBEE162F754E08F /* CapabilityFactory.swift */,
+				78E61FC7506D436C680043F2 /* SpyGravityProvider.swift */,
 			);
 			path = Support;
 			sourceTree = "<group>";
@@ -1981,6 +2003,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1C2BAB2F52B3CAD4B0838EE0 /* Assets.xcassets in Resources */,
+				27A7D8D4E3491E3E202DCC95 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2153,6 +2176,7 @@
 				B66FF76EE641ED2F32209DF2 /* SpeckDetectorTests.swift in Sources */,
 				7C1621324FB183FB3BF9B6DF /* CalibrationFactory.swift in Sources */,
 				737437E6C3EEAC2D294357FA /* CapabilityFactory.swift in Sources */,
+				833AE4730881521E07AE7F05 /* SpyGravityProvider.swift in Sources */,
 				61CEB272B99C0979463BFEFA /* SyntheticFrameFactoryTests.swift in Sources */,
 				1D370D95623252B0AD9DDC69 /* TrackClassifierTests.swift in Sources */,
 			);
@@ -2249,7 +2273,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Lucid uses the camera and torch to analyze light scattering in a water sample. Video is processed on this iPhone and is not saved unless you explicitly export diagnostics.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Lucid uses the camera and torch to analyze light scattering in a water sample. Video is processed on this iPhone and is not saved or sent anywhere.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -2387,7 +2411,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Lucid uses the camera and torch to analyze light scattering in a water sample. Video is processed on this iPhone and is not saved unless you explicitly export diagnostics.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Lucid uses the camera and torch to analyze light scattering in a water sample. Video is processed on this iPhone and is not saved or sent anywhere.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

@@ -29,10 +29,14 @@ DEPLOYMENT_TARGET = "17.0"
 SWIFT_VERSION = "5.0"
 ORGANIZATION = "Lucid"
 
+# Describes only what the app does. An earlier draft ended "...is not saved
+# unless you explicitly export diagnostics", which described a feature that does
+# not exist; a purpose string is the one piece of copy a reviewer reads closely,
+# and it has to be true.
 CAMERA_USAGE_DESCRIPTION = (
     "Lucid uses the camera and torch to analyze light scattering in a water "
-    "sample. Video is processed on this iPhone and is not saved unless you "
-    "explicitly export diagnostics."
+    "sample. Video is processed on this iPhone and is not saved or sent "
+    "anywhere."
 )
 
 # ---------------------------------------------------------------------------
@@ -152,15 +156,24 @@ def discover(directory: str) -> tuple[list[str], list[str]]:
             resources.append(os.path.relpath(os.path.join(current, bundle), ROOT))
         subdirs[:] = sorted(d for d in subdirs if not d.startswith("."))
         for name in sorted(files):
+            relative = os.path.relpath(os.path.join(current, name), ROOT)
             if name.endswith(".swift"):
-                sources.append(os.path.relpath(os.path.join(current, name), ROOT))
+                sources.append(relative)
+            elif name.endswith(RESOURCE_EXTENSIONS):
+                resources.append(relative)
 
     return sorted(sources), sorted(resources)
 
 
+# Loose files copied into the app bundle. The privacy manifest has to be at the
+# bundle root for App Store Connect to find it, which is what a Resources build
+# phase does with a file added this way.
+RESOURCE_EXTENSIONS = (".xcprivacy",)
+
 FILE_TYPES = {
     ".swift": "sourcecode.swift",
     ".xcassets": "folder.assetcatalog",
+    ".xcprivacy": "text.plist.xml",
 }
 
 

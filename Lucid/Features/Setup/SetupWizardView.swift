@@ -9,6 +9,16 @@ import SwiftUI
 /// say plainly whether the view is currently good, so starting anyway is a
 /// choice rather than an accident.
 struct SetupWizardView: View {
+    /// Read from the protocol rather than written out, so a changed window
+    /// length cannot leave the interface quoting the old one.
+    static var runLength: String {
+        // Rounded up, never to nearest: telling someone to hold still for less
+        // time than the window actually needs is the one error that costs them
+        // the measurement.
+        let seconds = CaptureProtocol.screening.totalSeconds.rounded(.up)
+        return "\(seconds.formatted(.number.precision(.fractionLength(0)))) second"
+    }
+
     let alignment: AlignmentStatus
     let mode: MeasurementMode
     let profile: CalibrationProfile?
@@ -124,7 +134,7 @@ struct SetupWizardView: View {
             }
             .accessibilityIdentifier(AccessibilityID.Setup.begin)
             .accessibilityHint(alignment.isReadyToMeasure
-                               ? "Runs a 12 and a half second measurement."
+                               ? "Runs a \(Self.runLength) measurement."
                                : "The view is not steady yet. You can start anyway.")
 
             SecondaryActionButton(title: "Stop and turn the torch off",

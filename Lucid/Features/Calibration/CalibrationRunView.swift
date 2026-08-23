@@ -114,7 +114,7 @@ struct CalibrationRunView: View {
                     ForEach(session.requirementSummary, id: \.self) { item in
                         BulletRow(systemImage: "checkmark.circle", text: item)
                     }
-                    Text("Each reading takes about thirteen seconds, and the fixture has to be reassembled the same way every time.")
+                    Text("Each reading takes about \(SetupWizardView.runLength)s, and the fixture has to be reassembled the same way every time.")
                         .font(.caption)
                         .foregroundStyle(Theme.Palette.secondaryText)
                 }

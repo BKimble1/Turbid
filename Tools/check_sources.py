@@ -14,6 +14,8 @@ project's engineering rules:
   * memberwise initializer calls name properties the struct actually declares,
     in declaration order
   * the UI tests' copy of the accessibility identifiers matches the app's
+  * no networking anywhere, and no file writing on the frame path
+  * no user-facing copy claiming accuracy nobody has measured
 
     python3 Tools/check_sources.py
 """
@@ -253,6 +255,96 @@ def check_identifier_mirror(sources: dict[str, str]) -> list[str]:
     return failures
 
 
+# --- Frames must never leave the device, and never be written down ----------
+#
+# The privacy claim in the README and in `PrivacyInfo.xcprivacy` is that video
+# is processed on device and nothing is stored or transmitted. That is only a
+# claim unless something checks it, so these are the APIs that would break it.
+NETWORK_SYMBOLS = (
+    "URLSession", "URLRequest", "URLConnection", "NWConnection", "NWListener",
+    "NWBrowser", "CFStreamCreate", "CFSocket", "NSURLSession",
+)
+NETWORK_MODULES = {"Network", "CFNetwork", "CoreTelephony", "MultipeerConnectivity"}
+# Anything that turns a frame into a file or a photo-library asset.
+FRAME_PERSISTENCE_SYMBOLS = (
+    "AVAssetWriter", "AVCaptureMovieFileOutput", "AVCapturePhotoOutput",
+    "CGImageDestination", "UIImageWriteToSavedPhotosAlbum", "PHPhotoLibrary",
+    "PHAssetCreationRequest", "UIPasteboard",
+)
+# Directories that see pixel data. Nothing here may write a file at all.
+FRAME_PATH_DIRS = ("Lucid/Camera", "Lucid/Analysis")
+FILE_WRITE_SYMBOLS = ("FileHandle", "OutputStream", "createFile(")
+
+
+def check_frames_stay_on_device(sources: dict[str, str]) -> list[str]:
+    """No networking anywhere, and no file writing where the pixels are."""
+    failures: list[str] = []
+    for relative, code in sorted(sources.items()):
+        normalized = relative.replace(os.sep, "/")
+        if normalized.startswith(("LucidTests/", "LucidUITests/")):
+            continue
+
+        for symbol in NETWORK_SYMBOLS:
+            if re.search(r"(?<![A-Za-z0-9_])" + re.escape(symbol), code):
+                failures.append(f"{relative}: uses {symbol}; Lucid has no network code")
+        for match in re.finditer(r"^\s*import\s+([A-Za-z_][A-Za-z0-9_]*)", code, re.M):
+            if match.group(1) in NETWORK_MODULES:
+                failures.append(f"{relative}: imports {match.group(1)}")
+
+        for symbol in FRAME_PERSISTENCE_SYMBOLS:
+            if re.search(r"(?<![A-Za-z0-9_])" + re.escape(symbol), code):
+                failures.append(
+                    f"{relative}: uses {symbol}; frames are never stored or shared"
+                )
+
+        if normalized.startswith(FRAME_PATH_DIRS):
+            for symbol in FILE_WRITE_SYMBOLS:
+                if symbol in code:
+                    failures.append(
+                        f"{relative}: uses {symbol}; nothing on the frame path writes files"
+                    )
+            if re.search(r"\.write\s*\(to\s*:", code):
+                failures.append(
+                    f"{relative}: writes a file; nothing on the frame path may"
+                )
+    return failures
+
+
+# --- Copy may not claim accuracy nobody has measured ------------------------
+#
+# Every threshold in Lucid is an unvalidated engineering starting point. These
+# are the phrases that would turn that into a claim.
+CLAIM_PHRASES = (
+    "laboratory-grade", "laboratory grade", "lab-grade", "lab grade",
+    "professional-grade", "professional grade", "medical-grade", "medical grade",
+    "research-grade", "research grade",
+    "epa-compliant", "epa compliant", "epa approved", "epa-approved",
+    "clinically proven", "scientifically proven", "guaranteed accurate",
+    "highly accurate", "accurate to within", "certified results",
+    "lab quality", "lab-quality",
+)
+STRING_LITERAL = re.compile(r'"""(.*?)"""|"((?:[^"\\\n]|\\.)*)"', re.S)
+
+
+def check_no_accuracy_claims(sources: dict[str, str]) -> list[str]:
+    """Scan the raw text for phrases that would claim measured performance."""
+    failures: list[str] = []
+    for relative, text in sorted(sources.items()):
+        normalized = relative.replace(os.sep, "/")
+        if not normalized.startswith("Lucid/"):
+            continue
+        for match in STRING_LITERAL.finditer(text):
+            literal = (match.group(1) or match.group(2) or "").lower()
+            for phrase in CLAIM_PHRASES:
+                if phrase in literal:
+                    line = text.count("\n", 0, match.start()) + 1
+                    failures.append(
+                        f"{relative}: line {line} claims {phrase!r}; "
+                        "no accuracy has been measured"
+                    )
+    return failures
+
+
 def check_memberwise(sources: dict[str, str]) -> list[str]:
     """Catch calls to a struct's implicit memberwise initializer that name a
     property the struct does not declare, or list properties out of order.
@@ -380,6 +472,8 @@ def main() -> int:
 
     failures.extend(check_memberwise(sources))
     failures.extend(check_identifier_mirror(raw_sources))
+    failures.extend(check_frames_stay_on_device(sources))
+    failures.extend(check_no_accuracy_claims(raw_sources))
 
     if failures:
         for failure in failures:
