@@ -46,6 +46,25 @@ final class InfoPlistTests: XCTestCase {
         XCTAssertNil(appBundle.object(forInfoDictionaryKey: "NSFlashlightUsageDescription"))
     }
 
+    /// Answered in the Info.plist so it is not asked on every upload. Lucid
+    /// implements no encryption and makes no network connections at all, so
+    /// the answer is no; without the key, every TestFlight build waits in
+    /// "Missing Compliance" for someone to click through the question.
+    func testExportComplianceIsAnsweredInTheBundle() throws {
+        let value = appBundle.object(forInfoDictionaryKey: "ITSAppUsesNonExemptEncryption")
+        XCTAssertEqual(value as? Bool, false,
+                       "ITSAppUsesNonExemptEncryption must be present and false")
+    }
+
+    /// A simulator build only warns when the App Store icon is missing, so
+    /// nothing notices until the archive is rejected for a missing
+    /// CFBundleIconName. This is where it gets noticed.
+    func testTheAppIconReachesTheBundle() throws {
+        let name = appBundle.object(forInfoDictionaryKey: "CFBundleIconName") as? String
+        XCTAssertEqual(name, "AppIcon",
+                       "the asset catalogue's app icon must be named in the Info.plist")
+    }
+
     // MARK: - Privacy manifest
 
     /// The manifest has to be *in the bundle* to mean anything. A file sitting

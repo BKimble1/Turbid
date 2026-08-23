@@ -245,10 +245,12 @@ final class FrameQualityEvaluatorTests: XCTestCase {
         strong.globalMotionScore = 0.00001
         let strongConfidence = evaluator.evaluate(strong).confidence
 
-        var weak = healthyInput()
+        // `weak` would be legal as a name but it is a declaration modifier
+        // everywhere else in the language, which is a needless double-take.
+        var marginal = healthyInput()
         // Everything else is pristine; one gate is nearly at its limit.
-        weak.globalMotionScore = 0.00117
-        let weakConfidence = evaluator.evaluate(weak).confidence
+        marginal.globalMotionScore = 0.00117
+        let weakConfidence = evaluator.evaluate(marginal).confidence
 
         XCTAssertLessThan(weakConfidence, strongConfidence,
                           "one weak gate must drag confidence down on its own")

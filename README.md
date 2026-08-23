@@ -107,6 +107,24 @@ values, torch level, frame rate, dropped frames and thermal state.
 5. Read the result. Tap **Deep Dive** for the numbers, the gates that judged
    them, and the versions of everything that produced them.
 
+## Continuous integration and TestFlight
+
+`codemagic.yaml` defines three workflows: unit tests on a simulator (the fast
+gate, on every push), the interface tests (slower — each one runs a real
+12.5-second analysis), and a TestFlight build that signs, uploads and stops
+short of store submission.
+
+Three things have to exist before the TestFlight workflow can work, and only
+the account holder can create them: an App Store Connect API key in Codemagic
+named `LucidAppStoreKey`, a bundle identifier you own (`com.lucid.Lucid` is a
+placeholder and will not sign), and an app record for it. The file marks both
+places the identifier has to change, and a build step fails loudly if the two
+drift apart.
+
+The bundle identifier and development team are generator inputs
+(`LUCID_BUNDLE_ID`, `LUCID_DEVELOPMENT_TEAM`), not tracked constants, so CI sets
+them without editing a file.
+
 ## Regenerating the Xcode project
 
 `Lucid.xcodeproj` is generated from the file tree rather than hand-edited, so
@@ -117,9 +135,18 @@ deleting a Swift file:
 sh Tools/check.sh
 ```
 
-That runs the source checks, regenerates the project and validates it. It needs
-only Python 3 — no Xcode. Anyone who prefers XcodeGen can run
-`xcodegen generate` against `project.yml` instead.
+That runs the source checks, the structural audit, the numeric reference, then
+regenerates the project and validates it. Only the audit needs anything beyond a
+stock Python 3:
+
+```sh
+python3 -m pip install tree_sitter tree_sitter_swift
+```
+
+Without it the audit skips itself and says so, and the rest still runs. The app
+icon is drawn by `python3 Tools/make_app_icon.py` (needs Pillow) and committed;
+the project validator fails if it goes missing, because a simulator build only
+warns about a missing icon and the rejection arrives at upload time.
 
 ## Layout
 
@@ -158,8 +185,8 @@ Lucid/
   Resources/  Asset catalogue, privacy manifest
 LucidTests/     Unit tests
 LucidUITests/   Interface tests, driven by launch-argument scenarios
-Tools/        Project generator, project validator, source checks,
-              Python cross-check of the analysis numerics
+Tools/        Project generator, project validator, source checks, structural
+              Swift audit, app-icon drawing, Python cross-check of the numerics
 docs/         Measurement protocol, architecture, release readiness
 ```
 
@@ -440,6 +467,17 @@ Xcode available, so **every claim about behaviour rests on review, on the static
 checks, and on the Python reference — not on a passing test run.** What stands
 in for a compiler:
 
+- `Tools/swift_audit.py` — a real Swift parser (`tree-sitter-swift`), so this
+  sees the code the way a compiler front end does rather than as text. It
+  checks that every file parses; that every type referenced is either declared
+  here or on a reviewed list of Apple and standard-library names, so a typo in
+  a type name has nowhere to hide; that every `Type.method(...)` and `Type(...)`
+  call matches a declaration in labels and order, allowing for defaults and
+  trailing closures; that every conformer to a protocol declared here
+  implements its requirements; that every `switch` over a local enum is
+  exhaustive; and that no SwiftUI view builder is handed more than the ten
+  children it accepts. Every one of those was self-tested by introducing the
+  error and confirming the failure. It found two real compile errors.
 - `Tools/check_sources.py` — balanced delimiters, no force unwraps or force
   casts in hardware and measurement code, no placeholders or `TODO`, Apple
   frameworks only, malformed numeric literals, memberwise initializer calls

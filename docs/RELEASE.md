@@ -10,7 +10,7 @@ environment this was written in.
 
 | # | Item | Status |
 |---|---|---|
-| 1 | Run all unit/UI tests | **Blocked** — no Swift toolchain. Written, never executed. |
+| 1 | Run all unit/UI tests | **Blocked** here, **wired up** in CI — `codemagic.yaml` runs them on a simulator. Written, never executed. |
 | 2 | Repeated physical-device tests on every supported camera path | **Blocked** — no device |
 | 3 | Profile CPU, GPU, memory, thermal, frame drops, latency | **Blocked** — no device. Static audit done and one defect fixed; see below. |
 | 4 | Verify no processing backlog or unbounded growth | **Done**, by construction and by check |
@@ -205,6 +205,41 @@ medical or health claim, because a water-related app will be looked at for one.
 
 ---
 
+# Shipping to TestFlight
+
+`codemagic.yaml` has the workflow. In order: regenerate the project with the
+signing bundle identifier, fail if the project and the signing configuration
+disagree about that identifier, run the unit tests, set a build number one above
+the latest already in TestFlight, archive, export and upload. It stops at
+TestFlight — nothing here submits to the store on a CI trigger, because this is
+a screening instrument whose thresholds have never been validated against real
+samples.
+
+Four things had to be fixed before an upload could have worked at all, none of
+which a simulator build would have complained about:
+
+- **There was no app icon.** `AppIcon.appiconset` declared a 1024x1024 slot with
+  no image in it. A simulator build only warns; App Store Connect rejects the
+  archive for a missing `CFBundleIconName`. `Tools/make_app_icon.py` now draws
+  one from the app's own palette, the validator fails if it goes missing, and a
+  unit test checks it reaches the built bundle.
+- **Export compliance was unanswered.** Without
+  `ITSAppUsesNonExemptEncryption`, every TestFlight build waits in *Missing
+  Compliance* until somebody clicks through the question. Lucid implements no
+  encryption and makes no network connections, so the answer is now in the
+  Info.plist.
+- **`agvtool` could not set a build number**, because the app target had no
+  `VERSIONING_SYSTEM`. TestFlight refuses a build number it has seen before, so
+  the second upload would have failed.
+- **The bundle identifier was a tracked constant.** `com.lucid.Lucid` is a
+  placeholder nobody owns; it is now a generator input, so CI signs against a
+  real identifier without anyone editing a file.
+
+What still has to be created by hand, because only the account holder can: an
+App Store Connect API key added to Codemagic as `LucidAppStoreKey`, a registered
+bundle identifier, and an app record for it. `codemagic.yaml` marks exactly
+where each goes.
+
 # What to do on a Mac with a device
 
 The blocked items, in the order that finds problems fastest.
@@ -212,12 +247,18 @@ The blocked items, in the order that finds problems fastest.
 ## 1. Build and run the tests
 
 ```sh
+python3 -m pip install tree_sitter tree_sitter_swift
 sh Tools/check.sh          # regenerate and validate the project first
 open Lucid.xcodeproj
 ```
 
 Then ⌘U. Expect compilation errors: nothing here has ever been through a
-compiler. Fix them before reading anything into the test results.
+compiler. `Tools/swift_audit.py` parses every file with a real Swift grammar
+and checks type references, call labels, protocol conformances, switch
+exhaustiveness and view-builder arity, which removes whole categories of them —
+but it does not type-check, so mismatched numeric types and SwiftUI inference
+failures are still ahead of you. Fix them before reading anything into the test
+results.
 
 The UI tests need a Simulator and take several minutes — each one runs a real
 12.5-second analysis of synthetic frames, and the Simulator is slow at it.

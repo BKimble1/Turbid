@@ -14,7 +14,12 @@ struct CameraPreviewView: UIViewRepresentable {
     var regionOfInterest: CGRect
 
     func makeUIView(context: Context) -> CameraPreviewUIView {
-        let view = CameraPreviewUIView()
+        // The designated initializer, not `CameraPreviewUIView()`: whether a
+        // UIView subclass that overrides `init(frame:)` still inherits a
+        // no-argument initializer depends on Objective-C initializer
+        // inheritance rules that are not worth relying on. SwiftUI lays the
+        // view out, so the starting frame is irrelevant.
+        let view = CameraPreviewUIView(frame: .zero)
         view.regionOfInterest = regionOfInterest
         view.attach(session: session)
         return view

@@ -24,7 +24,12 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 APP_NAME = "Lucid"
 TEST_NAME = "LucidTests"
 UITEST_NAME = "LucidUITests"
-BUNDLE_ID = "com.lucid.Lucid"
+# Overridable so CI can sign against a bundle identifier that actually exists
+# in someone's App Store Connect account, without editing a tracked file. The
+# generator is otherwise deterministic; setting these changes the output, which
+# is the point.
+BUNDLE_ID = os.environ.get("LUCID_BUNDLE_ID", "com.lucid.Lucid")
+DEVELOPMENT_TEAM = os.environ.get("LUCID_DEVELOPMENT_TEAM", "")
 DEPLOYMENT_TARGET = "17.0"
 SWIFT_VERSION = "5.0"
 ORGANIZATION = "Lucid"
@@ -294,6 +299,11 @@ SHARED_PROJECT_SETTINGS = {
     "MTL_FAST_MATH": "YES",
     "SDKROOT": "iphoneos",
     "SWIFT_EMIT_LOC_STRINGS": "YES",
+    # Stated rather than inherited. The code is written for Swift 5 language
+    # mode, where this is already the default; saying so means a newer Xcode
+    # with a different default cannot turn concurrency warnings into errors
+    # halfway through a release build.
+    "SWIFT_STRICT_CONCURRENCY": "minimal",
     "SWIFT_VERSION": SWIFT_VERSION,
 }
 
@@ -325,6 +335,11 @@ APP_TARGET_SETTINGS = {
     "ENABLE_PREVIEWS": "YES",
     "GENERATE_INFOPLIST_FILE": "YES",
     "INFOPLIST_KEY_NSCameraUsageDescription": CAMERA_USAGE_DESCRIPTION,
+    # Answered here rather than by hand on every upload. Lucid uses no
+    # encryption of its own and nothing but Apple's own HTTPS-free stack, so the
+    # answer is no; leaving it out makes every TestFlight build sit in "Missing
+    # Compliance" until someone clicks through the question.
+    "INFOPLIST_KEY_ITSAppUsesNonExemptEncryption": "NO",
     "INFOPLIST_KEY_UIApplicationSceneManifest_Generation": "YES",
     "INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents": "YES",
     "INFOPLIST_KEY_UILaunchScreen_Generation": "YES",
@@ -340,6 +355,10 @@ APP_TARGET_SETTINGS = {
     "SWIFT_EMIT_LOC_STRINGS": "YES",
     "SWIFT_VERSION": SWIFT_VERSION,
     "TARGETED_DEVICE_FAMILY": "1",
+    # `agvtool` refuses to set a build number without this, and every CI that
+    # uploads to TestFlight has to set one: the store rejects a build number it
+    # has already seen.
+    "VERSIONING_SYSTEM": "apple-generic",
 }
 
 TEST_TARGET_SETTINGS = {
@@ -372,6 +391,12 @@ UITEST_TARGET_SETTINGS = {
     "TARGETED_DEVICE_FAMILY": "1",
     "TEST_TARGET_NAME": APP_NAME,
 }
+
+
+if DEVELOPMENT_TEAM:
+    APP_TARGET_SETTINGS["DEVELOPMENT_TEAM"] = DEVELOPMENT_TEAM
+    TEST_TARGET_SETTINGS["DEVELOPMENT_TEAM"] = DEVELOPMENT_TEAM
+    UITEST_TARGET_SETTINGS["DEVELOPMENT_TEAM"] = DEVELOPMENT_TEAM
 
 
 def configuration_list(owner: str, debug: dict, release: dict) -> str:

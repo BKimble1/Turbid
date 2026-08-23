@@ -109,8 +109,8 @@ struct RelativeScatteringIndex: Equatable, Sendable, Codable {
         let bulk = weights.bulk * max(0, summary.medianPositiveResidual)
         let excess = weights.excess * max(0, summary.medianUpperPercentileExcess)
         let active = weights.active * max(0, summary.medianActiveForegroundFraction)
-        let specks = weights.specks * weights.speckScale
-            * max(0, tracking.speckEventsPerSecondPerMegapixel)
+        let speckRate = max(0, tracking.speckEventsPerSecondPerMegapixel)
+        let specks = weights.specks * weights.speckScale * speckRate
 
         return RelativeScatteringIndex(
             value: scale * (bulk + excess + active + specks),

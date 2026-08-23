@@ -7,6 +7,17 @@ import SwiftUI
 /// and then opened fully. Nothing here is computed in the view — every value
 /// comes from the reading, so what is on screen can always be traced back to a
 /// documented calculation.
+/// One labelled number in the Deep Dive.
+///
+/// These lists are longer than a view builder's ten-child limit, so they are
+/// built as data and rendered with `ForEach` rather than written out as rows.
+struct DeepDiveMetric: Identifiable, Equatable {
+    var id: String { title }
+    let title: String
+    let value: String
+    var detail: String?
+}
+
 struct DeepDiveView: View {
     let reading: TurbidityReading
     let samples: [ScatteringSample]
@@ -149,36 +160,58 @@ struct DeepDiveView: View {
                               tint: Theme.Palette.warning)
                 }
 
-                MetricRow(title: "Usable frames",
-                          value: "\(quality.usableFrames) of \(quality.evaluatedFrames)")
-                MetricRow(title: "Dropped frames",
-                          value: quality.droppedFrameRatio.formatted(.percent.precision(.fractionLength(1))))
-                MetricRow(title: "Frame delivery continuous",
-                          value: quality.frameDeliveryIsContinuous ? "Yes" : "No")
-                MetricRow(title: "Mean level",
-                          value: Double(quality.meanLuma).formatted(.number.precision(.fractionLength(3))))
-                MetricRow(title: "Saturated pixels",
-                          value: quality.saturatedFraction.formatted(.percent.precision(.fractionLength(3))))
-                MetricRow(title: "Brightest tile share",
-                          value: quality.brightestTileShare.formatted(.percent.precision(.fractionLength(1))))
-                MetricRow(title: "Sharpness",
-                          value: quality.sharpness.formatted(.number.precision(.fractionLength(5))))
-                MetricRow(title: "Exposure stability",
-                          value: quality.exposureStability.formatted(.number.precision(.fractionLength(3))))
-                MetricRow(title: "Controls stayed locked",
-                          value: quality.controlsRemainedLocked ? "Yes" : "No")
-                if let stability = quality.backgroundStability {
-                    MetricRow(
-                        title: "Background settled",
-                        value: stability.formatted(.percent.precision(.fractionLength(1))),
-                        detail: "How much of the view held still while the background model was built. Reported, not gated on: suspended material moving through the frame lowers it just as a shifting container does."
-                    )
+                ForEach(captureQualityMetrics) { metric in
+                    MetricRow(title: metric.title, value: metric.value, detail: metric.detail)
                 }
-                MetricRow(title: "Thermal state", value: quality.thermal.displayName)
-                MetricRow(title: "System pressure", value: quality.systemPressure.rawValue)
             }
         }
         .accessibilityIdentifier(AccessibilityID.DeepDive.qualitySection)
+    }
+
+    /// Built as data rather than as a stack of rows: a view builder takes at
+    /// most ten children, and this list is longer than that and will grow.
+    private var captureQualityMetrics: [DeepDiveMetric] {
+        let quality = reading.quality
+        var metrics: [DeepDiveMetric] = [
+            DeepDiveMetric(title: "Usable frames",
+                           value: "\(quality.usableFrames) of \(quality.evaluatedFrames)"),
+            DeepDiveMetric(title: "Dropped frames",
+                           value: quality.droppedFrameRatio
+                               .formatted(.percent.precision(.fractionLength(1)))),
+            DeepDiveMetric(title: "Frame delivery continuous",
+                           value: quality.frameDeliveryIsContinuous ? "Yes" : "No"),
+            DeepDiveMetric(title: "Mean level",
+                           value: Double(quality.meanLuma)
+                               .formatted(.number.precision(.fractionLength(3)))),
+            DeepDiveMetric(title: "Saturated pixels",
+                           value: quality.saturatedFraction
+                               .formatted(.percent.precision(.fractionLength(3)))),
+            DeepDiveMetric(title: "Brightest tile share",
+                           value: quality.brightestTileShare
+                               .formatted(.percent.precision(.fractionLength(1)))),
+            DeepDiveMetric(title: "Sharpness",
+                           value: quality.sharpness
+                               .formatted(.number.precision(.fractionLength(5)))),
+            DeepDiveMetric(title: "Exposure stability",
+                           value: quality.exposureStability
+                               .formatted(.number.precision(.fractionLength(3)))),
+            DeepDiveMetric(title: "Controls stayed locked",
+                           value: quality.controlsRemainedLocked ? "Yes" : "No")
+        ]
+
+        if let stability = quality.backgroundStability {
+            metrics.append(DeepDiveMetric(
+                title: "Background settled",
+                value: stability.formatted(.percent.precision(.fractionLength(1))),
+                detail: "How much of the view held still while the background model was built. Reported, not gated on: suspended material moving through the frame lowers it just as a shifting container does."
+            ))
+        }
+
+        metrics.append(DeepDiveMetric(title: "Thermal state",
+                                      value: quality.thermal.displayName))
+        metrics.append(DeepDiveMetric(title: "System pressure",
+                                      value: quality.systemPressure.rawValue))
+        return metrics
     }
 
     private var verdictTitle: String {
@@ -222,25 +255,39 @@ struct DeepDiveView: View {
             footnote: "Recorded so any result can be reproduced, and so a calibration can refuse a run made by different code."
         ) {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                MetricRow(title: "Measured at",
-                          value: reading.timestamp.formatted(date: .abbreviated, time: .standard))
-                MetricRow(title: "Window length",
-                          value: String(format: "%.1f s", reading.measurementWindowSeconds))
-                MetricRow(title: "Capture protocol", value: "v\(versions.captureProtocol)")
-                MetricRow(title: "Quality thresholds", value: "v\(versions.qualityThresholds)")
-                MetricRow(title: "Detector", value: "v\(versions.detector)")
-                MetricRow(title: "Band-pass", value: "v\(versions.bandPass)")
-                MetricRow(title: "Background model", value: "v\(versions.backgroundModel)")
-                MetricRow(title: "Tracker", value: "v\(versions.tracker)")
-                MetricRow(title: "Classifier", value: "v\(versions.classifier)")
-                MetricRow(title: "Aggregation", value: "v\(versions.aggregation)")
-                MetricRow(title: "Index weights", value: "v\(versions.indexWeights)")
-                MetricRow(title: "Clarity bands", value: "v\(reading.clarityPolicyVersion)")
-                MetricRow(title: "Analysis region",
-                          value: "v\(reading.quality.analysisRegionVersion)")
+                ForEach(provenanceMetrics(versions)) { metric in
+                    MetricRow(title: metric.title, value: metric.value)
+                }
             }
         }
         .accessibilityIdentifier(AccessibilityID.DeepDive.provenanceSection)
+    }
+
+    /// Also data rather than rows, and for the same reason: there are thirteen
+    /// of them and a view builder takes ten.
+    private func provenanceMetrics(
+        _ versions: CalibrationBinding.AlgorithmVersions
+    ) -> [DeepDiveMetric] {
+        [
+            DeepDiveMetric(title: "Measured at",
+                           value: reading.timestamp.formatted(date: .abbreviated,
+                                                              time: .standard)),
+            DeepDiveMetric(title: "Window length",
+                           value: String(format: "%.1f s",
+                                         reading.measurementWindowSeconds)),
+            DeepDiveMetric(title: "Capture protocol", value: "v\(versions.captureProtocol)"),
+            DeepDiveMetric(title: "Quality thresholds", value: "v\(versions.qualityThresholds)"),
+            DeepDiveMetric(title: "Detector", value: "v\(versions.detector)"),
+            DeepDiveMetric(title: "Band-pass", value: "v\(versions.bandPass)"),
+            DeepDiveMetric(title: "Background model", value: "v\(versions.backgroundModel)"),
+            DeepDiveMetric(title: "Tracker", value: "v\(versions.tracker)"),
+            DeepDiveMetric(title: "Classifier", value: "v\(versions.classifier)"),
+            DeepDiveMetric(title: "Aggregation", value: "v\(versions.aggregation)"),
+            DeepDiveMetric(title: "Index weights", value: "v\(versions.indexWeights)"),
+            DeepDiveMetric(title: "Clarity bands", value: "v\(reading.clarityPolicyVersion)"),
+            DeepDiveMetric(title: "Analysis region",
+                           value: "v\(reading.quality.analysisRegionVersion)")
+        ]
     }
 
     private var limitations: some View {

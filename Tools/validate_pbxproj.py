@@ -12,6 +12,7 @@ together the way Xcode expects.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import sys
@@ -327,6 +328,21 @@ def main() -> int:
     for category in ("FileTimestamp", "DiskSpace", "ActiveKeyboards", "SystemBootTime"):
         require(f"NSPrivacyAccessedAPICategory{category}" not in manifest,
                 f"the privacy manifest declares {category}, which Lucid does not use")
+
+    # 9. The app icon has to exist as a file, not just as a slot.
+    #
+    #    A simulator build only warns when the 1024x1024 icon is missing, so
+    #    nothing notices until App Store Connect rejects the archive for a
+    #    missing CFBundleIconName. Regenerate it with Tools/make_app_icon.py.
+    icon_set = os.path.join("Lucid", "Resources", "Assets.xcassets", "AppIcon.appiconset")
+    contents = json.load(open(os.path.join(ROOT, icon_set, "Contents.json"), encoding="utf-8"))
+    filenames = [image.get("filename") for image in contents.get("images", [])]
+    require(any(filenames), "AppIcon.appiconset declares a slot with no image file")
+    for filename in filenames:
+        if not filename:
+            continue
+        require(os.path.exists(os.path.join(ROOT, icon_set, filename)),
+                f"app icon {filename} is referenced but not on disk")
 
     if failures:
         for failure in failures:

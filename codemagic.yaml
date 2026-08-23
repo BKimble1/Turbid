@@ -1,0 +1,166 @@
+# Codemagic CI for Lucid.
+#
+# Three workflows:
+#
+#   ios-unit-tests   the fast gate: static checks, then the unit tests on a
+#                    simulator. No signing, no secrets, runs on every push.
+#   ios-ui-tests     the slow one: the interface tests. Each of them runs a real
+#                    12.5-second analysis of synthetic frames, so this takes
+#                    minutes and is kept off the default path.
+#   ios-testflight   builds, signs and uploads to TestFlight.
+#
+# Before the TestFlight workflow can work, three things have to exist and only
+# you can create them:
+#
+#   1. An App Store Connect API key added to Codemagic under Teams >
+#      Integrations > Developer Portal, named exactly `LucidAppStoreKey`
+#      (or change `integrations.app_store_connect` below).
+#   2. A bundle identifier you own, registered in your Apple developer account.
+#      `com.lucid.Lucid` is a placeholder and will not sign. Change it in BOTH
+#      places marked CHANGE ME — a script step fails the build if they drift.
+#   3. An app record in App Store Connect for that bundle identifier. Put its
+#      Apple ID (the numeric one, from the App Information page) in
+#      `APP_STORE_APPLE_ID` so the build number can be incremented.
+
+definitions:
+  # `latest` rather than a pin: a pinned Xcode goes stale and starts failing for
+  # reasons that have nothing to do with the code. Pin it if you need a build
+  # that is reproducible a year from now.
+  xcode_and_project: &xcode_and_project
+    xcode: latest
+    vars:
+      XCODE_PROJECT: "Lucid.xcodeproj"
+      XCODE_SCHEME: "Lucid"
+
+  static_checks: &static_checks
+    name: Static checks and project generation
+    script: |
+      # The Swift parser the structural audit uses. Not fatal if it cannot be
+      # installed — the audit skips itself and says so.
+      python3 -m pip install --quiet --disable-pip-version-check \
+        tree_sitter tree_sitter_swift || true
+      # Regenerates Lucid.xcodeproj from the file tree and validates it, so a
+      # source file added without regenerating fails here rather than at link
+      # time.
+      sh Tools/check.sh
+
+workflows:
+
+  ios-unit-tests:
+    name: Unit tests (Simulator)
+    instance_type: mac_mini_m2
+    max_build_duration: 45
+    environment:
+      <<: *xcode_and_project
+    triggering:
+      events:
+        - push
+        - pull_request
+    scripts:
+      - *static_checks
+      - name: Unit tests
+        script: |
+          # No --device: the default test destination follows whatever runtimes
+          # the image has, which a hard-coded simulator name does not.
+          xcode-project run-tests \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME" \
+            --test-only LucidTests
+    artifacts:
+      - build/ios/test/*.xml
+      - /tmp/xcodebuild_logs/*.log
+    test_report: build/ios/test/*.xml
+
+  ios-ui-tests:
+    name: Interface tests (Simulator)
+    instance_type: mac_mini_m2
+    # Every UI test drives a real measurement through the analyzer on
+    # synthetic frames. It is not quick.
+    max_build_duration: 90
+    environment:
+      <<: *xcode_and_project
+    scripts:
+      - *static_checks
+      - name: Interface tests
+        script: |
+          xcode-project run-tests \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME" \
+            --test-only LucidUITests
+    artifacts:
+      - build/ios/test/*.xml
+      - /tmp/xcodebuild_logs/*.log
+    test_report: build/ios/test/*.xml
+
+  ios-testflight:
+    name: TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: LucidAppStoreKey
+    environment:
+      <<: *xcode_and_project
+      ios_signing:
+        distribution_type: app_store
+        # CHANGE ME (1 of 2) — must be a bundle identifier you own.
+        bundle_identifier: com.lucid.Lucid
+      vars:
+        XCODE_PROJECT: "Lucid.xcodeproj"
+        XCODE_SCHEME: "Lucid"
+        # CHANGE ME (2 of 2) — keep identical to `bundle_identifier` above.
+        BUNDLE_ID: "com.lucid.Lucid"
+        # The numeric Apple ID of the App Store Connect app record.
+        APP_STORE_APPLE_ID: "0000000000"
+    scripts:
+      - name: Generate the project with the signing bundle identifier
+        script: |
+          python3 -m pip install --quiet --disable-pip-version-check \
+            tree_sitter tree_sitter_swift || true
+          # The project file is generated, so the bundle identifier is a
+          # generator input rather than something to edit by hand.
+          export LUCID_BUNDLE_ID="$BUNDLE_ID"
+          sh Tools/check.sh
+      - name: Confirm the project will be signed with the identifier it declares
+        script: |
+          # A mismatch here is the difference between an upload and an hour of
+          # confusing signing errors, so it fails now instead.
+          grep -q "PRODUCT_BUNDLE_IDENTIFIER = $BUNDLE_ID;" \
+            "$XCODE_PROJECT/project.pbxproj" || {
+              echo "The project declares a different bundle identifier than the"
+              echo "one being signed. Set BUNDLE_ID and ios_signing.bundle_identifier"
+              echo "to the same value."
+              exit 1
+            }
+      - name: Unit tests
+        script: |
+          xcode-project run-tests \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME" \
+            --test-only LucidTests
+      - name: Set the build number
+        script: |
+          # TestFlight refuses a build number it has already seen. If the app
+          # record has no builds yet the lookup fails, and 0 is the right
+          # starting point.
+          LATEST=$(app-store-connect get-latest-testflight-build-number \
+            "$APP_STORE_APPLE_ID" 2>/dev/null || echo 0)
+          agvtool new-version -all $(($LATEST + 1))
+      - name: Build the archive and export the IPA
+        script: |
+          xcode-project build-ipa \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - build/ios/test/*.xml
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+    test_report: build/ios/test/*.xml
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        # No automatic submission to review: this is a screening instrument
+        # whose thresholds have never been validated against real samples, and
+        # nothing here should reach the public store on a CI trigger.
+        submit_to_app_store: false
