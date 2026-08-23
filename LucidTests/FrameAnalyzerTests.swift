@@ -64,7 +64,7 @@ final class FrameAnalyzerTests: XCTestCase {
             observations.first { abs($0.timestampSeconds - time) < 1e-6 }?.stage
         }
 
-        XCTAssertEqual(stage(atTime: 0), .ambientReference)
+        XCTAssertEqual(stage(atTime: 0), .torchSettling)
         XCTAssertEqual(stage(atTime: 30.0 / 30.0), .torchSettling)
         XCTAssertEqual(stage(atTime: 75.0 / 30.0), .backgroundAcquisition)
         XCTAssertEqual(stage(atTime: 135.0 / 30.0), .measurement)
@@ -99,8 +99,8 @@ final class FrameAnalyzerTests: XCTestCase {
         let measurementFrames = observations.filter { $0.stage == .measurement }
         XCTAssertFalse(measurementFrames.isEmpty)
         for observation in measurementFrames {
-            XCTAssertGreaterThanOrEqual(observation.timestampSeconds, 4.5)
-            XCTAssertLessThan(observation.timestampSeconds, 13.5)
+            XCTAssertGreaterThanOrEqual(observation.timestampSeconds, 3.5)
+            XCTAssertLessThan(observation.timestampSeconds, 12.5)
         }
     }
 
@@ -113,7 +113,7 @@ final class FrameAnalyzerTests: XCTestCase {
         let later = analyzer.analyze(luma: SyntheticFrameFactory.render(goodScene, atTime: 5, frameIndex: 150),
                                      presentationSeconds: 1_005)
 
-        XCTAssertEqual(first.stage, .ambientReference)
+        XCTAssertEqual(first.stage, .torchSettling)
         XCTAssertEqual(later.stage, .measurement)
     }
 
@@ -137,7 +137,7 @@ final class FrameAnalyzerTests: XCTestCase {
         )
 
         XCTAssertEqual(observation.sequenceNumber, 0)
-        XCTAssertEqual(observation.stage, .ambientReference)
+        XCTAssertEqual(observation.stage, .torchSettling)
         XCTAssertEqual(observation.globalMotionScore, 0,
                        "the first frame after a reset has nothing to compare against")
     }
@@ -372,7 +372,7 @@ final class FrameAnalyzerTests: XCTestCase {
             luma: SyntheticFrameFactory.render(goodScene, atTime: 0, frameIndex: 0),
             presentationSeconds: 42
         )
-        XCTAssertEqual(observation.stage, .ambientReference)
+        XCTAssertEqual(observation.stage, .torchSettling)
     }
 
     // MARK: - Detection is stage-gated
@@ -416,11 +416,10 @@ final class FrameAnalyzerTests: XCTestCase {
                 timestamps: SyntheticTimestamps.regular(count: 400, frameRate: 30))
 
         XCTAssertTrue(analyzer.backgroundIsReady)
-        XCTAssertGreaterThan(analyzer.backgroundStability,
-                             QualityThresholds.screening.minimumBackgroundStability)
+        XCTAssertGreaterThan(analyzer.backgroundStability, 0.93)
     }
 
-    func testTheBackgroundStabilityGateIsSuppliedToTheQualityVerdict() {
+    func testBackgroundStabilityIsReportedInTheQualityVerdict() {
         let analyzer = makeAnalyzer()
         _ = run(analyzer, scene: samplingScene,
                 timestamps: SyntheticTimestamps.regular(count: 400, frameRate: 30))
@@ -429,7 +428,7 @@ final class FrameAnalyzerTests: XCTestCase {
                                        timing: healthyTiming(frames: 400))
 
         XCTAssertNotNil(quality.backgroundStability,
-                        "Phase 3B measures this, so the gate must no longer see nil")
+                        "the number is measured, so it must reach the reading")
         XCTAssertTrue(quality.isUsable, "rejected because: \(quality.explanations)")
     }
 

@@ -10,12 +10,17 @@ final class CameraPipelineIntegrationTests: XCTestCase {
         authorization: CameraAuthorization = .authorized,
         camera: StubCameraService = StubCameraService()
     ) -> (MeasurementViewModel, StubCameraService) {
-        let viewModel = MeasurementViewModel(environment: AppEnvironment(
-            cameraAuthorization: StubCameraAuthorizationService(initialStatus: authorization),
-            camera: camera,
-            settingsOpener: StubSettingsOpener(),
-            allowsSimulatedData: false
-        ))
+        let viewModel = MeasurementViewModel(
+            environment: AppEnvironment(
+                cameraAuthorization: StubCameraAuthorizationService(initialStatus: authorization),
+                camera: camera,
+                settingsOpener: StubSettingsOpener(),
+                allowsSimulatedData: false
+            ),
+            // These stubs deliver no frames, so the run is meant to stall. A
+            // short allowance keeps that from costing four seconds a test.
+            stallAllowance: .milliseconds(200)
+        )
         return (viewModel, camera)
     }
 
@@ -28,7 +33,10 @@ final class CameraPipelineIntegrationTests: XCTestCase {
 
         XCTAssertEqual(viewModel.state, .alignment)
         let calls = await camera.calls
-        XCTAssertEqual(calls, [.prepare, .start])
+        XCTAssertEqual(calls, [.prepare, .start, .torch(on: true)],
+                       "the torch comes on for alignment: a dark preview cannot be lined up")
+        XCTAssertEqual(camera.consumerLog.latest, true,
+                       "the alignment monitor watches the preview")
     }
 
     func testDeniedSetupNeverTouchesTheCamera() async {
@@ -70,17 +78,18 @@ final class CameraPipelineIntegrationTests: XCTestCase {
 
     // MARK: - Measurement sequence
 
-    func testMeasurementIlluminatesBeforeLockingAndStopsAtTheMissingAnalyzer() async {
+    func testMeasurementIlluminatesBeforeLockingAndGivesUpWhenNoFramesArrive() async {
         let (viewModel, camera) = makeViewModel()
         await viewModel.startSetup()
 
         await viewModel.beginMeasurement()
 
-        XCTAssertEqual(viewModel.state, .failed(.analysisUnavailableInThisBuild),
-                       "Phase 2 ends where background acquisition would begin")
+        XCTAssertEqual(viewModel.state, .failed(.frameDeliveryStopped),
+                       "a window that was never filled is not a shorter measurement")
 
         let calls = await camera.calls
-        XCTAssertEqual(calls, [.prepare, .start, .torch(on: true), .warmUp, .lockControls, .stop])
+        XCTAssertEqual(calls, [.prepare, .start, .torch(on: true),
+                               .torch(on: true), .warmUp, .lockControls, .stop])
 
         guard let torchIndex = calls.firstIndex(of: .torch(on: true)),
               let warmUpIndex = calls.firstIndex(of: .warmUp) else {
@@ -88,6 +97,10 @@ final class CameraPipelineIntegrationTests: XCTestCase {
         }
         XCTAssertLessThan(torchIndex, warmUpIndex,
                           "controls must settle on the illuminated scene, not the ambient one")
+        XCTAssertEqual(camera.consumerLog.latest, false,
+                       "no consumer may stay attached to a finished run")
+        XCTAssertGreaterThan(camera.timingResets.count, 0,
+                             "frame statistics belong to the window, not to the alignment")
     }
 
     func testMeasurementCannotStartBeforeAlignment() async {
@@ -139,7 +152,7 @@ final class CameraPipelineIntegrationTests: XCTestCase {
 
         await viewModel.beginMeasurement()
 
-        XCTAssertEqual(viewModel.state, .failed(.analysisUnavailableInThisBuild))
+        XCTAssertEqual(viewModel.state, .failed(.frameDeliveryStopped))
         let calls = await camera.calls
         XCTAssertTrue(calls.contains(.lockControls))
     }
@@ -170,12 +183,15 @@ final class CameraPipelineIntegrationTests: XCTestCase {
     func testRevokedPermissionInterruptsALiveSessionAndStops() async {
         let authorization = StubCameraAuthorizationService(initialStatus: .authorized)
         let camera = StubCameraService()
-        let viewModel = MeasurementViewModel(environment: AppEnvironment(
-            cameraAuthorization: authorization,
-            camera: camera,
-            settingsOpener: StubSettingsOpener(),
-            allowsSimulatedData: false
-        ))
+        let viewModel = MeasurementViewModel(
+            environment: AppEnvironment(
+                cameraAuthorization: authorization,
+                camera: camera,
+                settingsOpener: StubSettingsOpener(),
+                allowsSimulatedData: false
+            ),
+            stallAllowance: .milliseconds(200)
+        )
         await viewModel.startSetup()
         XCTAssertEqual(viewModel.state, .alignment)
 

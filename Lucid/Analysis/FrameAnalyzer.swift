@@ -18,6 +18,7 @@ final class FrameAnalyzer: FrameAnalyzing {
     let region: AnalysisRegion
     let captureProtocol: CaptureProtocol
     private let thresholds: QualityThresholds
+    private let gate: FrameGate
     private let evaluator: FrameQualityEvaluator
     private let detector: SpeckDetector
     private let flowEstimator: GlobalFlowEstimating
@@ -62,6 +63,7 @@ final class FrameAnalyzer: FrameAnalyzing {
         self.region = region
         self.captureProtocol = captureProtocol
         self.thresholds = thresholds
+        self.gate = FrameGate(thresholds: thresholds)
         self.evaluator = FrameQualityEvaluator(thresholds: thresholds)
         self.detector = SpeckDetector(configuration: detector)
         self.flowEstimator = PatchFlowEstimator(configuration: flow)
@@ -205,34 +207,8 @@ final class FrameAnalyzer: FrameAnalyzing {
         }
     }
 
-    /// Gates that can be decided from a single frame.
-    ///
-    /// Deliberately a subset: flicker, usable-frame ratio and continuity need
-    /// more than one frame and belong to the window verdict, not here.
     private func perFrameRejections(statistics: LumaStatistics, motion: Double) -> [MeasurementRejectionReason] {
-        var reasons: [MeasurementRejectionReason] = []
-        if statistics.sampleCount == 0 {
-            reasons.append(.insufficientUsableFrames)
-            return reasons
-        }
-        if statistics.saturatedFraction > thresholds.maximumSaturatedFraction {
-            reasons.append(.saturatedRegion)
-        }
-        if statistics.brightestTileShare > thresholds.maximumBrightestTileShare {
-            reasons.append(.torchHotspot)
-        }
-        if statistics.mean < thresholds.minimumMeanLuma {
-            reasons.append(.regionTooDark)
-        } else if statistics.mean > thresholds.maximumMeanLuma {
-            reasons.append(.regionTooBright)
-        }
-        if statistics.sharpness < thresholds.minimumSharpness {
-            reasons.append(.outOfFocus)
-        }
-        if motion > thresholds.maximumGlobalMotion {
-            reasons.append(.cameraMoved)
-        }
-        return reasons
+        gate.rejections(statistics: statistics, motion: motion)
     }
 
     func quality(thermal: ThermalStatus,
@@ -253,8 +229,12 @@ final class FrameAnalyzer: FrameAnalyzing {
             // `nil` until the model has actually been built: an unbuilt model
             // has no stability, and reporting zero would fire the gate for a
             // measurement that simply has not reached that stage yet.
-            // Phase 3D supplies calibration compatibility.
             backgroundStability: detector.backgroundIsReady ? detector.backgroundStability : nil,
+            // Deliberately `nil`. Calibration compatibility is enforced by the
+            // NTU gate, which withholds the number and says why. Feeding it in
+            // here would invalidate the whole window instead, discarding a
+            // perfectly good optical observation because the calibration that
+            // would have labelled it in NTU does not apply.
             calibrationProfileIsCompatible: nil,
             analysisRegionVersion: region.version,
             captureProtocolVersion: captureProtocol.version

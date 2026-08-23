@@ -165,4 +165,45 @@ final class ClarityCategoryEngineTests: XCTestCase {
         }
         XCTAssertTrue(MeasurementDisclaimer.short.localizedCaseInsensitiveContains("not"))
     }
+
+    /// The wording shown on a result depends on what decided it. Both forms
+    /// have to describe an observation rather than a verdict about the water.
+    func testEveryBasisDescribesAnObservationRatherThanSafety() {
+        let forbidden = ["safe", "drink", "potable", "pure", "healthy"]
+        let bases: [ClarityCategoryEngine.Verdict.Basis] = [.relativeScatteringIndex,
+                                                            .calibratedNTU]
+
+        for clarity in OpticalClarityClass.allCases {
+            for basis in bases {
+                let verdict = ClarityCategoryEngine.Verdict(clarity: clarity,
+                                                            basis: basis,
+                                                            policyVersion: 1)
+                XCTAssertFalse(verdict.description.isEmpty)
+                for word in forbidden {
+                    XCTAssertFalse(verdict.description.localizedCaseInsensitiveContains(word),
+                                   "\(verdict.description) implies \(word)")
+                }
+            }
+        }
+    }
+
+    /// A single sentence listing everything Lucid cannot detect is easy to skim
+    /// past, so the disclosure names them one at a time. This checks the ones
+    /// people most often assume a water-testing app covers are actually there.
+    func testTheDisclosureNamesWhatPeopleAssumeItChecks() {
+        XCTAssertFalse(MeasurementDisclaimer.cannotDetect.isEmpty)
+        XCTAssertFalse(MeasurementDisclaimer.limitations.isEmpty)
+
+        let spelled = MeasurementDisclaimer.cannotDetect
+            .joined(separator: " ")
+            .lowercased()
+        for topic in ["bacteria", "virus", "lead", "pfas", "chlorine", "pathogen"] {
+            XCTAssertTrue(spelled.contains(topic),
+                          "the disclosure never mentions \(topic)")
+        }
+
+        let limits = MeasurementDisclaimer.limitations.joined(separator: " ").lowercased()
+        XCTAssertTrue(limits.contains("nephelometer"),
+                      "the first limitation is that an iPhone is not one")
+    }
 }

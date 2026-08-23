@@ -35,6 +35,10 @@ struct CaptureProtocol: Equatable, Sendable, Codable {
 
     /// Screening default.
     ///
+    /// * No ambient reference. Nothing in the analysis subtracts one, and a
+    ///   stage that spent a second capturing frames labelled *ambient* while
+    ///   the torch was on would put a false record in every reading. It is
+    ///   zero until there is code that uses it.
     /// * 1.5 s of torch settling: an LED torch reaches steady output quickly,
     ///   but the sensor's own noise and the ISP's internal state take longer.
     /// * 2.0 s of background acquisition at 30 fps gives about 60 frames, which
@@ -43,14 +47,15 @@ struct CaptureProtocol: Equatable, Sendable, Codable {
     ///   for: long enough for slow-moving specks to cross the region, short
     ///   enough that the phone does not heat up mid-measurement.
     ///
-    /// All four are to be re-tuned empirically once real repeatability data
-    /// exists (Phase 3D).
+    /// All of these are to be re-tuned empirically once real repeatability data
+    /// exists. The version is what a calibration profile is bound to, so any
+    /// change here invalidates every existing calibration by design.
     static let screening = CaptureProtocol(
-        ambientReferenceSeconds: 1.0,
+        ambientReferenceSeconds: 0,
         torchSettlingSeconds: 1.5,
         backgroundAcquisitionSeconds: 2.0,
         measurementWindowSeconds: 9.0,
-        version: 1
+        version: 2
     )
 
     var totalSeconds: Double {

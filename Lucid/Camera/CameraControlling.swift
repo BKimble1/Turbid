@@ -42,4 +42,15 @@ protocol CameraControlling: Sendable {
     func stop() async
 
     func currentSnapshot() async -> CaptureSnapshot
+
+    /// Attaches the analyzer. Frames are delivered on the capture pipeline's
+    /// processing queue; passing `nil` detaches it.
+    func setFrameConsumer(_ consumer: CaptureFrameConsuming?)
+
+    /// Clears the frame-delivery statistics.
+    ///
+    /// Called at the start of a measurement window so the dropped-frame and
+    /// continuity figures in the reading describe that window, not the minutes
+    /// someone spent lining the sample up beforehand.
+    func resetFrameStatistics()
 }

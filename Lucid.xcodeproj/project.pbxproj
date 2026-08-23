@@ -7,6 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CA7E631517FF43B1F6FA2F67 /* AccessibilityIdentifiers.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = AEBB120AA47A399260EB95CF /* AccessibilityIdentifiers.swift */;
+		};
+		05EF351F2015E262023CCAEF /* AlignmentMonitor.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = C1EFA8DCAD0389B45AF2FE91 /* AlignmentMonitor.swift */;
+		};
+		8F6B99D8222F883030EF1AF6 /* AlignmentMonitorTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 17CE1FCD184DE06EB091FB05 /* AlignmentMonitorTests.swift */;
+		};
 		73F27FC60983BEB9211FB330 /* AnalysisRegion.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = 57AE9974ECABC9331CFDB9B8 /* AnalysisRegion.swift */;
@@ -39,6 +51,14 @@
 			isa = PBXBuildFile;
 			fileRef = 73BBA31A7B5E58131D86DA05 /* CalibrationBinding.swift */;
 		};
+		BB0EE874A97D8C0D9B56CDAA /* CalibrationBindingBuilder.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = F2219920D66C92000246066A /* CalibrationBindingBuilder.swift */;
+		};
+		46DCDD77F36E0C53E6170CFB /* CalibrationBindingBuilderTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 40B2212CC20D4E1A791F0DD4 /* CalibrationBindingBuilderTests.swift */;
+		};
 		7C1621324FB183FB3BF9B6DF /* CalibrationFactory.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = F9C5E2CC38AEF01EE772DC4B /* CalibrationFactory.swift */;
@@ -51,9 +71,29 @@
 			isa = PBXBuildFile;
 			fileRef = 220D470F2741B559FD9D516A /* CalibrationFitterTests.swift */;
 		};
+		0AF788BAC8080CA65B0A3F6B /* CalibrationLibrary.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = E67CCCDD060817097E674F53 /* CalibrationLibrary.swift */;
+		};
+		70519BDA0FDC6025CBF73E59 /* CalibrationLibraryTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 2B019387B7AB2D9FACC81F2E /* CalibrationLibraryTests.swift */;
+		};
 		EB821B158AEA14F182A72224 /* CalibrationProfile.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = C1EFDE0D6AB2F6882599E794 /* CalibrationProfile.swift */;
+		};
+		D86D730CDF4A59B5B5D94D42 /* CalibrationRunView.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 1A208635DE4EEF0372D269CA /* CalibrationRunView.swift */;
+		};
+		7BF1FBCF5ECBED1C23023AFD /* CalibrationSessionTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 47B1771CD499F327349B5E41 /* CalibrationSessionTests.swift */;
+		};
+		8846E436F504456D08B9BDF9 /* CalibrationSessionViewModel.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 0C88AA5838FB0919FD287C1F /* CalibrationSessionViewModel.swift */;
 		};
 		9C8B3ACF89EFA7867DC66580 /* CalibrationStandard.swift in Sources */ = {
 			isa = PBXBuildFile;
@@ -66,6 +106,14 @@
 		E6574BCFF3448E0F5B384818 /* CalibrationStoreTests.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = 6551235B5A2033DDAAABC094 /* CalibrationStoreTests.swift */;
+		};
+		B6DDDAC2217F2BB5361335D1 /* CalibrationUITests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 51A30A103B803A27FEF38A7F /* CalibrationUITests.swift */;
+		};
+		734BCDEF5471DF0CE180E508 /* CalibrationView.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = B3651AB321976799D4CCD12E /* CalibrationView.swift */;
 		};
 		120C089D46FD7367B0386607 /* CameraAuthorization.swift in Sources */ = {
 			isa = PBXBuildFile;
@@ -175,6 +223,10 @@
 			isa = PBXBuildFile;
 			fileRef = C3254964D14848F651FABC17 /* CaptureSnapshot.swift */;
 		};
+		F4EC32ABFD90A7B4F3FCD140 /* CaptureStageView.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 9F385FE4FF63C414C9DAC5B7 /* CaptureStageView.swift */;
+		};
 		51B44129CF9D85767983E284 /* ClarityCategoryEngineTests.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = B472182837AA6E9B597E4671 /* ClarityCategoryEngineTests.swift */;
@@ -199,6 +251,10 @@
 			isa = PBXBuildFile;
 			fileRef = 06351C6B5B95339D8EB706F2 /* ConstantVelocityFilterTests.swift */;
 		};
+		4631107A9CB339D6884D6E95 /* DeepDiveView.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = BFE38028ECB965B32CCE8C17 /* DeepDiveView.swift */;
+		};
 		575B16D5A3C21493637DA62D /* DemoScenario.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = B32E301A7A25E83A39AA7E04 /* DemoScenario.swift */;
@@ -211,6 +267,10 @@
 			isa = PBXBuildFile;
 			fileRef = C2993B285496277F63F6B7A5 /* DeterministicRandom.swift */;
 		};
+		FAD707D71920E61F5F12B1CF /* DisclosureAcknowledgement.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 5B451A0863766B3F7F3FC2FA /* DisclosureAcknowledgement.swift */;
+		};
 		D3A7000B414D1DF5DD99C976 /* FrameAnalyzer.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = 67A4A329898DE84724BA0008 /* FrameAnalyzer.swift */;
@@ -222,6 +282,10 @@
 		6E50095D6BE3117CA5D06517 /* FrameAnalyzing.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = 57EC1A02D27C1562747BBE33 /* FrameAnalyzing.swift */;
+		};
+		E1D8FC39624B4BD0854F8502 /* FrameGate.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = BD0F57722A4C2979437649C9 /* FrameGate.swift */;
 		};
 		8C3AC586B20C14390C322E5E /* FrameNormalization.swift in Sources */ = {
 			isa = PBXBuildFile;
@@ -267,6 +331,10 @@
 			isa = PBXBuildFile;
 			fileRef = 0D8EF28127B6DEC07003D437 /* LucidApp.swift */;
 		};
+		847FFBCA55697560E05650C4 /* LucidUITestCase.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = CA6D319A19063D28978BDDD1 /* LucidUITestCase.swift */;
+		};
 		A49E3B7F166D7CF7A87E7632 /* LumaImage.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = 97DE7CEFB049403F2AA89224 /* LumaImage.swift */;
@@ -287,9 +355,33 @@
 			isa = PBXBuildFile;
 			fileRef = 595E8BA9CE091833C7410B2D /* MeasurementFailure.swift */;
 		};
+		1068ADCCCBF2C8C5D49ECB86 /* MeasurementFlowUITests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 2060FCC5891A538CF2D1A272 /* MeasurementFlowUITests.swift */;
+		};
 		662CDEF16D911BA2A7E9B1ED /* MeasurementMode.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = A8CFEE438CB1450ECEF2EA3A /* MeasurementMode.swift */;
+		};
+		BB38F0DD5F31CBD29B968459 /* MeasurementPipeline.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 953C13E21D128522D783EE88 /* MeasurementPipeline.swift */;
+		};
+		6AB4979DE81D005372E77272 /* MeasurementPipelineTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 5B4A9A0814D31146004EC326 /* MeasurementPipelineTests.swift */;
+		};
+		3B73AC3CA9DF1FA0D558EB7A /* MeasurementProgress.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 9B1DAE429E4343BD47431746 /* MeasurementProgress.swift */;
+		};
+		7A4106AC8A1F5E38B564F720 /* MeasurementProgressTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 3A6B5BF92EDBF3059EED4EF0 /* MeasurementProgressTests.swift */;
+		};
+		BB934592A0BD6C65AD3C1189 /* MeasurementProgressView.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = B0C4018834CF215E12B4445F /* MeasurementProgressView.swift */;
 		};
 		26D8FD3FCA18D6C6E6A59B5C /* MeasurementRejectionReason.swift in Sources */ = {
 			isa = PBXBuildFile;
@@ -343,6 +435,10 @@
 			isa = PBXBuildFile;
 			fileRef = 6E3FB881605D892FBE97E87E /* NTUGateTests.swift */;
 		};
+		7E1D7103BA418D6A6D7FDDF4 /* OnboardingView.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 3F521AEF2C6CFE5D6F19D298 /* OnboardingView.swift */;
+		};
 		C4655A0C4C9A2C17EA66704D /* OpticalClarityClass.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = CC7C8C65C7EF55801FA16DA8 /* OpticalClarityClass.swift */;
@@ -355,9 +451,17 @@
 			isa = PBXBuildFile;
 			fileRef = BCDAED706FBCAC5E2D3864D4 /* PatchFlowEstimatorTests.swift */;
 		};
+		327FC993D33535834B6A7BBB /* PermissionAndOnboardingUITests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 3AE9BFC56113AB56334722EC /* PermissionAndOnboardingUITests.swift */;
+		};
 		C097ABDD3A996E1AD51D8180 /* PixelBufferLumaExtractor.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = 1F0C3932914F5548DA9A15E7 /* PixelBufferLumaExtractor.swift */;
+		};
+		748897E370C2F1B9AA1487E7 /* QuickViewResultView.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 6194C5E27B1C20414D63BA45 /* QuickViewResultView.swift */;
 		};
 		B2D785A10789777C46914757 /* RelativeScatteringIndex.swift in Sources */ = {
 			isa = PBXBuildFile;
@@ -375,6 +479,10 @@
 			isa = PBXBuildFile;
 			fileRef = 86E811EF9B39BFDC6D2975F5 /* RuntimeEnvironment.swift */;
 		};
+		75A74A7EB6DF7633F248F5BB /* ScatteringChartView.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 1FB7D1558B75894DBEF57645 /* ScatteringChartView.swift */;
+		};
 		B94C0B8F8DC83F9B5AADCFC6 /* ScatteringWindowAggregator.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = 5A40DB4CDB5F5183FB83B111 /* ScatteringWindowAggregator.swift */;
@@ -386,6 +494,22 @@
 		7252BFF01C661D135E1FC957 /* SettingsOpening.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = 5F78619A987272BED1A3ECFD /* SettingsOpening.swift */;
+		};
+		3E734AA877603E7D1E682750 /* SetupChecklist.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = BF99A8777E9B2A938EEC6401 /* SetupChecklist.swift */;
+		};
+		C5163368485987994CBEA4FE /* SetupWizardView.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = BFD5F4AB8CD02553B28386BA /* SetupWizardView.swift */;
+		};
+		C04C13C13DE58637F9FA3F0D /* SimulatedFrameSource.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 7F187290200018B6FC540054 /* SimulatedFrameSource.swift */;
+		};
+		479557295D9F05CEC0138E89 /* SimulatedFrameSourceTests.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 9CCC450C587E97769F9DDE16 /* SimulatedFrameSourceTests.swift */;
 		};
 		FC8E1E9AA3D777967A7D8978 /* SpeckCandidate.swift in Sources */ = {
 			isa = PBXBuildFile;
@@ -451,9 +575,24 @@
 			isa = PBXBuildFile;
 			fileRef = C6D1DD5F4340FED513C90BC5 /* TurbidityReading.swift */;
 		};
+		91532472AB1B28D36A1EE386 /* UITestConfiguration.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = E4DDE3E0941B9314B1C6DDE3 /* UITestConfiguration.swift */;
+		};
+		1C240FDC9B02AA07E4545776 /* UITestIdentifiers.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = 9E31E594ACB254493AF6F3B4 /* UITestIdentifiers.swift */;
+		};
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		00E89D60C4B3370734E5644E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 244210E48437B6556980A702 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8C1A045E96B998B40533C7FF /* Lucid */;
+			remoteInfo = Lucid;
+		};
 		43C02BBB36ABB6EE58969E77 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 244210E48437B6556980A702 /* Project object */;
@@ -464,6 +603,24 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		AEBB120AA47A399260EB95CF /* AccessibilityIdentifiers.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = AccessibilityIdentifiers.swift;
+			sourceTree = "<group>";
+		};
+		C1EFA8DCAD0389B45AF2FE91 /* AlignmentMonitor.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = AlignmentMonitor.swift;
+			sourceTree = "<group>";
+		};
+		17CE1FCD184DE06EB091FB05 /* AlignmentMonitorTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = AlignmentMonitorTests.swift;
+			sourceTree = "<group>";
+		};
 		57AE9974ECABC9331CFDB9B8 /* AnalysisRegion.swift */ = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -512,6 +669,18 @@
 			path = CalibrationBinding.swift;
 			sourceTree = "<group>";
 		};
+		F2219920D66C92000246066A /* CalibrationBindingBuilder.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CalibrationBindingBuilder.swift;
+			sourceTree = "<group>";
+		};
+		40B2212CC20D4E1A791F0DD4 /* CalibrationBindingBuilderTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CalibrationBindingBuilderTests.swift;
+			sourceTree = "<group>";
+		};
 		F9C5E2CC38AEF01EE772DC4B /* CalibrationFactory.swift */ = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -530,10 +699,40 @@
 			path = CalibrationFitterTests.swift;
 			sourceTree = "<group>";
 		};
+		E67CCCDD060817097E674F53 /* CalibrationLibrary.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CalibrationLibrary.swift;
+			sourceTree = "<group>";
+		};
+		2B019387B7AB2D9FACC81F2E /* CalibrationLibraryTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CalibrationLibraryTests.swift;
+			sourceTree = "<group>";
+		};
 		C1EFDE0D6AB2F6882599E794 /* CalibrationProfile.swift */ = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
 			path = CalibrationProfile.swift;
+			sourceTree = "<group>";
+		};
+		1A208635DE4EEF0372D269CA /* CalibrationRunView.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CalibrationRunView.swift;
+			sourceTree = "<group>";
+		};
+		47B1771CD499F327349B5E41 /* CalibrationSessionTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CalibrationSessionTests.swift;
+			sourceTree = "<group>";
+		};
+		0C88AA5838FB0919FD287C1F /* CalibrationSessionViewModel.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CalibrationSessionViewModel.swift;
 			sourceTree = "<group>";
 		};
 		4416F1A872B0B25B1A40E510 /* CalibrationStandard.swift */ = {
@@ -552,6 +751,18 @@
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
 			path = CalibrationStoreTests.swift;
+			sourceTree = "<group>";
+		};
+		51A30A103B803A27FEF38A7F /* CalibrationUITests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CalibrationUITests.swift;
+			sourceTree = "<group>";
+		};
+		B3651AB321976799D4CCD12E /* CalibrationView.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CalibrationView.swift;
 			sourceTree = "<group>";
 		};
 		C46EB88070D748D4DB17C844 /* CameraAuthorization.swift */ = {
@@ -716,6 +927,12 @@
 			path = CaptureSnapshot.swift;
 			sourceTree = "<group>";
 		};
+		9F385FE4FF63C414C9DAC5B7 /* CaptureStageView.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CaptureStageView.swift;
+			sourceTree = "<group>";
+		};
 		B472182837AA6E9B597E4671 /* ClarityCategoryEngineTests.swift */ = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -752,6 +969,12 @@
 			path = ConstantVelocityFilterTests.swift;
 			sourceTree = "<group>";
 		};
+		BFE38028ECB965B32CCE8C17 /* DeepDiveView.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = DeepDiveView.swift;
+			sourceTree = "<group>";
+		};
 		B32E301A7A25E83A39AA7E04 /* DemoScenario.swift */ = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -770,6 +993,12 @@
 			path = DeterministicRandom.swift;
 			sourceTree = "<group>";
 		};
+		5B451A0863766B3F7F3FC2FA /* DisclosureAcknowledgement.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = DisclosureAcknowledgement.swift;
+			sourceTree = "<group>";
+		};
 		67A4A329898DE84724BA0008 /* FrameAnalyzer.swift */ = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -786,6 +1015,12 @@
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
 			path = FrameAnalyzing.swift;
+			sourceTree = "<group>";
+		};
+		BD0F57722A4C2979437649C9 /* FrameGate.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = FrameGate.swift;
 			sourceTree = "<group>";
 		};
 		40C51F67D2FFDA423D575C74 /* FrameNormalization.swift */ = {
@@ -868,6 +1103,19 @@
 			path = LucidTests.xctest;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
+		CA6D319A19063D28978BDDD1 /* LucidUITestCase.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = LucidUITestCase.swift;
+			sourceTree = "<group>";
+		};
+		1E72342EF5FEED24ED965995 /* LucidUITests.xctest */ = {
+			isa = PBXFileReference;
+			explicitFileType = wrapper.cfbundle;
+			includeInIndex = 0;
+			path = LucidUITests.xctest;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 		97DE7CEFB049403F2AA89224 /* LumaImage.swift */ = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -898,10 +1146,46 @@
 			path = MeasurementFailure.swift;
 			sourceTree = "<group>";
 		};
+		2060FCC5891A538CF2D1A272 /* MeasurementFlowUITests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = MeasurementFlowUITests.swift;
+			sourceTree = "<group>";
+		};
 		A8CFEE438CB1450ECEF2EA3A /* MeasurementMode.swift */ = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
 			path = MeasurementMode.swift;
+			sourceTree = "<group>";
+		};
+		953C13E21D128522D783EE88 /* MeasurementPipeline.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = MeasurementPipeline.swift;
+			sourceTree = "<group>";
+		};
+		5B4A9A0814D31146004EC326 /* MeasurementPipelineTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = MeasurementPipelineTests.swift;
+			sourceTree = "<group>";
+		};
+		9B1DAE429E4343BD47431746 /* MeasurementProgress.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = MeasurementProgress.swift;
+			sourceTree = "<group>";
+		};
+		3A6B5BF92EDBF3059EED4EF0 /* MeasurementProgressTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = MeasurementProgressTests.swift;
+			sourceTree = "<group>";
+		};
+		B0C4018834CF215E12B4445F /* MeasurementProgressView.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = MeasurementProgressView.swift;
 			sourceTree = "<group>";
 		};
 		0717E2D960126AD5B297D2E6 /* MeasurementRejectionReason.swift */ = {
@@ -982,6 +1266,12 @@
 			path = NTUGateTests.swift;
 			sourceTree = "<group>";
 		};
+		3F521AEF2C6CFE5D6F19D298 /* OnboardingView.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = OnboardingView.swift;
+			sourceTree = "<group>";
+		};
 		CC7C8C65C7EF55801FA16DA8 /* OpticalClarityClass.swift */ = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -1000,10 +1290,22 @@
 			path = PatchFlowEstimatorTests.swift;
 			sourceTree = "<group>";
 		};
+		3AE9BFC56113AB56334722EC /* PermissionAndOnboardingUITests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = PermissionAndOnboardingUITests.swift;
+			sourceTree = "<group>";
+		};
 		1F0C3932914F5548DA9A15E7 /* PixelBufferLumaExtractor.swift */ = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
 			path = PixelBufferLumaExtractor.swift;
+			sourceTree = "<group>";
+		};
+		6194C5E27B1C20414D63BA45 /* QuickViewResultView.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = QuickViewResultView.swift;
 			sourceTree = "<group>";
 		};
 		350627FA5398B793F9995A67 /* RelativeScatteringIndex.swift */ = {
@@ -1030,6 +1332,12 @@
 			path = RuntimeEnvironment.swift;
 			sourceTree = "<group>";
 		};
+		1FB7D1558B75894DBEF57645 /* ScatteringChartView.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = ScatteringChartView.swift;
+			sourceTree = "<group>";
+		};
 		5A40DB4CDB5F5183FB83B111 /* ScatteringWindowAggregator.swift */ = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -1046,6 +1354,30 @@
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
 			path = SettingsOpening.swift;
+			sourceTree = "<group>";
+		};
+		BF99A8777E9B2A938EEC6401 /* SetupChecklist.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = SetupChecklist.swift;
+			sourceTree = "<group>";
+		};
+		BFD5F4AB8CD02553B28386BA /* SetupWizardView.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = SetupWizardView.swift;
+			sourceTree = "<group>";
+		};
+		7F187290200018B6FC540054 /* SimulatedFrameSource.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = SimulatedFrameSource.swift;
+			sourceTree = "<group>";
+		};
+		9CCC450C587E97769F9DDE16 /* SimulatedFrameSourceTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = SimulatedFrameSourceTests.swift;
 			sourceTree = "<group>";
 		};
 		942A2AFC1E917B958B3FE5F9 /* SpeckCandidate.swift */ = {
@@ -1144,9 +1476,28 @@
 			path = TurbidityReading.swift;
 			sourceTree = "<group>";
 		};
+		E4DDE3E0941B9314B1C6DDE3 /* UITestConfiguration.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = UITestConfiguration.swift;
+			sourceTree = "<group>";
+		};
+		9E31E594ACB254493AF6F3B4 /* UITestIdentifiers.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = UITestIdentifiers.swift;
+			sourceTree = "<group>";
+		};
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		BFCF4C89E6EFF2C53080852E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C25DC3525EBCD84E8B43FB04 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -1169,6 +1520,7 @@
 			children = (
 				8428F225ED5615094951C695 /* Lucid */,
 				068BADD57312115245030AB1 /* LucidTests */,
+				46AEAABE498B502AB0BB640C /* LucidUITests */,
 				AE7805B56D1DCAFAA071416F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -1184,11 +1536,13 @@
 				E979E22AF93182784A67F1BE /* CaptureProtocolTimeline.swift */,
 				9C25394541C3DFE79E2F5DD3 /* CaptureQuality.swift */,
 				BBC5CA1A356747E082107ABA /* ConnectedComponents.swift */,
+				BD0F57722A4C2979437649C9 /* FrameGate.swift */,
 				40C51F67D2FFDA423D575C74 /* FrameNormalization.swift */,
 				ED68D7A51277BB29DEBD5168 /* FrameObservation.swift */,
 				50BBE0BF6A636791F3E7B4FE /* FrameQualityEvaluator.swift */,
 				97DE7CEFB049403F2AA89224 /* LumaImage.swift */,
 				69F496E2ED4360E69BE16D36 /* LumaStatistics.swift */,
+				9B1DAE429E4343BD47431746 /* MeasurementProgress.swift */,
 				942A2AFC1E917B958B3FE5F9 /* SpeckCandidate.swift */,
 			);
 			path = Analysis;
@@ -1198,9 +1552,11 @@
 			isa = PBXGroup;
 			children = (
 				95817169B5662436DD6715FB /* Synthetic */,
+				C1EFA8DCAD0389B45AF2FE91 /* AlignmentMonitor.swift */,
 				67A4A329898DE84724BA0008 /* FrameAnalyzer.swift */,
 				57EC1A02D27C1562747BBE33 /* FrameAnalyzing.swift */,
 				1CC833CFBC567125E13E5125 /* GravityProviding.swift */,
+				953C13E21D128522D783EE88 /* MeasurementPipeline.swift */,
 				1F0C3932914F5548DA9A15E7 /* PixelBufferLumaExtractor.swift */,
 				C8CA043EA7ACD6FE857534F7 /* SpeckDetector.swift */,
 			);
@@ -1212,14 +1568,26 @@
 			children = (
 				E5DBC5F3BD3BA34EDF8F802C /* AppEnvironment.swift */,
 				0D8EF28127B6DEC07003D437 /* LucidApp.swift */,
+				E4DDE3E0941B9314B1C6DDE3 /* UITestConfiguration.swift */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		4B2AAAF1FC415326279EE619 /* Calibration */ = {
+			isa = PBXGroup;
+			children = (
+				1A208635DE4EEF0372D269CA /* CalibrationRunView.swift */,
+				0C88AA5838FB0919FD287C1F /* CalibrationSessionViewModel.swift */,
+				B3651AB321976799D4CCD12E /* CalibrationView.swift */,
+			);
+			path = Calibration;
 			sourceTree = "<group>";
 		};
 		75FCE041142C29C774187305 /* Calibration */ = {
 			isa = PBXGroup;
 			children = (
 				73BBA31A7B5E58131D86DA05 /* CalibrationBinding.swift */,
+				F2219920D66C92000246066A /* CalibrationBindingBuilder.swift */,
 				9FD75B7F84E897E68FDCF77F /* CalibrationFit.swift */,
 				C1EFDE0D6AB2F6882599E794 /* CalibrationProfile.swift */,
 				4416F1A872B0B25B1A40E510 /* CalibrationStandard.swift */,
@@ -1290,6 +1658,7 @@
 		8F837CFDD9304B8C653F32DE /* Fakes */ = {
 			isa = PBXGroup;
 			children = (
+				7F187290200018B6FC540054 /* SimulatedFrameSource.swift */,
 				14FFC9FD0A0F84E1E89CB4FF /* StubCameraAuthorizationService.swift */,
 				2CE8D0CA24F9AB2A17D4286A /* StubCameraService.swift */,
 				F3B3F2FDC8C68AAB866F7E21 /* StubSettingsOpener.swift */,
@@ -1300,9 +1669,13 @@
 		AB1FDBBE6AFBF1583816CEA0 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				4B2AAAF1FC415326279EE619 /* Calibration */,
 				EB369D1973798ECCC7893B5B /* Demo */,
 				81EC53447189B78DBA90E9F8 /* Diagnostics */,
 				1CF2E6C0DF85D596CC4C9C6A /* Measurement */,
+				13F2654E28754C5955F97E59 /* Onboarding */,
+				EB6A9717CAF67EE815AA2942 /* Result */,
+				9E63B2F799D3B4B8460F1302 /* Setup */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -1326,8 +1699,12 @@
 			isa = PBXGroup;
 			children = (
 				00074C8E381543C714BF4ED0 /* Support */,
+				17CE1FCD184DE06EB091FB05 /* AlignmentMonitorTests.swift */,
 				FFF1FDF7EFF832E9F4ADA4A1 /* AnalysisRegionTests.swift */,
+				40B2212CC20D4E1A791F0DD4 /* CalibrationBindingBuilderTests.swift */,
 				220D470F2741B559FD9D516A /* CalibrationFitterTests.swift */,
+				2B019387B7AB2D9FACC81F2E /* CalibrationLibraryTests.swift */,
+				47B1771CD499F327349B5E41 /* CalibrationSessionTests.swift */,
 				6551235B5A2033DDAAABC094 /* CalibrationStoreTests.swift */,
 				B4F32B2356F5475F6EFBAAAF /* CameraAuthorizationMappingTests.swift */,
 				172E75A874EAF7C64D612636 /* CameraControlLockPlannerTests.swift */,
@@ -1344,6 +1721,8 @@
 				139B200C6B3615B16E2FC310 /* FrameTimingCollectorTests.swift */,
 				C994A2D7C14DF57C15AF3A4D /* InfoPlistTests.swift */,
 				5DB012690CAC81A0C26B9B7B /* LumaStatisticsTests.swift */,
+				5B4A9A0814D31146004EC326 /* MeasurementPipelineTests.swift */,
+				3A6B5BF92EDBF3059EED4EF0 /* MeasurementProgressTests.swift */,
 				D149B3CA57B1D3CB11BA0158 /* MeasurementStateMachineTests.swift */,
 				6F0BAFE650D8D86F7CF43245 /* MeasurementViewModelTests.swift */,
 				C46139A7FBB068686739220C /* MonotonicMappingTests.swift */,
@@ -1352,6 +1731,7 @@
 				BCDAED706FBCAC5E2D3864D4 /* PatchFlowEstimatorTests.swift */,
 				FF82DAC9CF708DAFBB91CC04 /* RelativeScatteringIndexTests.swift */,
 				706A68BC7EB3BE6F6E664523 /* ScatteringWindowAggregatorTests.swift */,
+				9CCC450C587E97769F9DDE16 /* SimulatedFrameSourceTests.swift */,
 				3E69C11BE6C2401C943B670B /* SpeckDetectorTests.swift */,
 				EB066563FB30328FA2ECFF8F /* SyntheticFrameFactoryTests.swift */,
 				07A9A88783E20EAFE6B6D465 /* TrackClassifierTests.swift */,
@@ -1359,9 +1739,23 @@
 			path = LucidTests;
 			sourceTree = "<group>";
 		};
+		46AEAABE498B502AB0BB640C /* LucidUITests */ = {
+			isa = PBXGroup;
+			children = (
+				51A30A103B803A27FEF38A7F /* CalibrationUITests.swift */,
+				CA6D319A19063D28978BDDD1 /* LucidUITestCase.swift */,
+				2060FCC5891A538CF2D1A272 /* MeasurementFlowUITests.swift */,
+				3AE9BFC56113AB56334722EC /* PermissionAndOnboardingUITests.swift */,
+				9E31E594ACB254493AF6F3B4 /* UITestIdentifiers.swift */,
+			);
+			path = LucidUITests;
+			sourceTree = "<group>";
+		};
 		1CF2E6C0DF85D596CC4C9C6A /* Measurement */ = {
 			isa = PBXGroup;
 			children = (
+				9F385FE4FF63C414C9DAC5B7 /* CaptureStageView.swift */,
+				B0C4018834CF215E12B4445F /* MeasurementProgressView.swift */,
 				71B1DF711CA830AEB3BC115E /* MeasurementScreen.swift */,
 				0B85B9E36040B6A1430E2CCD /* MeasurementStatePresentation.swift */,
 				8174C917387B3E067BE15050 /* MeasurementViewModel.swift */,
@@ -1370,11 +1764,20 @@
 			path = Measurement;
 			sourceTree = "<group>";
 		};
+		13F2654E28754C5955F97E59 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				3F521AEF2C6CFE5D6F19D298 /* OnboardingView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
 		AE7805B56D1DCAFAA071416F /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				81F31879437340D5CD6ED968 /* Lucid.app */,
 				70F09BF32F6D77A92FF191B4 /* LucidTests.xctest */,
+				1E72342EF5FEED24ED965995 /* LucidUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1387,11 +1790,23 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
+		EB6A9717CAF67EE815AA2942 /* Result */ = {
+			isa = PBXGroup;
+			children = (
+				BFE38028ECB965B32CCE8C17 /* DeepDiveView.swift */,
+				6194C5E27B1C20414D63BA45 /* QuickViewResultView.swift */,
+				1FB7D1558B75894DBEF57645 /* ScatteringChartView.swift */,
+			);
+			path = Result;
+			sourceTree = "<group>";
+		};
 		024126E5633DCDF99D11AEB4 /* Services */ = {
 			isa = PBXGroup;
 			children = (
 				8F837CFDD9304B8C653F32DE /* Fakes */,
+				E67CCCDD060817097E674F53 /* CalibrationLibrary.swift */,
 				F7F69CCD362D9A309E23F7B6 /* CameraAuthorizing.swift */,
+				5B451A0863766B3F7F3FC2FA /* DisclosureAcknowledgement.swift */,
 				86E811EF9B39BFDC6D2975F5 /* RuntimeEnvironment.swift */,
 				5F78619A987272BED1A3ECFD /* SettingsOpening.swift */,
 				A59AAA412CF3059C4F74428E /* SystemCameraAuthorizationService.swift */,
@@ -1399,9 +1814,19 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
+		9E63B2F799D3B4B8460F1302 /* Setup */ = {
+			isa = PBXGroup;
+			children = (
+				BF99A8777E9B2A938EEC6401 /* SetupChecklist.swift */,
+				BFD5F4AB8CD02553B28386BA /* SetupWizardView.swift */,
+			);
+			path = Setup;
+			sourceTree = "<group>";
+		};
 		C96B4151893CA00DA6E023AC /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				AEBB120AA47A399260EB95CF /* AccessibilityIdentifiers.swift */,
 				9E69F57EBA529470F6486C32 /* Components.swift */,
 				1C38E5659C8437AF63038026 /* Logging.swift */,
 				D10467EB36802B3577E3A1F7 /* Theme.swift */,
@@ -1481,6 +1906,24 @@
 			productReference = 70F09BF32F6D77A92FF191B4 /* LucidTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		129964AA630C5970DF325D9E /* LucidUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0FC8D57E01D86FC2065D389D /* Build configuration list for "LucidUITests" target */;
+			buildPhases = (
+				7797D15BCB6FE4651DE7FDBE /* Sources */,
+				BFCF4C89E6EFF2C53080852E /* Frameworks */,
+				EE1DE1292EFC8793B225C5C2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				994E6EDD18B378041FC39147 /* PBXTargetDependency */,
+			);
+			name = LucidUITests;
+			productName = LucidUITests;
+			productReference = 1E72342EF5FEED24ED965995 /* LucidUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -1492,6 +1935,10 @@
 				LastUpgradeCheck = 1600;
 				ORGANIZATIONNAME = Lucid;
 				TargetAttributes = {
+					129964AA630C5970DF325D9E = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = 8C1A045E96B998B40533C7FF /* Lucid */;
+					};
 					2ADDEE89B29C55E11126D89F = {
 						CreatedOnToolsVersion = 16.0;
 						TestTargetID = 8C1A045E96B998B40533C7FF /* Lucid */;
@@ -1516,6 +1963,7 @@
 			targets = (
 				8C1A045E96B998B40533C7FF /* Lucid */,
 				2ADDEE89B29C55E11126D89F /* LucidTests */,
+				129964AA630C5970DF325D9E /* LucidUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -1536,16 +1984,37 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		EE1DE1292EFC8793B225C5C2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		7797D15BCB6FE4651DE7FDBE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B6DDDAC2217F2BB5361335D1 /* CalibrationUITests.swift in Sources */,
+				847FFBCA55697560E05650C4 /* LucidUITestCase.swift in Sources */,
+				1068ADCCCBF2C8C5D49ECB86 /* MeasurementFlowUITests.swift in Sources */,
+				327FC993D33535834B6A7BBB /* PermissionAndOnboardingUITests.swift in Sources */,
+				1C240FDC9B02AA07E4545776 /* UITestIdentifiers.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A57DBEF0299370AF343399FB /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				05EF351F2015E262023CCAEF /* AlignmentMonitor.swift in Sources */,
 				D3A7000B414D1DF5DD99C976 /* FrameAnalyzer.swift in Sources */,
 				6E50095D6BE3117CA5D06517 /* FrameAnalyzing.swift in Sources */,
 				1293D4C4E8307D73BB69D988 /* GravityProviding.swift in Sources */,
+				BB38F0DD5F31CBD29B968459 /* MeasurementPipeline.swift in Sources */,
 				C097ABDD3A996E1AD51D8180 /* PixelBufferLumaExtractor.swift in Sources */,
 				A0D1C251026DC01BA6921671 /* SpeckDetector.swift in Sources */,
 				6A37D1C178139AB5BB768291 /* DeterministicRandom.swift in Sources */,
@@ -1553,6 +2022,7 @@
 				F7C071574F68DA3C265FAD19 /* SyntheticScene.swift in Sources */,
 				85DE2793CE67B3F35E7FC77F /* AppEnvironment.swift in Sources */,
 				E74072B2F3CA4FD53015AD22 /* LucidApp.swift in Sources */,
+				91532472AB1B28D36A1EE386 /* UITestConfiguration.swift in Sources */,
 				A3800AEB380ABE7D96746E3D /* CameraCapabilityReporter.swift in Sources */,
 				63BF5C33CA6C78E72B3A25F2 /* CameraControlling.swift in Sources */,
 				44D6F0114D6BEEDB19CCCF03 /* CameraPreviewView.swift in Sources */,
@@ -1564,11 +2034,13 @@
 				6F1C3E9C5450A2EBE86083C5 /* CaptureProtocolTimeline.swift in Sources */,
 				7775AC87688364E6F7839F3E /* CaptureQuality.swift in Sources */,
 				D56F4C01EFF8FCBA7FFC2509 /* ConnectedComponents.swift in Sources */,
+				E1D8FC39624B4BD0854F8502 /* FrameGate.swift in Sources */,
 				8C3AC586B20C14390C322E5E /* FrameNormalization.swift in Sources */,
 				63403CD239E24F90CEC4E7B1 /* FrameObservation.swift in Sources */,
 				5BCD6ED2056FE25F3BC3045A /* FrameQualityEvaluator.swift in Sources */,
 				A49E3B7F166D7CF7A87E7632 /* LumaImage.swift in Sources */,
 				D0F0D44DBF29B7CAFD40471D /* LumaStatistics.swift in Sources */,
+				3B73AC3CA9DF1FA0D558EB7A /* MeasurementProgress.swift in Sources */,
 				FC8E1E9AA3D777967A7D8978 /* SpeckCandidate.swift in Sources */,
 				63072D735005B64A37754B2B /* ConstantVelocityFilter.swift in Sources */,
 				1B17C3E98DD84F12E8C512A7 /* GlobalFlow.swift in Sources */,
@@ -1579,6 +2051,7 @@
 				1EBA60086570DC22845D76C6 /* TrackClassifier.swift in Sources */,
 				FD710EA5DFBA05E27D7CAD07 /* TrackingMetrics.swift in Sources */,
 				92E73D567946A7B10492E2E9 /* CalibrationBinding.swift in Sources */,
+				BB0EE874A97D8C0D9B56CDAA /* CalibrationBindingBuilder.swift in Sources */,
 				C4F2EFCB3D56964DFF705D4C /* CalibrationFit.swift in Sources */,
 				EB821B158AEA14F182A72224 /* CalibrationProfile.swift in Sources */,
 				9C8B3ACF89EFA7867DC66580 /* CalibrationStandard.swift in Sources */,
@@ -1605,20 +2078,35 @@
 				4A53CC916703056A9BA7148F /* MeasurementState.swift in Sources */,
 				FDD46B34F31AA27B2DC78EC7 /* MeasurementStateMachine.swift in Sources */,
 				C4655A0C4C9A2C17EA66704D /* OpticalClarityClass.swift in Sources */,
+				D86D730CDF4A59B5B5D94D42 /* CalibrationRunView.swift in Sources */,
+				8846E436F504456D08B9BDF9 /* CalibrationSessionViewModel.swift in Sources */,
+				734BCDEF5471DF0CE180E508 /* CalibrationView.swift in Sources */,
 				575B16D5A3C21493637DA62D /* DemoScenario.swift in Sources */,
 				6D6A921C85E548BB73CAD1F3 /* DemoShowcaseView.swift in Sources */,
 				D1742F267F41C1882CFF3460 /* CaptureDiagnosticsView.swift in Sources */,
+				F4EC32ABFD90A7B4F3FCD140 /* CaptureStageView.swift in Sources */,
+				BB934592A0BD6C65AD3C1189 /* MeasurementProgressView.swift in Sources */,
 				A87346CEEC5837E8703BC19D /* MeasurementScreen.swift in Sources */,
 				13526630101D52C38813EED4 /* MeasurementStatePresentation.swift in Sources */,
 				EF61CF0772EB0FB7A711A642 /* MeasurementViewModel.swift in Sources */,
 				7296C93BE7AB50290D023AF7 /* RootView.swift in Sources */,
+				7E1D7103BA418D6A6D7FDDF4 /* OnboardingView.swift in Sources */,
+				4631107A9CB339D6884D6E95 /* DeepDiveView.swift in Sources */,
+				748897E370C2F1B9AA1487E7 /* QuickViewResultView.swift in Sources */,
+				75A74A7EB6DF7633F248F5BB /* ScatteringChartView.swift in Sources */,
+				3E734AA877603E7D1E682750 /* SetupChecklist.swift in Sources */,
+				C5163368485987994CBEA4FE /* SetupWizardView.swift in Sources */,
+				0AF788BAC8080CA65B0A3F6B /* CalibrationLibrary.swift in Sources */,
 				5B5E8409B9299E1C6F0E668F /* CameraAuthorizing.swift in Sources */,
+				FAD707D71920E61F5F12B1CF /* DisclosureAcknowledgement.swift in Sources */,
+				C04C13C13DE58637F9FA3F0D /* SimulatedFrameSource.swift in Sources */,
 				D2346959A0B2963E9A356859 /* StubCameraAuthorizationService.swift in Sources */,
 				6365A2E61FB3B4A9C69952FF /* StubCameraService.swift in Sources */,
 				279CC9131E3A6E55868B1769 /* StubSettingsOpener.swift in Sources */,
 				9E7DE44CFA0C064E0B11FF34 /* RuntimeEnvironment.swift in Sources */,
 				7252BFF01C661D135E1FC957 /* SettingsOpening.swift in Sources */,
 				E9599D7DF1E7A9EFAAAC961D /* SystemCameraAuthorizationService.swift in Sources */,
+				CA7E631517FF43B1F6FA2F67 /* AccessibilityIdentifiers.swift in Sources */,
 				9F1940E90F0FD532273E4A11 /* Components.swift in Sources */,
 				E0DC30EC5BC40F2A759C06EC /* Logging.swift in Sources */,
 				EB4659D9C04D96401130777F /* Theme.swift in Sources */,
@@ -1629,8 +2117,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8F6B99D8222F883030EF1AF6 /* AlignmentMonitorTests.swift in Sources */,
 				D8394BB111E9B07A2B427985 /* AnalysisRegionTests.swift in Sources */,
+				46DCDD77F36E0C53E6170CFB /* CalibrationBindingBuilderTests.swift in Sources */,
 				4AB7C90E34171624005672BC /* CalibrationFitterTests.swift in Sources */,
+				70519BDA0FDC6025CBF73E59 /* CalibrationLibraryTests.swift in Sources */,
+				7BF1FBCF5ECBED1C23023AFD /* CalibrationSessionTests.swift in Sources */,
 				E6574BCFF3448E0F5B384818 /* CalibrationStoreTests.swift in Sources */,
 				C47C827F3E23A33A54BC594C /* CameraAuthorizationMappingTests.swift in Sources */,
 				8D180AFECF53AE948F2E6B80 /* CameraControlLockPlannerTests.swift in Sources */,
@@ -1647,6 +2139,8 @@
 				174C3261644B6690E1645D48 /* FrameTimingCollectorTests.swift in Sources */,
 				14E26BDFF25429CA4C95C30E /* InfoPlistTests.swift in Sources */,
 				3FAEB2BF2208B5A67DF96FBD /* LumaStatisticsTests.swift in Sources */,
+				6AB4979DE81D005372E77272 /* MeasurementPipelineTests.swift in Sources */,
+				7A4106AC8A1F5E38B564F720 /* MeasurementProgressTests.swift in Sources */,
 				3502FB2F740897483E550D14 /* MeasurementStateMachineTests.swift in Sources */,
 				9328C3C886021D85059E7F74 /* MeasurementViewModelTests.swift in Sources */,
 				885632DEB8634F0CFD676DDF /* MonotonicMappingTests.swift in Sources */,
@@ -1655,6 +2149,7 @@
 				FC33FC590A6C6340BB1EAC93 /* PatchFlowEstimatorTests.swift in Sources */,
 				F8522882996165CD33473470 /* RelativeScatteringIndexTests.swift in Sources */,
 				EFDAC0E3D791434117B794AF /* ScatteringWindowAggregatorTests.swift in Sources */,
+				479557295D9F05CEC0138E89 /* SimulatedFrameSourceTests.swift in Sources */,
 				B66FF76EE641ED2F32209DF2 /* SpeckDetectorTests.swift in Sources */,
 				7C1621324FB183FB3BF9B6DF /* CalibrationFactory.swift in Sources */,
 				737437E6C3EEAC2D294357FA /* CapabilityFactory.swift in Sources */,
@@ -1666,6 +2161,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		994E6EDD18B378041FC39147 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8C1A045E96B998B40533C7FF /* Lucid */;
+			targetProxy = 00E89D60C4B3370734E5644E /* PBXContainerItemProxy */;
+		};
 		B44B5DFF7A4013DAA45163F8 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 8C1A045E96B998B40533C7FF /* Lucid */;
@@ -1766,6 +2266,23 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		D5BE1BFE6693480DAFA0CFAE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lucid.LucidUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = Lucid;
 			};
 			name = Debug;
 		};
@@ -1890,6 +2407,23 @@
 			};
 			name = Release;
 		};
+		40D7089DFD1F1D2840417103 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lucid.LucidUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = Lucid;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1916,6 +2450,15 @@
 			buildConfigurations = (
 				FE6A554BE351582F1A96A7A4 /* Debug */,
 				1AD3E8B1A012AA9B9F40EECB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0FC8D57E01D86FC2065D389D /* Build configuration list for "LucidUITests" target */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D5BE1BFE6693480DAFA0CFAE /* Debug */,
+				40D7089DFD1F1D2840417103 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

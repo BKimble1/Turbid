@@ -197,10 +197,19 @@ final class FrameQualityEvaluatorTests: XCTestCase {
                      "nil must mean unmeasured, never zero")
     }
 
-    func testAnUnstableBackgroundInvalidatesTheWindowOnceItIsMeasured() {
+    /// Background stability is recorded, never gated on. It cannot tell
+    /// suspended material drifting through the field from the container
+    /// creeping, and gating on it rejected exactly the turbid samples the app
+    /// exists to identify. Container movement is the motion gate's job.
+    func testALowBackgroundStabilityIsRecordedButNeverRejectsTheWindow() {
         var input = healthyInput()
         input.backgroundStability = 0.2
-        assertInvalid(input, because: .backgroundModelUnstable)
+        let quality = evaluator.evaluate(input)
+
+        XCTAssertTrue(quality.isUsable,
+                      "a sample full of particles must not be rejected for being full of particles")
+        XCTAssertEqual(quality.backgroundStability, 0.2,
+                       "the number is still reported, so a run can be judged on it afterwards")
     }
 
     func testAnIncompatibleCalibrationProfileInvalidatesTheWindow() {
@@ -272,7 +281,7 @@ final class FrameQualityEvaluatorTests: XCTestCase {
             .outOfFocus, .cameraMoved, .exposureUnstable, .controlsUnlocked,
             .insufficientUsableFrames, .excessiveDroppedFrames,
             .frameDeliveryDiscontinuous, .thermalLimit, .systemPressure,
-            .backgroundModelUnstable, .calibrationProfileMismatch
+            .calibrationProfileMismatch
         ]
 
         for reason in allReasons {

@@ -9,13 +9,13 @@ clarity** of a water sample.
 
 ## Build status
 
-**Phase 3D of 4 — relative score, calibration, NTU gating and validation.**
+**Phase 4 of 4 — the complete interface, wired to the real pipeline.**
 
-Completes the measurement model: a versioned Relative Scattering Index, a
-calibration workflow against certified standards with cross-validated curve
-selection, an uncertainty model, the gate that decides whether NTU may exist at
-all, the category engine, and versioned persistence. The analysis pipeline is
-complete; Phase 4 is the user interface.
+Camera frames now reach the analyzer and come back as a reading. The app has
+onboarding with the full scientific disclosure, a setup step with live quality
+prompts, a measurement flow with stage progress and a live graph, a Quick View
+result, a Deep Dive with every number and version behind it, and a guided
+calibration workflow against certified standards.
 
 | Phase | Scope | Status |
 |-------|-------|--------|
@@ -25,7 +25,12 @@ complete; Phase 4 is the user interface.
 | 3B | Background subtraction and bright-speck detection | Complete |
 | 3C | Optical flow, vector tracking, bubble rejection | Complete |
 | 3D | Relative score, calibration, NTU gating, validation | Complete |
-| 4 | Dashboard, advanced metrics, charts, calibration UI | Not started |
+| 4 | Onboarding, setup, measurement, results, charts, calibration UI | Complete |
+
+**Nothing in this repository has been compiled or run.** There is no Swift
+toolchain and no Xcode on the machine it was written on. What that means, and
+what stands in for a compiler, is set out under *What has and has not been
+verified* below.
 
 ## Requirements
 
@@ -49,18 +54,46 @@ complete; Phase 4 is the user interface.
 
 ### What you should see
 
-- **On the Simulator**: the home screen plus a purple **"SIMULATED DATA — NOT A
-  MEASUREMENT"** section showing what the three result states will look like.
-  The Simulator has no camera, so it runs a stub pipeline: *Start Setup* opens
-  the measurement screen with a "Camera preview unavailable" placeholder.
-- **On a physical iPhone**: *Start Setup* asks for camera permission, picks a
-  rear camera, and opens the measurement screen with a **live preview**.
-  *Start Measurement* turns the torch on at full power, lets the camera settle,
-  locks focus/exposure/white balance, and then stops with *"Frame analysis is
-  not part of this build."* — the correct Phase 2 outcome. The torch turns off.
-  The wrench button (debug builds) opens **Capture Diagnostics**, showing the
-  selected camera, its minimum focus distance, the active format, the locked
-  control values, torch level, frame rate, dropped frames and thermal state.
+**On first launch**, the disclosure screen: what Lucid measures, the list of
+things it cannot detect, why there is usually no NTU number, and how to get a
+usable reading. It has to be acknowledged before the app is usable, and it
+stays reachable from the home screen afterwards.
+
+**On the Simulator**, there is no camera, so a synthetic frame source stands in
+for the sensor. Frames are generated, written into a real bi-planar pixel
+buffer, and travel the production path — the same extractor, analyzer and
+quality gates a physical iPhone uses. A picker on the capture screen chooses
+what the simulated sample contains (almost nothing, a few particles, many
+particles, or a phone that is not being held still), and every screen showing a
+result from those frames carries the purple **"SIMULATED DATA — NOT A
+MEASUREMENT"** banner. That substitution requires a debug build *and* the
+Simulator, so a shipped binary on a phone can never take it.
+
+**On a physical iPhone**: *Start Setup* asks for camera permission, picks a rear
+camera, turns the torch on and opens the setup step with a live preview, an
+outlined analysis region, the checklist, and live prompts — *Hold steady*,
+*Reduce glare*, *Sample too dark* — driven by the same per-frame gates the
+analyzer applies. *Start Measurement* locks focus, exposure and white balance,
+then runs the 12.5-second protocol with a stage-by-stage progress bar and a live
+graph of the relative scattering index. At the end the torch goes off and the
+result appears.
+
+The wrench button (debug builds) opens **Capture Diagnostics**: the selected
+camera, its minimum focus distance, the active format, the locked control
+values, torch level, frame rate, dropped frames and thermal state.
+
+### Running a measurement on a device
+
+1. Fill a clean, clear, colourless container and let it stand a minute so
+   bubbles rise out.
+2. Put something matte and dark behind it, and dim the room. The torch should be
+   the main light on the sample.
+3. Open Lucid, tap **Start Setup**, and line the container up so the outlined
+   region is filled with liquid only — no rim, no meniscus, no label.
+4. Wait for **View looks good**, rest the phone against something, and tap
+   **Start Measurement**. Hold still for about thirteen seconds.
+5. Read the result. Tap **Deep Dive** for the numbers, the gates that judged
+   them, and the versions of everything that produced them.
 
 ## Regenerating the Xcode project
 
@@ -97,12 +130,22 @@ Lucid/
   Services/   Camera authorization, settings, runtime environment, test fakes
   Camera/     The AVFoundation boundary: capability probing, CameraService,
               preview layer
-  Analysis/   Frame analyzer, speck detector, gravity provider, pixel-buffer
-              luma extraction, and the seeded synthetic-frame harness
-  Features/   Measurement view model and views, diagnostics, Simulator demo
-  Shared/     Design tokens, reusable components, OSLog categories
+  Analysis/   Frame analyzer, speck detector, alignment monitor, measurement
+              pipeline, gravity provider, pixel-buffer luma extraction, and the
+              seeded synthetic-frame harness
+  Features/
+    Onboarding/  The scientific disclosure, shown first and always reachable
+    Setup/       The checklist and the alignment step with live prompts
+    Measurement/ View model, capture screen, progress, root screen
+    Result/      Quick View, Deep Dive, the live scattering chart
+    Calibration/ Profile library, guided standards workflow, session model
+    Diagnostics/ Capture diagnostics sheet (debug builds)
+    Demo/        Simulator-only illustration of the three result states
+  Shared/     Design tokens, reusable components, accessibility identifiers,
+              OSLog categories
   Resources/  Asset catalogue
-LucidTests/   Unit tests
+LucidTests/     Unit tests
+LucidUITests/   Interface tests, driven by launch-argument scenarios
 Tools/        Project generator, project validator, source checks,
               Python cross-check of the analysis numerics
 ```
@@ -283,6 +326,17 @@ Turbidity is a bulk optical measurement and a camera cannot resolve or count the
 microscopic and colloidal material that dominates it. Candidate counts are
 reported as *Visible particles (tracked)*, never as a concentration.
 
+**Background stability is reported, never gated on.** The model's stability —
+what fraction of pixels held still while it was built — separates a still
+container from a moving one, but it does *not* separate a still container from
+one full of drifting particles: measured on the synthetic scenes, a sample full
+of material scores 0.81 while a container creeping at 2% of the frame width per
+second scores 0.90, and no threshold, coarse-plane reformulation or
+majority-vote variant separates them. Gating on it therefore rejected exactly
+the turbid samples the app exists to identify, so it does not. Container
+movement is the motion gate's job; a creep too slow for that gate is a
+documented limitation. (`QualityThresholds` version 2 dropped the limit.)
+
 **The background model.** A per-pixel temporal median over the acquisition
 frames, because a particle drifting through a pixel affects a minority of the
 samples and a median ignores a minority. The retained samples are **spread
@@ -322,8 +376,106 @@ bound to it:
 - **Frame timing**: measured from real presentation timestamps in a fixed-size
   ring buffer. A camera throttling to 24 fps is reported as 24 fps.
 
+## The interface (Phase 4)
+
+**One screen owns the camera.** `CaptureStageView` shows the live preview and
+either the setup step or the running measurement beneath it, so the sample is
+lined up in exactly the frame the measurement then runs on. The calibration
+workflow embeds the same view rather than its own, because a calibration taken
+through a different capture screen would be calibrating that screen.
+
+**Frames never reach the interface.** `MeasurementPipeline` owns the analyzer,
+runs on the capture pipeline's processing queue, and publishes small immutable
+values over an `AsyncStream` with `bufferingNewest(1)` at about five times a
+second — whatever rate the camera and analyzer are running at. A slow interface
+can never make the analyzer wait or accumulate stale updates. The chart series
+is a fixed-capacity ring buffer, so leaving the screen open cannot grow the
+heap.
+
+**The live graph plots the index, never NTU.** A running NTU would have to be
+produced before the capture-quality verdict exists, and a number that appears,
+moves and is then withheld at the end is worse than no number at all. The NTU
+estimate belongs to the finished reading and appears there.
+
+**Live prompts come from the gates, not from folklore.** The alignment monitor
+applies the same `FrameGate` the analyzer applies, on the same region, and turns
+each rejection into a short instruction — *Hold steady*, *Reduce glare*. At most
+two are shown: a wall of warnings is not actionable while holding a phone still.
+Every item on the setup checklist names the gate it exists to avoid, and a test
+asserts each of those gates has an instruction.
+
+**The Start button is never disabled by a quality gate.** The thresholds are
+engineering starting points, not validated limits, and a gate that is slightly
+wrong must not be able to lock someone out of their own device. The screen says
+plainly whether the view is good, so starting anyway is a choice rather than an
+accident.
+
+**A rejected capture still shows its result**, with a banner saying the capture
+did not meet the gates and why. The evidence for the rejection is in the reading,
+and hiding it would leave nobody anything to act on.
+
+**Accessibility.** Colour is never the only signal: every status carries a
+symbol and a word. Dynamic Type is used throughout, all controls are at least
+44 points, the chart has a spoken summary of its shape rather than a list of two
+hundred numbers, and animation is switched off under Reduce Motion. Nothing
+flashes.
+
+## What has and has not been verified
+
+Nothing here has been compiled or executed. There is no Swift toolchain and no
+Xcode available, so **every claim about behaviour rests on review, on the static
+checks, and on the Python reference — not on a passing test run.** What stands
+in for a compiler:
+
+- `Tools/check_sources.py` — balanced delimiters, no force unwraps or force
+  casts in hardware and measurement code, no placeholders or `TODO`, Apple
+  frameworks only, malformed numeric literals, memberwise initializer calls
+  that name properties the struct actually declares in declaration order, and
+  agreement between the app's accessibility identifiers and the UI tests' copy
+  of them.
+- `Tools/generate_xcodeproj.py` and `Tools/validate_pbxproj.py` — the project
+  file is generated from the file tree and then parsed back and checked, so it
+  cannot drift from the sources.
+- `Tools/analysis_reference.py` — a Python port of every analysis calculation,
+  run against the same synthetic scenes. This is what has actually caught
+  defects: gates that could never have fired, a classifier whose combination
+  rule undid its own requirement, a speck term that outvoted the bulk channel,
+  and — in this phase — simulated scenes whose features all sat outside the
+  analysis region, and a quality gate that would have rejected every turbid
+  sample.
+
+The Swift unit tests and UI tests are written but have never run. Treat them as
+specifications until they do.
+
+## Known limitations
+
+- **An iPhone is not a nephelometer.** No calibrated light source, no fixed
+  sample geometry, no defined detection angle. Screening Mode reports a relative
+  index; NTU exists only behind the gate described above.
+- **A slow container creep is not caught.** The motion gate catches movement
+  above roughly 5% of the frame width per second. Below that, a creep can shift
+  the scene across the two-second acquisition window without registering. The
+  background-stability number would show it, but that number cannot tell a
+  creeping container from a sample full of drifting particles, so it is reported
+  rather than gated on — gating on it rejected exactly the turbid samples the
+  app exists to identify. `Tools/analysis_reference.py` contains the
+  measurements behind that decision.
+- **No ambient-light interference gate.** The screening protocol captures no
+  torch-off reference because nothing consumes one. Measuring in a bright room
+  degrades the result without the app being able to say so; the setup checklist
+  asks for a dim room instead.
+- **Every threshold is unvalidated.** The quality gates, the index weights and
+  the clarity bands are engineering starting points. None has been checked
+  against real samples on real hardware.
+- **SF Symbol names have not been rendered.** They are drawn from the iOS 17
+  set but have not been seen on a device; a wrong name renders as nothing.
+- **Only the rear camera, portrait, on iOS 17 or later.** Orientation is pinned
+  because a measurement needs a fixed optical path.
+
 ## Privacy
 
 The only privacy permission Lucid declares is `NSCameraUsageDescription`. iOS
 has no separate torch permission — the torch is covered by camera access. Video
-is processed on device; nothing is written to disk or transmitted.
+is processed on device; nothing is written to disk or transmitted. The only
+thing Lucid stores is its calibration profiles, in the app's own support
+directory, and whether the disclosure has been acknowledged.

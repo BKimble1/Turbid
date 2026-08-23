@@ -39,7 +39,6 @@ extension MeasurementRejectionReason {
     static let systemPressure = MeasurementRejectionReason(rawValue: "quality.systemPressure")
 
     // Supplied by later phases
-    static let backgroundModelUnstable = MeasurementRejectionReason(rawValue: "quality.backgroundModelUnstable")
     static let calibrationProfileMismatch = MeasurementRejectionReason(rawValue: "quality.calibrationProfileMismatch")
 
     /// Plain-language text for the UI. Kept beside the constants so a new
@@ -72,8 +71,6 @@ extension MeasurementRejectionReason {
             return "The iPhone is too warm for a reliable measurement."
         case .systemPressure:
             return "The system throttled the camera during the measurement."
-        case .backgroundModelUnstable:
-            return "The stationary background never settled."
         case .calibrationProfileMismatch:
             return "The current setup does not match the loaded calibration."
         default:

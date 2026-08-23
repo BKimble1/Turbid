@@ -38,6 +38,16 @@
                ReferencedContainer = "container:Lucid.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "129964AA630C5970DF325D9E"
+               BuildableName = "LucidUITests.xctest"
+               BlueprintName = "LucidUITests"
+               ReferencedContainer = "container:Lucid.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

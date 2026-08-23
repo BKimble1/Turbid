@@ -45,6 +45,11 @@ final class CameraService: NSObject, CameraControlling, @unchecked Sendable {
     // MARK: Cross-queue state
 
     private let timing = FrameTimingRecorder()
+    /// Set from any thread; read on the processing queue. Guarded by its own
+    /// lock because the analyzer is attached and detached from the MainActor
+    /// while frames are already arriving.
+    private let consumerLock = NSLock()
+    private var frameConsumer: CaptureFrameConsuming?
     private let requirements: CaptureRequirements
     private let continuation: AsyncStream<CaptureSnapshot>.Continuation
 
@@ -89,6 +94,17 @@ final class CameraService: NSObject, CameraControlling, @unchecked Sendable {
         continuation.finish()
     }
 
+    /// Safe from any thread: the recorder has its own lock.
+    func resetFrameStatistics() {
+        timing.reset()
+    }
+
+    func setFrameConsumer(_ consumer: CaptureFrameConsuming?) {
+        consumerLock.lock()
+        frameConsumer = consumer
+        consumerLock.unlock()
+    }
+
     /// Read from the MainActor to build the preview layer. `AVCaptureSession`
     /// is safe to hand to `AVCaptureVideoPreviewLayer` from another thread;
     /// its configuration still only happens on `sessionQueue`.
@@ -127,6 +143,17 @@ final class CameraService: NSObject, CameraControlling, @unchecked Sendable {
                 // input to the session.
                 if let summary = selectionSummary { return summary }
                 throw CameraError.sessionNotConfigured
+            }
+
+            // Configured by an earlier run and then stopped. The session keeps
+            // its input, output and active format across a stop, so repeating
+            // discovery and format selection would cost a second and change
+            // nothing — and it would reset the timing the caller may still be
+            // reading.
+            if let summary = selectionSummary, deviceInput != nil {
+                lifecycle.apply(.prepareSucceeded)
+                publishSnapshot()
+                return summary
             }
 
             do {
@@ -754,14 +781,24 @@ extension CameraService: AVCaptureVideoDataOutputSampleBufferDelegate {
 
     /// Runs on `processingQueue`.
     ///
-    /// The sample buffer does not escape this method. Phase 3A adds the frame
-    /// analyzer here, inside the same boundary.
+    /// The sample buffer does not escape this method: the consumer is handed
+    /// the pixel buffer for the duration of the call and nothing longer.
     func captureOutput(_ output: AVCaptureOutput,
                        didOutput sampleBuffer: CMSampleBuffer,
                        from connection: AVCaptureConnection) {
         let presentation = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         guard presentation.isValid && presentation.isNumeric else { return }
-        timing.record(presentationSeconds: CMTimeGetSeconds(presentation))
+        let seconds = CMTimeGetSeconds(presentation)
+        timing.record(presentationSeconds: seconds)
+
+        consumerLock.lock()
+        let consumer = frameConsumer
+        consumerLock.unlock()
+
+        guard let consumer, let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
+            return
+        }
+        consumer.consume(pixelBuffer: pixelBuffer, presentationSeconds: seconds)
     }
 
     /// Runs on `processingQueue`.

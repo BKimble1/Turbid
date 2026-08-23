@@ -79,6 +79,30 @@ enum CalibrationFactory {
                                      tracking: tracking())
     }
 
+    // MARK: - Readings
+
+    /// A complete reading, so tests that consume one do not have to assemble
+    /// the whole chain that produces it.
+    static func reading(residual: Double = 0.02,
+                        mode: MeasurementMode = .screening,
+                        usable: Bool = true,
+                        profile: CalibrationProfile? = nil,
+                        liveBinding: CalibrationBinding? = nil,
+                        timestamp: Date = Date(timeIntervalSince1970: 1_700_000_000))
+    -> TurbidityReading {
+        TurbidityReading.make(
+            timestamp: timestamp,
+            windowSeconds: CaptureProtocol.screening.measurementWindowSeconds,
+            mode: mode,
+            summary: summary(residual: residual),
+            tracking: tracking(),
+            quality: quality(usable: usable),
+            profile: profile,
+            liveBinding: liveBinding,
+            algorithmVersions: algorithmVersions
+        )
+    }
+
     // MARK: - Binding
 
     static let algorithmVersions = CalibrationBinding.AlgorithmVersions(
@@ -195,6 +219,8 @@ enum CalibrationFactory {
     /// Fits `goodLevels` into a usable profile.
     static func profile(levels: [CalibrationLevel]? = nil,
                         binding: CalibrationBinding? = nil,
+                        name: String = "Bench fixture",
+                        createdAt: Date = fitDate,
                         expiresAt: Date = Date(timeIntervalSince1970: 1_900_000_000),
                         id: UUID = UUID(uuidString: "11111111-2222-3333-4444-555555555555")!)
     -> CalibrationProfile? {
@@ -208,8 +234,8 @@ enum CalibrationFactory {
         return CalibrationProfile(
             id: id,
             schemaVersion: CalibrationProfile.currentSchemaVersion,
-            name: "Bench fixture",
-            createdAt: fitDate,
+            name: name,
+            createdAt: createdAt,
             expiresAt: expiresAt,
             binding: binding ?? Self.binding(),
             mapping: candidate.mapping,

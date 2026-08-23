@@ -299,6 +299,12 @@ def main():
     check("slow drift tolerated", slow <= MOTION_LIMIT, f"{slow:.6f}")
     check("fast pan rejected", fast > MOTION_LIMIT, f"{fast:.6f}")
 
+    # The translation `SimulatedSample.unsteady` and the pipeline's shaken-run
+    # test use. Both claim it is rejected; this is where that claim is checked.
+    unsteady = median_motion(good_scene(tx=0.35, ty=0.25))
+    check("the unsteady scene is rejected", unsteady > MOTION_LIMIT * 1.5,
+          f"{unsteady:.6f} vs limit {MOTION_LIMIT}")
+
     print()
     print("Failure scenes are rejected")
     dark = stats(render(dict(w=160, h=120, base=0.004, sigma=0.0005, seed=4), 0, 0))
@@ -319,6 +325,7 @@ def main():
     failures.extend(check_phase_3b())
     failures.extend(check_phase_3c())
     failures.extend(check_phase_3d())
+    failures.extend(check_phase_4())
 
     print()
     if failures:
@@ -450,7 +457,11 @@ MIN_AREA_PIXELS = 2
 MAX_NORMALIZED_DIAMETER = 0.04
 MIN_LOCAL_CONTRAST = 1.2
 STABILITY_LIMIT_SIGMAS = 6.0
-MIN_BACKGROUND_STABILITY = 0.93
+# Reported, never gated on. Kept here because the 3B checks below are what
+# establish that it separates a still container from a moving one and does NOT
+# separate a still container from one full of drifting particles - which is
+# exactly why it cannot be a quality gate.
+BACKGROUND_STABILITY_REFERENCE = 0.93
 
 
 def detect_scene(**kw):
@@ -507,6 +518,194 @@ def accepted_candidates(scene, background, frame_index, mask=None):
 def speck(cx, cy, orbit, omega, phase, radius, brightness):
     return (cx, cy, orbit, omega, phase, 0.0, 0.0, radius, brightness)
 
+
+# ---------------------------------------------------------------------------
+# Phase 4: the scenes the Simulator and the UI tests measure
+#
+# The interface is driven on the Simulator by a synthetic frame source, and the
+# UI tests assert what each scene produces. Those assertions are only worth
+# anything if the scenes really do clear (or really do fail) the gates, and the
+# gates are applied to the cropped, masked analysis region rather than to the
+# whole frame. That is what this section checks.
+# ---------------------------------------------------------------------------
+
+# `AnalysisRegion.screeningDefault`.
+REGION_RECT = (0.25, 0.28, 0.50, 0.44)
+REGION_EXCLUDED_RECTS = [(0.0, 0.0, 1.0, 0.12)]
+REGION_EXCLUDED_ELLIPSES = [(0.30, 0.02, 0.40, 0.34)]
+
+
+def region_pixel_rect(w, h):
+    """Mirrors `AnalysisRegion.pixelRect(inWidth:height:)`."""
+    x = math.floor(REGION_RECT[0] * w)
+    y = math.floor(REGION_RECT[1] * h)
+    max_x = math.ceil((REGION_RECT[0] + REGION_RECT[2]) * w)
+    max_y = math.ceil((REGION_RECT[1] + REGION_RECT[3]) * h)
+    return x, y, min(max_x, w) - x, min(max_y, h) - y
+
+
+def crop_to_region(img):
+    x, y, w, h = region_pixel_rect(img.w, img.h)
+    out = Img(w, h)
+    for row in range(h):
+        src = (y + row) * img.w + x
+        dst = row * w
+        out.v[dst:dst + w] = img.v[src:src + w]
+    return out
+
+
+def region_mask(w, h):
+    """Mirrors `RasterizedMask`, sampling at pixel centres."""
+    flags = [True] * (w * h)
+    for yy in range(h):
+        ny = (yy + 0.5) / h
+        for xx in range(w):
+            nx = (xx + 0.5) / w
+            excluded = False
+            for rx, ry, rw, rh in REGION_EXCLUDED_RECTS:
+                if rx <= nx <= rx + rw and ry <= ny <= ry + rh:
+                    excluded = True
+            for ex, ey, ew, eh in REGION_EXCLUDED_ELLIPSES:
+                if ew <= 0 or eh <= 0:
+                    continue
+                dx = (nx - (ex + ew / 2)) / (ew / 2)
+                dy = (ny - (ey + eh / 2)) / (eh / 2)
+                if dx * dx + dy * dy <= 1:
+                    excluded = True
+            flags[yy * w + xx] = not excluded
+    return flags
+
+
+def simulated_scene(kind):
+    """Mirrors `SimulatedSample.scene`."""
+    counts = {"clear": (2, 0.16), "lightlyLoaded": (12, 0.30),
+              "heavilyLoaded": (30, 0.46), "unsteady": (12, 0.30)}
+    count, brightness = counts[kind]
+    specks = []
+    for i in range(count):
+        column = i % 8
+        row = i // 8
+        specks.append((0.30 + column * 0.055, 0.47 + row * 0.035,
+                       0.012 + (i % 3) * 0.004, 0.9 + (i % 5) * 0.2, float(i) * 0.7,
+                       0.002, 0.004, 1.0 + (i % 3) * 0.2, brightness))
+    scene = dict(w=320, h=240, base=0.14, sigma=0.004, vignette=0.12,
+                 scratches=[(0.28, 0.44, 0.72, 0.50, 0.30, 2.0)],
+                 blobs=[(0.62, 0.62, 3.0, 0.25)],
+                 specks=specks, seed=0x51CE)
+    if kind == "unsteady":
+        scene["tx"] = 0.35
+        scene["ty"] = 0.25
+    return scene
+
+
+def region_stats(scene, t=0.0, frame_index=0):
+    img = crop_to_region(render(scene, t, frame_index))
+    return stats(img, region_mask(img.w, img.h))
+
+
+def region_frame_motions(scene, frames=16, fps=30.0):
+    """Per-frame motion on the region, which is what the gate actually sees."""
+    values = []
+    prev = None
+    for i in range(frames):
+        c = coarse(crop_to_region(render(scene, i / fps, i)))
+        if prev is not None:
+            values.append(motion(prev, c))
+        prev = c
+    return values
+
+
+def check_phase_4():
+    failures = []
+
+    def check(name, condition, detail):
+        status = "ok  " if condition else "FAIL"
+        print(f"  [{status}] {name}: {detail}")
+        if not condition:
+            failures.append(name)
+
+    print()
+    print("Phase 4: the simulated scenes, judged on the analysis region")
+    print()
+
+    for kind in ("clear", "lightlyLoaded", "heavilyLoaded"):
+        scene = simulated_scene(kind)
+        st = region_stats(scene)
+        motions = region_frame_motions(scene)
+        worst = max(motions) if motions else 0.0
+        check(f"{kind}: level in band",
+              MEAN_LOW < st["mean"] < MEAN_HIGH, f"mean {st['mean']:.4f}")
+        check(f"{kind}: no clipping",
+              st["sat"] <= SATURATION_LIMIT, f"{st['sat']:.5f}")
+        check(f"{kind}: no hotspot",
+              st["tile"] <= TILE_LIMIT, f"{st['tile']:.4f}")
+        check(f"{kind}: in focus",
+              st["sharp"] >= SHARPNESS_LIMIT,
+              f"{st['sharp']:.6f} vs {SHARPNESS_LIMIT}")
+        # Every frame, not the median: a frame the gate rejects is a frame that
+        # does not count towards the usable ratio, and enough of them fail the
+        # window even when the median passes.
+        check(f"{kind}: every frame reads as still", worst <= MOTION_LIMIT,
+              f"worst {worst:.6f} of {len(motions)} vs {MOTION_LIMIT}")
+
+    print()
+    shaken = region_frame_motions(simulated_scene("unsteady"))
+    rejected = sum(1 for value in shaken if value > MOTION_LIMIT)
+    check("unsteady is rejected on the region too, on every frame",
+          rejected == len(shaken), f"{rejected}/{len(shaken)} frames over the limit")
+
+    print()
+    # Why background stability is not a gate: a busy sample scores worse than a
+    # container creeping at 2% of the frame width per second, which the motion
+    # gate lets through. No threshold separates them, so gating on it would
+    # reject the turbid samples the app exists to identify.
+    # A denser sample than any of the shipped scenes: those are tuned so the
+    # *motion* gate has margin at this frame size, which also lifts their
+    # stability. The point being made here is about the metric, so it is made
+    # with a sample that is genuinely full of material.
+    dense = simulated_scene("heavilyLoaded")
+    dense["specks"] = [(0.30 + (i % 8) * 0.055, 0.47 + (i // 8) * 0.035,
+                        0.012 + (i % 3) * 0.004, 0.9 + (i % 5) * 0.2, float(i) * 0.7,
+                        0.002, 0.004, 1.4 + (i % 3) * 0.3, 0.46) for i in range(48)]
+    busy = background_stability_on_region(dense)
+    still = background_stability_on_region(simulated_scene("clear"))
+    marks = dict(
+        scratches=[(0.10, 0.20, 0.90, 0.26, 0.40, 2.0),
+                   (0.15, 0.70, 0.85, 0.62, 0.35, 2.0),
+                   (0.30, 0.10, 0.36, 0.90, 0.30, 2.0)],
+        blobs=[(0.25, 0.45, 4, 0.5), (0.70, 0.55, 5, 0.45), (0.50, 0.80, 3, 0.4)],
+    )
+    creep_scene = detect_scene(tx=0.02, ty=0.01, **marks)
+    creep = background_stability(creep_scene)
+    creep_motion = median_motion(creep_scene, frames=12)
+    check("a still sample reads as stable", still > BACKGROUND_STABILITY_REFERENCE,
+          f"{still:.4f}")
+    check("a sample full of material scores worse than an undetected creep",
+          busy < creep, f"busy {busy:.4f} vs creep {creep:.4f}")
+    check("that creep is invisible to the motion gate",
+          creep_motion <= MOTION_LIMIT, f"{creep_motion:.6f}")
+
+    return failures
+
+
+def background_stability_on_region(scene, noise=0.004):
+    """`background_stability`, but on the cropped and masked region."""
+    frames = [crop_to_region(render(scene, i / DETECT_FPS, i))
+              for i in range(0, ACQUISITION_FRAMES, ACQUISITION_STRIDE)][-MEDIAN_SAMPLES:]
+    if not frames:
+        return 0.0
+    mask = region_mask(frames[0].w, frames[0].h)
+    limit = max(noise, 1e-6) * STABILITY_LIMIT_SIGMAS
+    considered = 0
+    unstable = 0
+    for i in range(len(frames[0].v)):
+        if not mask[i]:
+            continue
+        considered += 1
+        window = sorted(f.v[i] for f in frames)
+        if window[-1] - window[0] > limit:
+            unstable += 1
+    return 1 - unstable / considered if considered else 0.0
 
 def check_phase_3b():
     failures = []
@@ -593,8 +792,10 @@ def check_phase_3b():
     sample = background_stability(detect_scene(specks=specks20))
     shifted = background_stability(detect_scene(tx=0.4, ty=0.2, **marks))
     check("still background is stable", still > 0.95, f"{still:.4f}")
-    check("drifting particles stay stable", sample > MIN_BACKGROUND_STABILITY, f"{sample:.4f}")
-    check("shifted structure is unstable", shifted < MIN_BACKGROUND_STABILITY, f"{shifted:.4f}")
+    check("drifting particles stay stable", sample > BACKGROUND_STABILITY_REFERENCE,
+          f"{sample:.4f}")
+    check("shifted structure is unstable", shifted < BACKGROUND_STABILITY_REFERENCE,
+          f"{shifted:.4f}")
 
     return failures
 

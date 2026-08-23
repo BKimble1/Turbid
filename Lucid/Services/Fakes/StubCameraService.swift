@@ -17,13 +17,28 @@ actor StubCameraService: CameraControlling {
         case stop
     }
 
+    /// The awaited calls, in order.
+    ///
+    /// Consumer attachment and timing resets are deliberately *not* here: they
+    /// arrive synchronously from whatever thread the pipeline is on, so mixing
+    /// them into this list would make its order depend on scheduling and turn
+    /// every ordering assertion into a flake. They are recorded separately.
     private(set) var calls: [Call] = []
+
+    nonisolated let consumerLog = StubEventLog()
+    nonisolated let timingResets = StubEventLog()
 
     private var snapshot: CaptureSnapshot = .idle
     private let continuation: AsyncStream<CaptureSnapshot>.Continuation
 
     nonisolated let snapshots: AsyncStream<CaptureSnapshot>
     nonisolated var previewSession: AVCaptureSession? { nil }
+
+    /// Present only when the stub is asked to behave like a camera that
+    /// actually delivers frames. Unit tests that do not need frames leave it
+    /// `nil`. `nonisolated` so the frame consumer can be attached without an
+    /// actor hop, which is what the real service does too.
+    private nonisolated let frameSource: SimulatedFrameSource?
 
     // Scripted outcomes.
     private let summary: CameraSelectionSummary
@@ -42,7 +57,9 @@ actor StubCameraService: CameraControlling {
          lockError: CameraError? = nil,
          settlesDuringWarmUp: Bool = true,
          torchError: CameraError? = nil,
-         torchLevel: Float = 1.0) {
+         torchLevel: Float = 1.0,
+         frameSource: SimulatedFrameSource? = nil) {
+        self.frameSource = frameSource
         self.summary = summary
         self.prepareError = prepareError
         self.startError = startError
@@ -77,6 +94,7 @@ actor StubCameraService: CameraControlling {
         calls.append(.start)
         if let startError { throw startError }
         update { $0.runState = .running }
+        frameSource?.start()
     }
 
     @discardableResult
@@ -110,6 +128,7 @@ actor StubCameraService: CameraControlling {
 
     func stop() async {
         calls.append(.stop)
+        frameSource?.stop()
         update {
             $0.runState = .idle
             $0.torch = .off
@@ -117,7 +136,31 @@ actor StubCameraService: CameraControlling {
         }
     }
 
-    func currentSnapshot() async -> CaptureSnapshot { snapshot }
+    /// Merged with the frame source's real delivery statistics, so a simulated
+    /// run's reading is judged on frames that actually arrived rather than on
+    /// an empty record.
+    func currentSnapshot() async -> CaptureSnapshot {
+        guard let frameSource else { return snapshot }
+        var copy = snapshot
+        copy.timing = frameSource.frameStatistics()
+        return copy
+    }
+
+    nonisolated func resetFrameStatistics() {
+        timingResets.record(true)
+        frameSource?.resetFrameStatistics()
+    }
+
+    nonisolated func setFrameConsumer(_ consumer: CaptureFrameConsuming?) {
+        consumerLog.record(consumer != nil)
+        frameSource?.attach(consumer)
+    }
+
+    /// Selects which synthetic sample the simulated camera is pointed at.
+    /// Does nothing when there is no frame source, which is the unit-test case.
+    nonisolated func setSimulatedSample(_ sample: SimulatedSample) {
+        frameSource?.setSample(sample)
+    }
 
     /// Lets a test drive thermal, pressure and interruption states.
     func applyOverride(_ mutate: (inout CaptureSnapshot) -> Void) {
@@ -144,6 +187,46 @@ extension CameraSelectionSummary {
         frameRate: 30,
         rationale: ["stubbed selection"],
         warnings: [],
+        rejectedCameras: []
+    )
+}
+
+/// A thread-safe list of events recorded from outside the actor.
+final class StubEventLog: @unchecked Sendable {
+    private let lock = NSLock()
+    private var entries: [Bool] = []
+
+    func record(_ value: Bool) {
+        lock.lock()
+        defer { lock.unlock() }
+        entries.append(value)
+    }
+
+    var all: [Bool] {
+        lock.lock()
+        defer { lock.unlock() }
+        return entries
+    }
+
+    var count: Int { all.count }
+    var latest: Bool? { all.last }
+}
+
+extension CameraSelectionSummary {
+    /// Describes the simulated feed truthfully: the frames really are 320x240,
+    /// so a calibration binding recorded on the Simulator records that and
+    /// cannot be mistaken for one made on a physical camera.
+    static let simulatedFeed = CameraSelectionSummary(
+        cameraName: "Simulated Camera",
+        deviceType: "AVCaptureDeviceTypeBuiltInUltraWideCamera",
+        uniqueID: "simulated-feed",
+        isVirtualDevice: false,
+        minimumFocusDistanceMillimetres: 20,
+        resolution: "320x240",
+        pixelFormat: "420f",
+        frameRate: 30,
+        rationale: ["simulated frame source; no camera hardware is present"],
+        warnings: ["Frames are generated, not captured."],
         rejectedCameras: []
     )
 }

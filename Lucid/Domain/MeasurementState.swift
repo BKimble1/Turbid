@@ -50,6 +50,16 @@ enum MeasurementState: Equatable, Sendable {
         }
     }
 
+    /// States that have a reading to show. A rejected window still produced
+    /// one: the evidence for the rejection is in it, and hiding that would
+    /// leave the user with nothing to act on.
+    var presentsAResult: Bool {
+        switch self {
+        case .result, .lowQuality: return true
+        default: return false
+        }
+    }
+
     /// `true` when the user can restart the flow from this state.
     var isRestartable: Bool {
         switch self {

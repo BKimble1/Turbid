@@ -6,32 +6,70 @@ struct AppEnvironment: Sendable {
     let cameraAuthorization: CameraAuthorizing
     let camera: CameraControlling
     let settingsOpener: SettingsOpening
-    /// Whether illustrative sample data may be displayed at all.
+    let disclosure: DisclosureRecording
+    let calibrationStore: any CalibrationStoring
+    /// Builds the analysis pipeline for one run. A factory rather than a shared
+    /// instance: each run gets a clean analyzer, and nothing from a previous
+    /// measurement can survive into the next one.
+    let makePipeline: @Sendable () -> MeasurementPipeline
+    /// Which mode a fresh session starts in. Screening everywhere except a UI
+    /// test that is specifically exercising the calibrated path.
+    let initialMode: MeasurementMode
+    /// Whether illustrative or simulated content may be displayed at all.
     let allowsSimulatedData: Bool
 
     init(cameraAuthorization: CameraAuthorizing,
          camera: CameraControlling,
          settingsOpener: SettingsOpening,
+         disclosure: DisclosureRecording = InMemoryDisclosureRecorder(acknowledged: true),
+         calibrationStore: any CalibrationStoring = InMemoryCalibrationStore(),
+         makePipeline: @escaping @Sendable () -> MeasurementPipeline = { MeasurementPipeline() },
+         initialMode: MeasurementMode = .screening,
          allowsSimulatedData: Bool) {
         self.cameraAuthorization = cameraAuthorization
         self.camera = camera
         self.settingsOpener = settingsOpener
+        self.disclosure = disclosure
+        self.calibrationStore = calibrationStore
+        self.makePipeline = makePipeline
+        self.initialMode = initialMode
         self.allowsSimulatedData = allowsSimulatedData
     }
 
     /// The environment used by the shipping app.
     ///
-    /// The Simulator has no camera or torch, so it gets the stub rather than a
-    /// `CameraService` that would fail on every call. That substitution is tied
-    /// to `RuntimeEnvironment.allowsSimulatedData`, which also requires a debug
+    /// The Simulator has no camera or torch, so it gets the stub driven by a
+    /// synthetic frame source rather than a `CameraService` that would fail on
+    /// every call. That substitution is tied to
+    /// `RuntimeEnvironment.allowsSimulatedData`, which also requires a debug
     /// build, so a shipped binary always gets the real pipeline.
     static func live() -> AppEnvironment {
         let simulated = RuntimeEnvironment.allowsSimulatedData
+        let camera: CameraControlling = simulated
+            ? StubCameraService(summary: .simulatedFeed, frameSource: SimulatedFrameSource())
+            : CameraService()
+
         return AppEnvironment(
             cameraAuthorization: SystemCameraAuthorizationService(),
-            camera: simulated ? StubCameraService() : CameraService(),
+            camera: camera,
             settingsOpener: SystemSettingsOpener(),
+            disclosure: DefaultsDisclosureRecorder(),
+            calibrationStore: Self.calibrationStore(),
+            makePipeline: { MeasurementPipeline() },
             allowsSimulatedData: simulated
         )
+    }
+
+    /// Falls back to memory when the support directory cannot be created.
+    ///
+    /// Losing calibrations on relaunch is bad; refusing to launch is worse, and
+    /// the calibration screen reports the failure rather than hiding it.
+    private static func calibrationStore() -> any CalibrationStoring {
+        do {
+            return FileCalibrationStore(url: try FileCalibrationStore.defaultURL())
+        } catch {
+            LucidLog.calibration.error("Calibration storage is unavailable; using memory only.")
+            return InMemoryCalibrationStore()
+        }
     }
 }

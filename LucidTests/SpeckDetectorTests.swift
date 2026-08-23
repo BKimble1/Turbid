@@ -389,6 +389,12 @@ final class SpeckDetectorTests: XCTestCase {
     }
 
     // MARK: - Background stability
+    //
+    // Reported, never gated on. These tests pin the number down because it is
+    // shown to the user and because it is the evidence for that decision: it
+    // separates a still container from a moving one, and it does *not*
+    // separate a still container from one full of drifting particles, which is
+    // why it cannot be a gate.
 
     func testAStillSceneGivesAStableBackground() {
         let detector = makeDetector(background: scene())
@@ -423,8 +429,7 @@ final class SpeckDetectorTests: XCTestCase {
             $0.globalTranslation = CGVector(dx: 0.4, dy: 0.2)
         }
         let detector = makeDetector(background: moving)
-        XCTAssertLessThan(detector.backgroundStability,
-                          QualityThresholds.screening.minimumBackgroundStability,
+        XCTAssertLessThan(detector.backgroundStability, 0.93,
                           "a median over a scene that moved describes somewhere nothing is any more")
     }
 
@@ -443,7 +448,6 @@ final class SpeckDetectorTests: XCTestCase {
             }
         }
         let detector = makeDetector(background: sample)
-        XCTAssertGreaterThan(detector.backgroundStability,
-                             QualityThresholds.screening.minimumBackgroundStability)
+        XCTAssertGreaterThan(detector.backgroundStability, 0.93)
     }
 }

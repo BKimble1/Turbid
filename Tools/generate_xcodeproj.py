@@ -23,6 +23,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 APP_NAME = "Lucid"
 TEST_NAME = "LucidTests"
+UITEST_NAME = "LucidUITests"
 BUNDLE_ID = "com.lucid.Lucid"
 DEPLOYMENT_TARGET = "17.0"
 SWIFT_VERSION = "5.0"
@@ -343,6 +344,22 @@ TEST_TARGET_SETTINGS = {
     "TEST_HOST": f"$(BUILT_PRODUCTS_DIR)/{APP_NAME}.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/{APP_NAME}",
 }
 
+# A UI-test bundle drives the app from outside it, so it has no BUNDLE_LOADER
+# and no TEST_HOST: it launches the app rather than being loaded into it.
+UITEST_TARGET_SETTINGS = {
+    "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES": "NO",
+    "CODE_SIGN_STYLE": "Automatic",
+    "CURRENT_PROJECT_VERSION": "1",
+    "GENERATE_INFOPLIST_FILE": "YES",
+    "MARKETING_VERSION": "1.0",
+    "PRODUCT_BUNDLE_IDENTIFIER": f"{BUNDLE_ID}UITests",
+    "PRODUCT_NAME": "$(TARGET_NAME)",
+    "SWIFT_EMIT_LOC_STRINGS": "NO",
+    "SWIFT_VERSION": SWIFT_VERSION,
+    "TARGETED_DEVICE_FAMILY": "1",
+    "TEST_TARGET_NAME": APP_NAME,
+}
+
 
 def configuration_list(owner: str, debug: dict, release: dict) -> str:
     debug_id = add(f"config:{owner}:Debug", "Debug",
@@ -368,14 +385,18 @@ def configuration_list(owner: str, debug: dict, release: dict) -> str:
 def main() -> int:
     app_sources, app_resources = discover(APP_NAME)
     test_sources, _ = discover(TEST_NAME)
+    uitest_sources, _ = discover(UITEST_NAME)
 
     if not app_sources:
         raise SystemExit(f"no Swift sources found under {APP_NAME}/")
     if not test_sources:
         raise SystemExit(f"no Swift sources found under {TEST_NAME}/")
+    if not uitest_sources:
+        raise SystemExit(f"no Swift sources found under {UITEST_NAME}/")
 
     app_group = build_group_tree(app_sources + app_resources, APP_NAME)
     test_group = build_group_tree(test_sources, TEST_NAME)
+    uitest_group = build_group_tree(uitest_sources, UITEST_NAME)
 
     app_product = add(
         "product:app", f"{APP_NAME}.app",
@@ -397,17 +418,27 @@ def main() -> int:
             "sourceTree": "BUILT_PRODUCTS_DIR",
         },
     )
+    uitest_product = add(
+        "product:uitests", f"{UITEST_NAME}.xctest",
+        {
+            "isa": "PBXFileReference",
+            "explicitFileType": "wrapper.cfbundle",
+            "includeInIndex": "0",
+            "path": f"{UITEST_NAME}.xctest",
+            "sourceTree": "BUILT_PRODUCTS_DIR",
+        },
+    )
     products_group = add(
         "group:Products", "Products",
         {
             "isa": "PBXGroup",
-            "children": [app_product, test_product],
+            "children": [app_product, test_product, uitest_product],
             "name": "Products",
             "sourceTree": "<group>",
         },
     )
 
-    main_children = [app_group, test_group, products_group]
+    main_children = [app_group, test_group, uitest_group, products_group]
 
     main_group = add(
         "group:main", "",
@@ -535,6 +566,73 @@ def main() -> int:
         },
     )
 
+    # --- UI test target -----------------------------------------------------
+    uitest_sources_phase = add(
+        "phase:uitests:Sources", "Sources",
+        {
+            "isa": "PBXSourcesBuildPhase",
+            "buildActionMask": "2147483647",
+            "files": [build_file(path, "uitests", "Sources") for path in uitest_sources],
+            "runOnlyForDeploymentPostprocessing": "0",
+        },
+    )
+    uitest_frameworks_phase = add(
+        "phase:uitests:Frameworks", "Frameworks",
+        {
+            "isa": "PBXFrameworksBuildPhase",
+            "buildActionMask": "2147483647",
+            "files": [],
+            "runOnlyForDeploymentPostprocessing": "0",
+        },
+    )
+    uitest_resources_phase = add(
+        "phase:uitests:Resources", "Resources",
+        {
+            "isa": "PBXResourcesBuildPhase",
+            "buildActionMask": "2147483647",
+            "files": [],
+            "runOnlyForDeploymentPostprocessing": "0",
+        },
+    )
+    uitest_proxy = add(
+        "proxy:uitests->app", "PBXContainerItemProxy",
+        {
+            "isa": "PBXContainerItemProxy",
+            "containerPortal": project_id,
+            "proxyType": "1",
+            "remoteGlobalIDString": app_target,
+            "remoteInfo": APP_NAME,
+        },
+    )
+    uitest_dependency = add(
+        "dependency:uitests->app", "PBXTargetDependency",
+        {
+            "isa": "PBXTargetDependency",
+            "target": app_target,
+            "targetProxy": uitest_proxy,
+        },
+    )
+    uitest_config_list = configuration_list(
+        f'"{UITEST_NAME}" target',
+        {**UITEST_TARGET_SETTINGS},
+        {**UITEST_TARGET_SETTINGS},
+    )
+    uitest_target = add(
+        "target:uitests", UITEST_NAME,
+        {
+            "isa": "PBXNativeTarget",
+            "buildConfigurationList": uitest_config_list,
+            "buildPhases": [uitest_sources_phase, uitest_frameworks_phase,
+                            uitest_resources_phase],
+            "buildRules": [],
+            "dependencies": [uitest_dependency],
+            "name": UITEST_NAME,
+            "productName": UITEST_NAME,
+            "productReference": uitest_product,
+            "productType": "com.apple.product-type.bundle.ui-testing",
+        },
+    )
+
     # --- Project ------------------------------------------------------------
     project_config_list = configuration_list(
         f'"{APP_NAME}" project',
@@ -552,6 +650,7 @@ def main() -> int:
             "TargetAttributes": {
                 app_target: {"CreatedOnToolsVersion": "16.0"},
                 test_target: {"CreatedOnToolsVersion": "16.0", "TestTargetID": app_target},
+                uitest_target: {"CreatedOnToolsVersion": "16.0", "TestTargetID": app_target},
             },
         },
         "buildConfigurationList": project_config_list,
@@ -563,7 +662,7 @@ def main() -> int:
         "productRefGroup": products_group,
         "projectDirPath": "",
         "projectRoot": "",
-        "targets": [app_target, test_target],
+        "targets": [app_target, test_target, uitest_target],
     }
     comments[project_id] = "Project object"
 
@@ -603,8 +702,10 @@ def main() -> int:
     scheme = SCHEME_TEMPLATE.format(
         app_name=APP_NAME,
         test_name=TEST_NAME,
+        uitest_name=UITEST_NAME,
         app_target=app_target,
         test_target=test_target,
+        uitest_target=uitest_target,
         bundle_id=BUNDLE_ID,
         container=f"container:{APP_NAME}.xcodeproj",
     )
@@ -616,6 +717,7 @@ def main() -> int:
     print(f"  app sources    : {len(app_sources)}")
     print(f"  app resources  : {len(app_resources)}")
     print(f"  test sources   : {len(test_sources)}")
+    print(f"  ui test sources: {len(uitest_sources)}")
     print(f"  pbxproj objects: {len(objects)}")
     return 0
 
@@ -657,6 +759,16 @@ SCHEME_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
                BlueprintIdentifier = "{test_target}"
                BuildableName = "{test_name}.xctest"
                BlueprintName = "{test_name}"
+               ReferencedContainer = "{container}">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "{uitest_target}"
+               BuildableName = "{uitest_name}.xctest"
+               BlueprintName = "{uitest_name}"
                ReferencedContainer = "{container}">
             </BuildableReference>
          </TestableReference>

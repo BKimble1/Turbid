@@ -187,7 +187,8 @@ def main() -> int:
     # 3. Targets.
     targets = {i: e for i, e in objects.items() if e["isa"] == "PBXNativeTarget"}
     names = sorted(e["name"] for e in targets.values())
-    require(names == ["Lucid", "LucidTests"], f"unexpected targets: {names}")
+    require(names == ["Lucid", "LucidTests", "LucidUITests"],
+            f"unexpected targets: {names}")
 
     for identifier, target in targets.items():
         require("productReference" in target, f"{target['name']} has no product reference")
@@ -197,11 +198,27 @@ def main() -> int:
 
     app = next(t for t in targets.values() if t["name"] == "Lucid")
     tests = next(t for t in targets.values() if t["name"] == "LucidTests")
+    uitests = next(t for t in targets.values() if t["name"] == "LucidUITests")
     require(app["productType"] == "com.apple.product-type.application",
             "Lucid is not an application target")
     require(tests["productType"] == "com.apple.product-type.bundle.unit-test",
             "LucidTests is not a unit-test target")
+    require(uitests["productType"] == "com.apple.product-type.bundle.ui-testing",
+            "LucidUITests is not a UI-testing target")
     require(len(tests["dependencies"]) == 1, "LucidTests does not depend on Lucid")
+    require(len(uitests["dependencies"]) == 1, "LucidUITests does not depend on Lucid")
+
+    # A UI-test bundle launches the app; it is never loaded into it. A stray
+    # TEST_HOST would make it a unit-test bundle wearing the wrong product type.
+    for configuration in uitests["buildConfigurationList"], :
+        for config_id in objects[configuration]["buildConfigurations"]:
+            settings = objects[config_id]["buildSettings"]
+            require(settings.get("TEST_TARGET_NAME") == "Lucid",
+                    "LucidUITests does not name Lucid as its test target")
+            require("TEST_HOST" not in settings,
+                    "LucidUITests must not set TEST_HOST")
+            require("BUNDLE_LOADER" not in settings,
+                    "LucidUITests must not set BUNDLE_LOADER")
 
     # 4. Every build file points at a file that exists on disk.
     paths: dict[str, str] = {}
@@ -242,7 +259,7 @@ def main() -> int:
                     compiled[path] = compiled.get(path, 0) + 1
 
     on_disk: set[str] = set()
-    for directory in ("Lucid", "LucidTests"):
+    for directory in ("Lucid", "LucidTests", "LucidUITests"):
         for current, subdirs, files in os.walk(os.path.join(ROOT, directory)):
             subdirs[:] = [d for d in subdirs if not d.endswith(".xcassets")]
             for name in files:

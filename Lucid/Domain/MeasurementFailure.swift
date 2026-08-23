@@ -5,8 +5,8 @@ struct MeasurementFailure: Equatable, Sendable {
     enum Code: String, Equatable, Sendable {
         case cameraPermissionDenied
         case cameraPermissionRestricted
-        /// The frame analyzer is not part of this build. Removed in Phase 3A.
-        case analysisUnavailableInThisBuild
+        /// Frames stopped arriving before the measurement window finished.
+        case frameDeliveryStopped
         case cameraUnavailable
         case captureConfigurationFailed
     }
@@ -23,12 +23,14 @@ struct MeasurementFailure: Equatable, Sendable {
 }
 
 extension MeasurementFailure {
-    /// Phase 2 stops here on purpose, once the hardware has been exercised.
-    /// The frame analyzer replaces this in Phase 3A.
-    static let analysisUnavailableInThisBuild = MeasurementFailure(
-        code: .analysisUnavailableInThisBuild,
-        message: "Frame analysis is not part of this build.",
-        recoverySuggestion: "The camera, torch and control locks all worked. Particle detection is added in Phase 3."
+    /// The run is driven by frame presentation timestamps, so if frames stop
+    /// arriving it would otherwise wait forever. The measurement is abandoned
+    /// rather than completed from whatever arrived: a window that was never
+    /// filled is not a shorter measurement, it is not a measurement.
+    static let frameDeliveryStopped = MeasurementFailure(
+        code: .frameDeliveryStopped,
+        message: "The camera stopped delivering frames before the measurement finished.",
+        recoverySuggestion: "Close other apps that use the camera, then try again."
     )
 
     static func cameraUnavailable(_ error: CameraError) -> MeasurementFailure {

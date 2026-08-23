@@ -159,12 +159,20 @@ struct FrameQualityEvaluator: Sendable {
             headrooms.append(0)
         }
 
-        // --- Gates whose inputs arrive in later phases -------------------------
-        if let stability = input.backgroundStability {
-            lowerBound(stability,
-                       limit: thresholds.minimumBackgroundStability,
-                       reason: .backgroundModelUnstable)
-        }
+        // Background stability is recorded but deliberately not gated on.
+        //
+        // It measures how many pixels changed across the acquisition window,
+        // and it cannot tell suspended material drifting through the field from
+        // the container creeping: both change a lot of pixels. Measured on the
+        // synthetic scenes, a sample with plenty of visible particles scores
+        // *worse* than a container drifting at two per cent of the frame width
+        // per second, and no threshold — nor a coarse-plane or majority-vote
+        // reformulation of the same idea — separates them.
+        //
+        // Gating on it would therefore reject exactly the turbid samples the
+        // app exists to identify. Container movement is caught by the motion
+        // gate instead; a creep too slow for that gate is a documented
+        // limitation, not something this number can fix.
         if let compatible = input.calibrationProfileIsCompatible, !compatible {
             failures.append(.calibrationProfileMismatch)
             headrooms.append(0)

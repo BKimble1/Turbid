@@ -57,6 +57,7 @@ struct RelativeScatteringIndex: Equatable, Sendable, Codable {
         /// times larger let it dominate: a clear sample with a burst of tracked
         /// events outscored a genuinely cloudy one, which would have made the
         /// index a particle counter wearing a turbidity label.
+        var speckScale: Double
         var version: Int
 
         /// Unvalidated starting point. The weights that best predict NTU are an
