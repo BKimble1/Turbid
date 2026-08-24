@@ -27,7 +27,7 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SOURCE_DIRS = ("Lucid", "LucidTests", "LucidUITests")
+SOURCE_DIRS = ("Turbid", "TurbidTests", "TurbidUITests")
 
 ALLOWED_IMPORTS = {
     "Accelerate", "AVFoundation", "Charts", "CoreGraphics", "CoreImage",
@@ -37,7 +37,7 @@ ALLOWED_IMPORTS = {
 }
 
 # Force unwrapping is banned outright in these directories.
-STRICT_DIRS = ("Lucid/Camera", "Lucid/Domain", "Lucid/Services", "Lucid/Features")
+STRICT_DIRS = ("Turbid/Camera", "Turbid/Domain", "Turbid/Services", "Turbid/Features")
 
 
 def strip_code(text: str) -> str:
@@ -221,8 +221,8 @@ def top_level_labels(code: str, open_index: int) -> tuple[list[str | None], int]
 IDENTIFIER_CONSTANT = re.compile(
     r"^\s*static\s+let\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\"([^\"]*)\"", re.M
 )
-APP_IDENTIFIERS = "Lucid/Shared/AccessibilityIdentifiers.swift"
-UITEST_IDENTIFIERS = "LucidUITests/UITestIdentifiers.swift"
+APP_IDENTIFIERS = "Turbid/Shared/AccessibilityIdentifiers.swift"
+UITEST_IDENTIFIERS = "TurbidUITests/UITestIdentifiers.swift"
 
 
 def check_identifier_mirror(sources: dict[str, str]) -> list[str]:
@@ -272,7 +272,7 @@ FRAME_PERSISTENCE_SYMBOLS = (
     "PHAssetCreationRequest", "UIPasteboard",
 )
 # Directories that see pixel data. Nothing here may write a file at all.
-FRAME_PATH_DIRS = ("Lucid/Camera", "Lucid/Analysis")
+FRAME_PATH_DIRS = ("Turbid/Camera", "Turbid/Analysis")
 FILE_WRITE_SYMBOLS = ("FileHandle", "OutputStream", "createFile(")
 
 
@@ -281,12 +281,12 @@ def check_frames_stay_on_device(sources: dict[str, str]) -> list[str]:
     failures: list[str] = []
     for relative, code in sorted(sources.items()):
         normalized = relative.replace(os.sep, "/")
-        if normalized.startswith(("LucidTests/", "LucidUITests/")):
+        if normalized.startswith(("TurbidTests/", "TurbidUITests/")):
             continue
 
         for symbol in NETWORK_SYMBOLS:
             if re.search(r"(?<![A-Za-z0-9_])" + re.escape(symbol), code):
-                failures.append(f"{relative}: uses {symbol}; Lucid has no network code")
+                failures.append(f"{relative}: uses {symbol}; Turbid has no network code")
         for match in re.finditer(r"^\s*import\s+([A-Za-z_][A-Za-z0-9_]*)", code, re.M):
             if match.group(1) in NETWORK_MODULES:
                 failures.append(f"{relative}: imports {match.group(1)}")
@@ -312,7 +312,7 @@ def check_frames_stay_on_device(sources: dict[str, str]) -> list[str]:
 
 # --- Copy may not claim accuracy nobody has measured ------------------------
 #
-# Every threshold in Lucid is an unvalidated engineering starting point. These
+# Every threshold in Turbid is an unvalidated engineering starting point. These
 # are the phrases that would turn that into a claim.
 CLAIM_PHRASES = (
     "laboratory-grade", "laboratory grade", "lab-grade", "lab grade",
@@ -331,7 +331,7 @@ def check_no_accuracy_claims(sources: dict[str, str]) -> list[str]:
     failures: list[str] = []
     for relative, text in sorted(sources.items()):
         normalized = relative.replace(os.sep, "/")
-        if not normalized.startswith("Lucid/"):
+        if not normalized.startswith("Turbid/"):
             continue
         for match in STRING_LITERAL.finditer(text):
             literal = (match.group(1) or match.group(2) or "").lower()
@@ -467,7 +467,7 @@ def main() -> int:
 
                 for match in re.finditer(r"^(?:@testable\s+)?import\s+([A-Za-z_][A-Za-z0-9_]*)", code, re.M):
                     module = match.group(1)
-                    if module not in ALLOWED_IMPORTS and module != "Lucid":
+                    if module not in ALLOWED_IMPORTS and module != "Turbid":
                         fail(f"unexpected import {module}")
 
     failures.extend(check_memberwise(sources))

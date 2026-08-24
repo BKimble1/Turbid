@@ -95,7 +95,7 @@ def draw(path: str) -> None:
 
 def main() -> int:
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    target = os.path.join(root, "Lucid", "Resources", "Assets.xcassets",
+    target = os.path.join(root, "Turbid", "Resources", "Assets.xcassets",
                           "AppIcon.appiconset", "AppIcon.png")
     draw(target)
     return 0

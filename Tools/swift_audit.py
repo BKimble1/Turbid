@@ -35,7 +35,7 @@ import os
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SOURCE_DIRS = ("Lucid", "LucidTests", "LucidUITests")
+SOURCE_DIRS = ("Turbid", "TurbidTests", "TurbidUITests")
 
 # Reviewed by hand, once. Everything here is an Apple SDK type, a standard
 # library type, an XCTest assertion or an attribute name. A name that is not in

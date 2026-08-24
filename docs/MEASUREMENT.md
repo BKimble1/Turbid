@@ -1,7 +1,7 @@
 # Measurement: devices, protocol, range, interferences and uncertainty
 
 > **Optical screening only — not a drinking-water safety test.** Nothing in this
-> document should be read as a claim that Lucid establishes whether water is
+> document should be read as a claim that Turbid establishes whether water is
 > safe to drink.
 
 ## Supported devices
@@ -10,7 +10,7 @@
 camera.** Orientation is pinned because a measurement needs a fixed optical
 path.
 
-Lucid does not keep a list of supported iPhone models, and deliberately so. A
+Turbid does not keep a list of supported iPhone models, and deliberately so. A
 model list goes stale, and it says nothing about what a given device can
 actually do. Instead every rear camera is probed at runtime and scored on what
 it reports:
@@ -28,7 +28,7 @@ highest, and a single physical sensor is preferred over a virtual device: a
 virtual device can switch its constituent camera mid-measurement and silently
 change the optics.
 
-**If no camera qualifies, Lucid says so and stops.** It does not fall back to a
+**If no camera qualifies, Turbid says so and stops.** It does not fall back to a
 degraded measurement. The reason each rejected camera failed is recorded and
 shown in the diagnostics sheet.
 
@@ -128,7 +128,7 @@ it, the fitted curve clamps, and a clamped value presented as a measurement
 would be a fabrication — so *Below validated range* or *Above validated range*
 is reported instead, with the bound.
 
-A calibration requires, and Lucid refuses to fit without:
+A calibration requires, and Turbid refuses to fit without:
 
 - a blank (0 NTU, or the water the standards were made up in);
 - at least **four** certified standards above zero, spanning the intended range;
@@ -144,7 +144,7 @@ candidate reproduces the points it was built from almost perfectly, and that
 predicts nothing.
 
 **Standards must be commercially prepared and certified.** Formazin is made from
-hydrazine sulfate, which is acutely toxic and a suspected carcinogen. Lucid does
+hydrazine sulfate, which is acutely toxic and a suspected carcinogen. Turbid does
 not provide preparation instructions and never will. Use bought standards —
 formazin or a certified styrene-divinylbenzene equivalent — according to the
 manufacturer's own safety, handling and disposal instructions.
@@ -154,7 +154,7 @@ profile carries an end date, and the app warns thirty days ahead.
 
 ## Known interferences
 
-| Interference | Effect | What Lucid does |
+| Interference | Effect | What Turbid does |
 |---|---|---|
 | **Colour** | A tinted sample absorbs as well as scatters, reading differently from a colourless one at the same turbidity | Nothing. Documented only. |
 | **Ambient light** | Light other than the torch reaching the region changes the illumination the calibration was made under | Nothing measures it. The checklist asks for a dim room. |
@@ -200,7 +200,7 @@ an engineering starting point.
 
 - **An iPhone is not a nephelometer.** EPA Method 180.1 specifies a defined
   light source, a defined 90° detection geometry and a defined optical path.
-  A phone has none of them, and Lucid does not claim to implement that method.
+  A phone has none of them, and Turbid does not claim to implement that method.
 - **Only particles the camera can resolve are tracked.** Colloidal and
   microscopic material, which dominates real turbidity, is invisible to it. The
   bulk scattering channel — not the particle count — is what carries the
@@ -211,7 +211,7 @@ an engineering starting point.
   sample full of drifting particles, so it is reported rather than gated on.
 - **Results are not comparable across phones, containers or techniques**, and in
   Screening Mode not across sessions either.
-- **The three clarity states are Lucid's own presentation bands**, versioned and
+- **The three clarity states are Turbid's own presentation bands**, versioned and
   recorded on every reading. They are not health thresholds, not regulatory
   limits, and not a potability determination.
 - **The fixture is asserted, not sensed.** In Calibrated Fixture Mode, choosing

@@ -1,10 +1,10 @@
-# Lucid
+# Turbid
 
-Lucid is an iPhone app that uses the camera and torch to screen the **optical
+Turbid is an iPhone app that uses the camera and torch to screen the **optical
 clarity** of a water sample.
 
 > **Optical screening only — not a drinking-water safety test.**
-> Lucid cannot detect bacteria, viruses, dissolved chemicals, heavy metals,
+> Turbid cannot detect bacteria, viruses, dissolved chemicals, heavy metals,
 > PFAS or toxins, and it cannot tell you whether water is safe to drink.
 
 ## Build status
@@ -52,21 +52,21 @@ verified* below.
 
 ## How to run it
 
-1. On a Mac, open **`Lucid.xcodeproj`** by double-clicking it in Finder.
+1. On a Mac, open **`Turbid.xcodeproj`** by double-clicking it in Finder.
 2. In the toolbar, choose a run destination — **any iPhone 15 or newer
    Simulator** is fine for Phase 1.
-3. Press **⌘R** to run. You should see the Lucid screen with the camera-access
+3. Press **⌘R** to run. You should see the Turbid screen with the camera-access
    status and a **Start Setup** button.
 4. Press **⌘U** to run the tests. The test navigator (**⌘6**) should show all
    tests passing.
-5. If Xcode asks about signing, select the **Lucid** target → **Signing &
+5. If Xcode asks about signing, select the **Turbid** target → **Signing &
    Capabilities** → tick *Automatically manage signing* and choose your Apple ID
    team. You may also need to change the bundle identifier from
-   `com.lucid.Lucid` to something unique to you.
+   `com.turbid.Turbid` to something unique to you.
 
 ### What you should see
 
-**On first launch**, the disclosure screen: what Lucid measures, the list of
+**On first launch**, the disclosure screen: what Turbid measures, the list of
 things it cannot detect, why there is usually no NTU number, and how to get a
 usable reading. It has to be acknowledged before the app is usable, and it
 stays reachable from the home screen afterwards.
@@ -100,7 +100,7 @@ values, torch level, frame rate, dropped frames and thermal state.
    bubbles rise out.
 2. Put something matte and dark behind it, and dim the room. The torch should be
    the main light on the sample.
-3. Open Lucid, tap **Start Setup**, and line the container up so the outlined
+3. Open Turbid, tap **Start Setup**, and line the container up so the outlined
    region is filled with liquid only — no rim, no meniscus, no label.
 4. Wait for **View looks good**, rest the phone against something, and tap
    **Start Measurement**. Hold still for about thirteen seconds.
@@ -116,18 +116,18 @@ short of store submission.
 
 Three things have to exist before the TestFlight workflow can work, and only
 the account holder can create them: an App Store Connect API key in Codemagic
-named `LucidAppStoreKey`, a bundle identifier you own (`com.lucid.Lucid` is a
+named `TurbidAppStoreKey`, a bundle identifier you own (`com.turbid.Turbid` is a
 placeholder and will not sign), and an app record for it. The file marks both
 places the identifier has to change, and a build step fails loudly if the two
 drift apart.
 
 The bundle identifier and development team are generator inputs
-(`LUCID_BUNDLE_ID`, `LUCID_DEVELOPMENT_TEAM`), not tracked constants, so CI sets
+(`TURBID_BUNDLE_ID`, `TURBID_DEVELOPMENT_TEAM`), not tracked constants, so CI sets
 them without editing a file.
 
 ## Regenerating the Xcode project
 
-`Lucid.xcodeproj` is generated from the file tree rather than hand-edited, so
+`Turbid.xcodeproj` is generated from the file tree rather than hand-edited, so
 the project file and the sources cannot drift apart. After adding, renaming or
 deleting a Swift file:
 
@@ -151,8 +151,8 @@ warns about a missing icon and the rejection arrives at upload time.
 ## Layout
 
 ```
-Lucid/
-  App/        LucidApp, AppEnvironment (dependency container)
+Turbid/
+  App/        TurbidApp, AppEnvironment (dependency container)
   Domain/     Pure, hardware-free logic: measurement state machine, camera and
               format selection, control-lock clamping, capture lifecycle,
               frame-timing statistics, published snapshot types
@@ -183,8 +183,8 @@ Lucid/
   Shared/     Design tokens, reusable components, accessibility identifiers,
               OSLog categories
   Resources/  Asset catalogue, privacy manifest
-LucidTests/     Unit tests
-LucidUITests/   Interface tests, driven by launch-argument scenarios
+TurbidTests/     Unit tests
+TurbidUITests/   Interface tests, driven by launch-argument scenarios
 Tools/        Project generator, project validator, source checks, structural
               Swift audit, app-icon drawing, Python cross-check of the numerics
 docs/         Measurement protocol, architecture, release readiness
@@ -202,7 +202,7 @@ camera's image-signal processor, not a radiance measurement: demosaicing, black
 level, lens shading, noise reduction and a possibly scene-dependent tone curve
 all sit between the photons and the pixel. Applying a nominal inverse would
 produce numbers that *look* like linear radiance while being wrong by an
-unknown factor. Lucid treats the normalized value as a repeatable **relative**
+unknown factor. Turbid treats the normalized value as a repeatable **relative**
 signal and gets absolute meaning from end-to-end calibration (Phase 3D). The
 one property this requires is monotonicity, which is why clipping is a hard
 rejection rather than a warning.
@@ -275,11 +275,11 @@ spread converted through the curve's local slope, floored by the standards'
 own certificate tolerance, at a coverage factor of two. A calibration can never
 be more certain than the standards it was made from.
 
-**Lucid never describes how to prepare a standard.** Formazin is made from
+**Turbid never describes how to prepare a standard.** Formazin is made from
 hydrazine sulfate; calibration uses commercially prepared certified standards
 used according to the manufacturer's own safety instructions.
 
-**Category thresholds are Lucid's own presentation bands**, versioned and
+**Category thresholds are Turbid's own presentation bands**, versioned and
 recorded on every reading. They are not health thresholds, not regulatory
 limits, and not a potability determination. In Screening Mode they describe
 *observed scattering*; a test asserts no label contains "safe", "drink",
@@ -489,7 +489,7 @@ in for a compiler:
 - `Tools/generate_xcodeproj.py` and `Tools/validate_pbxproj.py` — the project
   file is generated from the file tree and then parsed back and checked, so it
   cannot drift from the sources. The validator also confirms the privacy
-  manifest is actually copied into the app bundle and declares what Lucid
+  manifest is actually copied into the app bundle and declares what Turbid
   actually does.
 - `Tools/analysis_reference.py` — a Python port of every analysis calculation,
   run against the same synthetic scenes. This is what has actually caught
@@ -532,15 +532,15 @@ specifications until they do.
 
 ## Privacy
 
-The only privacy permission Lucid declares is `NSCameraUsageDescription`. iOS
+The only privacy permission Turbid declares is `NSCameraUsageDescription`. iOS
 has no separate torch permission — the torch is covered by camera access. Video
 is processed on device; nothing is written to disk or transmitted. The only
-things Lucid stores are its calibration profiles, in the app's own support
+things Turbid stores are its calibration profiles, in the app's own support
 directory, and one boolean recording that the disclosure has been read.
 
-`Lucid/Resources/PrivacyInfo.xcprivacy` declares no tracking, no tracking
+`Turbid/Resources/PrivacyInfo.xcprivacy` declares no tracking, no tracking
 domains, no collected data types, and one required-reason API: `UserDefaults`,
-for reason `CA92.1`. Lucid has no network code at all, and that is enforced —
+for reason `CA92.1`. Turbid has no network code at all, and that is enforced —
 `check_sources.py` fails the build if `URLSession`, `Network` or any of their
-relatives appear, or if anything under `Lucid/Camera` or `Lucid/Analysis` writes
+relatives appear, or if anything under `Turbid/Camera` or `Turbid/Analysis` writes
 a file. See `docs/RELEASE.md` for the full review.

@@ -1,4 +1,4 @@
-# Codemagic CI for Lucid.
+# Codemagic CI for Turbid.
 #
 # Three workflows:
 #
@@ -13,10 +13,10 @@
 # you can create them:
 #
 #   1. An App Store Connect API key added to Codemagic under Teams >
-#      Integrations > Developer Portal, named exactly `LucidAppStoreKey`
+#      Integrations > Developer Portal, named exactly `TurbidAppStoreKey`
 #      (or change `integrations.app_store_connect` below).
 #   2. A bundle identifier you own, registered in your Apple developer account.
-#      `com.lucid.Lucid` is a placeholder and will not sign. Change it in BOTH
+#      `com.turbid.Turbid` is a placeholder and will not sign. Change it in BOTH
 #      places marked CHANGE ME — a script step fails the build if they drift.
 #   3. An app record in App Store Connect for that bundle identifier. Put its
 #      Apple ID (the numeric one, from the App Information page) in
@@ -29,8 +29,8 @@ definitions:
   xcode_and_project: &xcode_and_project
     xcode: latest
     vars:
-      XCODE_PROJECT: "Lucid.xcodeproj"
-      XCODE_SCHEME: "Lucid"
+      XCODE_PROJECT: "Turbid.xcodeproj"
+      XCODE_SCHEME: "Turbid"
 
   static_checks: &static_checks
     name: Static checks and project generation
@@ -39,7 +39,7 @@ definitions:
       # installed — the audit skips itself and says so.
       python3 -m pip install --quiet --disable-pip-version-check \
         tree_sitter tree_sitter_swift || true
-      # Regenerates Lucid.xcodeproj from the file tree and validates it, so a
+      # Regenerates Turbid.xcodeproj from the file tree and validates it, so a
       # source file added without regenerating fails here rather than at link
       # time.
       sh Tools/check.sh
@@ -65,7 +65,7 @@ workflows:
           xcode-project run-tests \
             --project "$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME" \
-            --test-only LucidTests
+            --test-only TurbidTests
     artifacts:
       - build/ios/test/*.xml
       - /tmp/xcodebuild_logs/*.log
@@ -86,7 +86,7 @@ workflows:
           xcode-project run-tests \
             --project "$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME" \
-            --test-only LucidUITests
+            --test-only TurbidUITests
     artifacts:
       - build/ios/test/*.xml
       - /tmp/xcodebuild_logs/*.log
@@ -97,18 +97,18 @@ workflows:
     instance_type: mac_mini_m2
     max_build_duration: 60
     integrations:
-      app_store_connect: LucidAppStoreKey
+      app_store_connect: TurbidAppStoreKey
     environment:
       <<: *xcode_and_project
       ios_signing:
         distribution_type: app_store
         # CHANGE ME (1 of 2) — must be a bundle identifier you own.
-        bundle_identifier: com.lucid.Lucid
+        bundle_identifier: com.turbid.Turbid
       vars:
-        XCODE_PROJECT: "Lucid.xcodeproj"
-        XCODE_SCHEME: "Lucid"
+        XCODE_PROJECT: "Turbid.xcodeproj"
+        XCODE_SCHEME: "Turbid"
         # CHANGE ME (2 of 2) — keep identical to `bundle_identifier` above.
-        BUNDLE_ID: "com.lucid.Lucid"
+        BUNDLE_ID: "com.turbid.Turbid"
         # The numeric Apple ID of the App Store Connect app record.
         APP_STORE_APPLE_ID: "0000000000"
     scripts:
@@ -118,7 +118,7 @@ workflows:
             tree_sitter tree_sitter_swift || true
           # The project file is generated, so the bundle identifier is a
           # generator input rather than something to edit by hand.
-          export LUCID_BUNDLE_ID="$BUNDLE_ID"
+          export TURBID_BUNDLE_ID="$BUNDLE_ID"
           sh Tools/check.sh
       - name: Confirm the project will be signed with the identifier it declares
         script: |
@@ -136,7 +136,7 @@ workflows:
           xcode-project run-tests \
             --project "$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME" \
-            --test-only LucidTests
+            --test-only TurbidTests
       - name: Set the build number
         script: |
           # TestFlight refuses a build number it has already seen. If the app

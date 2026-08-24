@@ -1,7 +1,7 @@
 # Architecture and file inventory
 
-Lucid is a single iOS app target with a unit-test target and a UI-test target.
-It has no third-party dependencies. `Lucid.xcodeproj` is generated from the file
+Turbid is a single iOS app target with a unit-test target and a UI-test target.
+It has no third-party dependencies. `Turbid.xcodeproj` is generated from the file
 tree by `Tools/generate_xcodeproj.py` and validated by
 `Tools/validate_pbxproj.py`, so the project file cannot drift from the sources.
 
@@ -82,7 +82,7 @@ falls behind drops frames rather than building a backlog.
 ## Inventory
 
 ```
-Lucid/Analysis/  (7 files, 1390 lines)
+Turbid/Analysis/  (7 files, 1390 lines)
     179  AlignmentMonitor.swift
     388  FrameAnalyzer.swift
      38  FrameAnalyzing.swift
@@ -91,23 +91,23 @@ Lucid/Analysis/  (7 files, 1390 lines)
      76  PixelBufferLumaExtractor.swift
     361  SpeckDetector.swift
 
-Lucid/Analysis/Synthetic/  (3 files, 413 lines)
+Turbid/Analysis/Synthetic/  (3 files, 413 lines)
      45  DeterministicRandom.swift
     226  SyntheticFrameFactory.swift
     142  SyntheticScene.swift
 
-Lucid/App/  (3 files, 314 lines)
+Turbid/App/  (3 files, 314 lines)
      89  AppEnvironment.swift
-     21  LucidApp.swift
+     21  TurbidApp.swift
     204  UITestConfiguration.swift
 
-Lucid/Camera/  (4 files, 1114 lines)
+Turbid/Camera/  (4 files, 1119 lines)
      92  CameraCapabilityReporter.swift
      56  CameraControlling.swift
-    119  CameraPreviewView.swift
+    124  CameraPreviewView.swift
     847  CameraService.swift
 
-Lucid/Domain/  (18 files, 1443 lines)
+Turbid/Domain/  (18 files, 1443 lines)
      40  CameraAuthorization.swift
      55  CameraCapabilities.swift
     125  CameraControlLock.swift
@@ -127,7 +127,7 @@ Lucid/Domain/  (18 files, 1443 lines)
     103  MeasurementStateMachine.swift
      72  OpticalClarityClass.swift
 
-Lucid/Domain/Analysis/  (15 files, 2417 lines)
+Turbid/Domain/Analysis/  (15 files, 2417 lines)
     153  AnalysisRegion.swift
     229  BackgroundModel.swift
     137  BandPassFilter.swift
@@ -144,7 +144,7 @@ Lucid/Domain/Analysis/  (15 files, 2417 lines)
     177  MeasurementProgress.swift
     127  SpeckCandidate.swift
 
-Lucid/Domain/Analysis/Tracking/  (8 files, 1484 lines)
+Turbid/Domain/Analysis/Tracking/  (8 files, 1484 lines)
      87  ConstantVelocityFilter.swift
     102  GlobalFlow.swift
     204  MultiObjectTracker.swift
@@ -154,7 +154,7 @@ Lucid/Domain/Analysis/Tracking/  (8 files, 1484 lines)
     163  TrackClassifier.swift
      90  TrackingMetrics.swift
 
-Lucid/Domain/Calibration/  (10 files, 1643 lines)
+Turbid/Domain/Calibration/  (10 files, 1643 lines)
     168  CalibrationBinding.swift
     108  CalibrationBindingBuilder.swift
     280  CalibrationFit.swift
@@ -166,19 +166,19 @@ Lucid/Domain/Calibration/  (10 files, 1643 lines)
     127  RelativeScatteringIndex.swift
     127  TurbidityReading.swift
 
-Lucid/Features/Calibration/  (3 files, 1058 lines)
+Turbid/Features/Calibration/  (3 files, 1058 lines)
     472  CalibrationRunView.swift
     329  CalibrationSessionViewModel.swift
     257  CalibrationView.swift
 
-Lucid/Features/Demo/  (2 files, 118 lines)
+Turbid/Features/Demo/  (2 files, 118 lines)
      42  DemoScenario.swift
      76  DemoShowcaseView.swift
 
-Lucid/Features/Diagnostics/  (1 files, 187 lines)
+Turbid/Features/Diagnostics/  (1 files, 187 lines)
     187  CaptureDiagnosticsView.swift
 
-Lucid/Features/Measurement/  (6 files, 1283 lines)
+Turbid/Features/Measurement/  (6 files, 1283 lines)
      74  CaptureStageView.swift
     115  MeasurementProgressView.swift
      38  MeasurementScreen.swift
@@ -186,19 +186,19 @@ Lucid/Features/Measurement/  (6 files, 1283 lines)
     541  MeasurementViewModel.swift
     355  RootView.swift
 
-Lucid/Features/Onboarding/  (1 files, 143 lines)
+Turbid/Features/Onboarding/  (1 files, 143 lines)
     143  OnboardingView.swift
 
-Lucid/Features/Result/  (3 files, 587 lines)
-    260  DeepDiveView.swift
+Turbid/Features/Result/  (3 files, 634 lines)
+    307  DeepDiveView.swift
     171  QuickViewResultView.swift
     156  ScatteringChartView.swift
 
-Lucid/Features/Setup/  (2 files, 261 lines)
+Turbid/Features/Setup/  (2 files, 261 lines)
      77  SetupChecklist.swift
     184  SetupWizardView.swift
 
-Lucid/Services/  (6 files, 298 lines)
+Turbid/Services/  (6 files, 298 lines)
     150  CalibrationLibrary.swift
      12  CameraAuthorizing.swift
      61  DisclosureAcknowledgement.swift
@@ -206,19 +206,19 @@ Lucid/Services/  (6 files, 298 lines)
      21  SettingsOpening.swift
      29  SystemCameraAuthorizationService.swift
 
-Lucid/Services/Fakes/  (4 files, 595 lines)
+Turbid/Services/Fakes/  (4 files, 595 lines)
     296  SimulatedFrameSource.swift
      34  StubCameraAuthorizationService.swift
     246  StubCameraService.swift
      19  StubSettingsOpener.swift
 
-Lucid/Shared/  (4 files, 420 lines)
+Turbid/Shared/  (4 files, 420 lines)
      69  AccessibilityIdentifiers.swift
     229  Components.swift
      14  Logging.swift
     108  Theme.swift
 
-LucidTests/  (36 files, 7028 lines)
+TurbidTests/  (36 files, 7049 lines)
     146  AlignmentMonitorTests.swift
     138  AnalysisRegionTests.swift
     138  CalibrationBindingBuilderTests.swift
@@ -237,9 +237,9 @@ LucidTests/  (36 files, 7028 lines)
     209  ClarityCategoryEngineTests.swift
     103  ConstantVelocityFilterTests.swift
     573  FrameAnalyzerTests.swift
-    349  FrameQualityEvaluatorTests.swift
+    351  FrameQualityEvaluatorTests.swift
     139  FrameTimingCollectorTests.swift
-     91  InfoPlistTests.swift
+    110  InfoPlistTests.swift
     224  LumaStatisticsTests.swift
     242  MeasurementPipelineTests.swift
     144  MeasurementProgressTests.swift
@@ -256,24 +256,26 @@ LucidTests/  (36 files, 7028 lines)
     260  SyntheticFrameFactoryTests.swift
     250  TrackClassifierTests.swift
 
-LucidTests/Support/  (3 files, 405 lines)
+TurbidTests/Support/  (3 files, 405 lines)
     249  CalibrationFactory.swift
     121  CapabilityFactory.swift
      35  SpyGravityProvider.swift
 
-LucidUITests/  (5 files, 312 lines)
+TurbidUITests/  (5 files, 312 lines)
      49  CalibrationUITests.swift
-     55  LucidUITestCase.swift
      88  MeasurementFlowUITests.swift
      50  PermissionAndOnboardingUITests.swift
+     55  TurbidUITestCase.swift
      70  UITestIdentifiers.swift
 
-Tools/  (5 files, 2888 lines)
+Tools/  (7 files, 3565 lines)
    1211  analysis_reference.py
-      8  check.sh
+     17  check.sh
     488  check_sources.py
-    840  generate_xcodeproj.py
-    341  validate_pbxproj.py
+    865  generate_xcodeproj.py
+    105  make_app_icon.py
+    522  swift_audit.py
+    357  validate_pbxproj.py
 
-TOTAL 25801 lines
+TOTAL 26551 lines
 ```

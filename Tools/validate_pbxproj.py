@@ -18,7 +18,7 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PROJECT = os.path.join(ROOT, "Lucid.xcodeproj", "project.pbxproj")
+PROJECT = os.path.join(ROOT, "Turbid.xcodeproj", "project.pbxproj")
 
 ID_PATTERN = re.compile(r"^[0-9A-F]{24}$")
 
@@ -188,7 +188,7 @@ def main() -> int:
     # 3. Targets.
     targets = {i: e for i, e in objects.items() if e["isa"] == "PBXNativeTarget"}
     names = sorted(e["name"] for e in targets.values())
-    require(names == ["Lucid", "LucidTests", "LucidUITests"],
+    require(names == ["Turbid", "TurbidTests", "TurbidUITests"],
             f"unexpected targets: {names}")
 
     for identifier, target in targets.items():
@@ -197,29 +197,29 @@ def main() -> int:
         phases = [objects[p]["isa"] for p in target["buildPhases"]]
         require("PBXSourcesBuildPhase" in phases, f"{target['name']} has no sources phase")
 
-    app = next(t for t in targets.values() if t["name"] == "Lucid")
-    tests = next(t for t in targets.values() if t["name"] == "LucidTests")
-    uitests = next(t for t in targets.values() if t["name"] == "LucidUITests")
+    app = next(t for t in targets.values() if t["name"] == "Turbid")
+    tests = next(t for t in targets.values() if t["name"] == "TurbidTests")
+    uitests = next(t for t in targets.values() if t["name"] == "TurbidUITests")
     require(app["productType"] == "com.apple.product-type.application",
-            "Lucid is not an application target")
+            "Turbid is not an application target")
     require(tests["productType"] == "com.apple.product-type.bundle.unit-test",
-            "LucidTests is not a unit-test target")
+            "TurbidTests is not a unit-test target")
     require(uitests["productType"] == "com.apple.product-type.bundle.ui-testing",
-            "LucidUITests is not a UI-testing target")
-    require(len(tests["dependencies"]) == 1, "LucidTests does not depend on Lucid")
-    require(len(uitests["dependencies"]) == 1, "LucidUITests does not depend on Lucid")
+            "TurbidUITests is not a UI-testing target")
+    require(len(tests["dependencies"]) == 1, "TurbidTests does not depend on Turbid")
+    require(len(uitests["dependencies"]) == 1, "TurbidUITests does not depend on Turbid")
 
     # A UI-test bundle launches the app; it is never loaded into it. A stray
     # TEST_HOST would make it a unit-test bundle wearing the wrong product type.
     for configuration in uitests["buildConfigurationList"], :
         for config_id in objects[configuration]["buildConfigurations"]:
             settings = objects[config_id]["buildSettings"]
-            require(settings.get("TEST_TARGET_NAME") == "Lucid",
-                    "LucidUITests does not name Lucid as its test target")
+            require(settings.get("TEST_TARGET_NAME") == "Turbid",
+                    "TurbidUITests does not name Turbid as its test target")
             require("TEST_HOST" not in settings,
-                    "LucidUITests must not set TEST_HOST")
+                    "TurbidUITests must not set TEST_HOST")
             require("BUNDLE_LOADER" not in settings,
-                    "LucidUITests must not set BUNDLE_LOADER")
+                    "TurbidUITests must not set BUNDLE_LOADER")
 
     # 4. Every build file points at a file that exists on disk.
     paths: dict[str, str] = {}
@@ -260,7 +260,7 @@ def main() -> int:
                     compiled[path] = compiled.get(path, 0) + 1
 
     on_disk: set[str] = set()
-    for directory in ("Lucid", "LucidTests", "LucidUITests"):
+    for directory in ("Turbid", "TurbidTests", "TurbidUITests"):
         for current, subdirs, files in os.walk(os.path.join(ROOT, directory)):
             subdirs[:] = [d for d in subdirs if not d.endswith(".xcassets")]
             for name in files:
@@ -297,9 +297,9 @@ def main() -> int:
                 require(word not in key, f"unexpected privacy build setting: {key}")
 
     # 8. The privacy manifest must actually reach the app bundle, and say what
-    #    Lucid actually does. A manifest that is not in a Resources build phase
+    #    Turbid actually does. A manifest that is not in a Resources build phase
     #    is a file in the repository, not something App Store Connect will see.
-    manifest_path = os.path.join("Lucid", "Resources", "PrivacyInfo.xcprivacy")
+    manifest_path = os.path.join("Turbid", "Resources", "PrivacyInfo.xcprivacy")
     copied: set[str] = set()
     for phase_id in app["buildPhases"]:
         phase = objects[phase_id]
@@ -327,14 +327,14 @@ def main() -> int:
             "the UserDefaults reason code is missing or is not CA92.1")
     for category in ("FileTimestamp", "DiskSpace", "ActiveKeyboards", "SystemBootTime"):
         require(f"NSPrivacyAccessedAPICategory{category}" not in manifest,
-                f"the privacy manifest declares {category}, which Lucid does not use")
+                f"the privacy manifest declares {category}, which Turbid does not use")
 
     # 9. The app icon has to exist as a file, not just as a slot.
     #
     #    A simulator build only warns when the 1024x1024 icon is missing, so
     #    nothing notices until App Store Connect rejects the archive for a
     #    missing CFBundleIconName. Regenerate it with Tools/make_app_icon.py.
-    icon_set = os.path.join("Lucid", "Resources", "Assets.xcassets", "AppIcon.appiconset")
+    icon_set = os.path.join("Turbid", "Resources", "Assets.xcassets", "AppIcon.appiconset")
     contents = json.load(open(os.path.join(ROOT, icon_set, "Contents.json"), encoding="utf-8"))
     filenames = [image.get("filename") for image in contents.get("images", [])]
     require(any(filenames), "AppIcon.appiconset declares a slot with no image file")

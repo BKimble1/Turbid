@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Lucid.xcodeproj from the source tree.
+"""Generate Turbid.xcodeproj from the source tree.
 
 This repository has no XcodeGen or Tuist available, and hand-editing a
 project.pbxproj is error prone. Generating it from the file system keeps the
@@ -21,25 +21,25 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-APP_NAME = "Lucid"
-TEST_NAME = "LucidTests"
-UITEST_NAME = "LucidUITests"
+APP_NAME = "Turbid"
+TEST_NAME = "TurbidTests"
+UITEST_NAME = "TurbidUITests"
 # Overridable so CI can sign against a bundle identifier that actually exists
 # in someone's App Store Connect account, without editing a tracked file. The
 # generator is otherwise deterministic; setting these changes the output, which
 # is the point.
-BUNDLE_ID = os.environ.get("LUCID_BUNDLE_ID", "com.lucid.Lucid")
-DEVELOPMENT_TEAM = os.environ.get("LUCID_DEVELOPMENT_TEAM", "")
+BUNDLE_ID = os.environ.get("TURBID_BUNDLE_ID", "com.turbid.Turbid")
+DEVELOPMENT_TEAM = os.environ.get("TURBID_DEVELOPMENT_TEAM", "")
 DEPLOYMENT_TARGET = "17.0"
 SWIFT_VERSION = "5.0"
-ORGANIZATION = "Lucid"
+ORGANIZATION = "Turbid"
 
 # Describes only what the app does. An earlier draft ended "...is not saved
 # unless you explicitly export diagnostics", which described a feature that does
 # not exist; a purpose string is the one piece of copy a reviewer reads closely,
 # and it has to be true.
 CAMERA_USAGE_DESCRIPTION = (
-    "Lucid uses the camera and torch to analyze light scattering in a water "
+    "Turbid uses the camera and torch to analyze light scattering in a water "
     "sample. Video is processed on this iPhone and is not saved or sent "
     "anywhere."
 )
@@ -335,7 +335,7 @@ APP_TARGET_SETTINGS = {
     "ENABLE_PREVIEWS": "YES",
     "GENERATE_INFOPLIST_FILE": "YES",
     "INFOPLIST_KEY_NSCameraUsageDescription": CAMERA_USAGE_DESCRIPTION,
-    # Answered here rather than by hand on every upload. Lucid uses no
+    # Answered here rather than by hand on every upload. Turbid uses no
     # encryption of its own and nothing but Apple's own HTTPS-free stack, so the
     # answer is no; leaving it out makes every TestFlight build sit in "Missing
     # Compliance" until someone clicks through the question.

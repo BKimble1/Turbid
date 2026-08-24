@@ -92,18 +92,18 @@ targets references `URLSession`, `URLRequest`, `NWConnection` and the rest, or
 imports `Network`, `CFNetwork`, `CoreTelephony` or `MultipeerConnectivity`; if
 anything anywhere references `AVAssetWriter`, `AVCaptureMovieFileOutput`,
 `AVCapturePhotoOutput`, `CGImageDestination`, `UIImageWriteToSavedPhotosAlbum`,
-`PHPhotoLibrary` or `UIPasteboard`; or if anything under `Lucid/Camera` or
-`Lucid/Analysis` writes a file at all. Both rules were self-tested by
+`PHPhotoLibrary` or `UIPasteboard`; or if anything under `Turbid/Camera` or
+`Turbid/Analysis` writes a file at all. Both rules were self-tested by
 introducing a violation and confirming the failure.
 
-The only thing Lucid writes is `calibrations.json` in its own Application
-Support directory, from `Lucid/Domain/Calibration/CalibrationStore.swift`, which
+The only thing Turbid writes is `calibrations.json` in its own Application
+Support directory, from `Turbid/Domain/Calibration/CalibrationStore.swift`, which
 never sees a pixel. The only preference it writes is one boolean recording that
 the disclosure has been read.
 
 ## 11. No unmeasured accuracy claims
 
-`check_sources.py` scans every string literal under `Lucid/` for claim phrases —
+`check_sources.py` scans every string literal under `Turbid/` for claim phrases —
 *laboratory-grade*, *professional-grade*, *EPA-compliant*, *clinically proven*,
 *highly accurate*, *accurate to within*, *certified results* and their variants —
 and fails if one appears. Self-tested.
@@ -118,19 +118,19 @@ the index-based or the NTU-based wording.
 
 ## Privacy manifest
 
-`Lucid/Resources/PrivacyInfo.xcprivacy` is copied into the app bundle by the
+`Turbid/Resources/PrivacyInfo.xcprivacy` is copied into the app bundle by the
 app target's Resources build phase, which `Tools/validate_pbxproj.py` verifies —
 a manifest that is not in a build phase is a file in the repository, not
 something App Store Connect will ever see.
 
 | Key | Value | Why |
 |---|---|---|
-| `NSPrivacyTracking` | `false` | Lucid has no network code at all |
+| `NSPrivacyTracking` | `false` | Turbid has no network code at all |
 | `NSPrivacyTrackingDomains` | empty | — |
 | `NSPrivacyCollectedDataTypes` | empty | Nothing is collected. Calibration profiles stay on device and are not linked to anyone. |
 | `NSPrivacyAccessedAPITypes` | `NSPrivacyAccessedAPICategoryUserDefaults` → `CA92.1` | One boolean, readable and writable only by this app |
 
-**Deliberately not declared**: `FileTimestamp` — Lucid reads no file metadata;
+**Deliberately not declared**: `FileTimestamp` — Turbid reads no file metadata;
 `DiskSpace` — it checks none; `ActiveKeyboards` — it is not a keyboard;
 `SystemBootTime` — it calls neither `mach_absolute_time()` nor
 `systemUptime`. The stall watchdog uses `ContinuousClock`, which is not on
@@ -145,7 +145,7 @@ that occurred within the app* — is the accurate declaration.
 One purpose string, `NSCameraUsageDescription`, set as a build setting and
 validated for content:
 
-> Lucid uses the camera and torch to analyze light scattering in a water
+> Turbid uses the camera and torch to analyze light scattering in a water
 > sample. Video is processed on this iPhone and is not saved or sent anywhere.
 
 iOS has no separate torch permission — the torch is covered by camera access.
@@ -181,7 +181,7 @@ Every string literal in the app was extracted and read. Findings:
 - **The three clarity states describe optical clarity**, and in Screening Mode
   the result description says *observed scattering* rather than naming a
   concentration.
-- **The calibration screen leads with safety** and states that Lucid does not
+- **The calibration screen leads with safety** and states that Turbid does not
   provide standard-preparation instructions. No screen anywhere describes making
   a standard.
 - **Two hard-coded durations were removed** during this review — the setup
@@ -225,18 +225,18 @@ which a simulator build would have complained about:
   unit test checks it reaches the built bundle.
 - **Export compliance was unanswered.** Without
   `ITSAppUsesNonExemptEncryption`, every TestFlight build waits in *Missing
-  Compliance* until somebody clicks through the question. Lucid implements no
+  Compliance* until somebody clicks through the question. Turbid implements no
   encryption and makes no network connections, so the answer is now in the
   Info.plist.
 - **`agvtool` could not set a build number**, because the app target had no
   `VERSIONING_SYSTEM`. TestFlight refuses a build number it has seen before, so
   the second upload would have failed.
-- **The bundle identifier was a tracked constant.** `com.lucid.Lucid` is a
+- **The bundle identifier was a tracked constant.** `com.turbid.Turbid` is a
   placeholder nobody owns; it is now a generator input, so CI signs against a
   real identifier without anyone editing a file.
 
 What still has to be created by hand, because only the account holder can: an
-App Store Connect API key added to Codemagic as `LucidAppStoreKey`, a registered
+App Store Connect API key added to Codemagic as `TurbidAppStoreKey`, a registered
 bundle identifier, and an app record for it. `codemagic.yaml` marks exactly
 where each goes.
 
@@ -249,7 +249,7 @@ The blocked items, in the order that finds problems fastest.
 ```sh
 python3 -m pip install tree_sitter tree_sitter_swift
 sh Tools/check.sh          # regenerate and validate the project first
-open Lucid.xcodeproj
+open Turbid.xcodeproj
 ```
 
 Then ⌘U. Expect compilation errors: nothing here has ever been through a

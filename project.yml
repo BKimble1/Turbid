@@ -1,16 +1,17 @@
 # XcodeGen alternative to Tools/generate_xcodeproj.py.
 #
-# The checked-in Lucid.xcodeproj is produced by Tools/generate_xcodeproj.py,
+# The checked-in Turbid.xcodeproj is produced by Tools/generate_xcodeproj.py,
 # which needs nothing but Python 3. This file is here so that anyone who
 # already uses XcodeGen can regenerate an equivalent project instead:
 #
 #     brew install xcodegen && xcodegen generate
 #
-# Keep the two in sync when build settings change.
+# Keep the two in sync when build settings change. Tools/generate_xcodeproj.py
+# is the source of truth; this file mirrors it.
 
-name: Lucid
+name: Turbid
 options:
-  bundleIdPrefix: com.lucid
+  bundleIdPrefix: com.turbid
   deploymentTarget:
     iOS: "17.0"
   createIntermediateGroups: true
@@ -18,37 +19,65 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.0"
+    SWIFT_STRICT_CONCURRENCY: minimal
     ENABLE_USER_SCRIPT_SANDBOXING: YES
 
 targets:
-  Lucid:
+  Turbid:
     type: application
     platform: iOS
     sources:
-      - path: Lucid
+      - path: Turbid
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.lucid.Lucid
+        PRODUCT_BUNDLE_IDENTIFIER: com.turbid.Turbid
         GENERATE_INFOPLIST_FILE: YES
         ENABLE_PREVIEWS: YES
         TARGETED_DEVICE_FAMILY: "1"
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        # `agvtool` refuses to set a build number without this, and every
+        # upload to TestFlight needs one.
+        VERSIONING_SYSTEM: apple-generic
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
         INFOPLIST_KEY_UIRequiresFullScreen: YES
+        INFOPLIST_KEY_UIStatusBarStyle: UIStatusBarStyleDefault
+        # A measurement needs a fixed optical path, so the orientation is
+        # pinned rather than left free to rotate mid-capture.
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
-        INFOPLIST_KEY_NSCameraUsageDescription: "Lucid uses the camera and torch to analyze light scattering in a water sample. Video is processed on this iPhone and is not saved unless you explicitly export diagnostics."
+        # Answered here rather than by hand on every upload.
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
+        INFOPLIST_KEY_NSCameraUsageDescription: "Turbid uses the camera and torch to analyze light scattering in a water sample. Video is processed on this iPhone and is not saved or sent anywhere."
 
-  LucidTests:
+  TurbidTests:
     type: bundle.unit-test
     platform: iOS
     sources:
-      - path: LucidTests
+      - path: TurbidTests
     dependencies:
-      - target: Lucid
+      - target: Turbid
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.lucid.LucidTests
+        PRODUCT_BUNDLE_IDENTIFIER: com.turbid.TurbidTests
         GENERATE_INFOPLIST_FILE: YES
         TARGETED_DEVICE_FAMILY: "1"
+
+  # A UI-test bundle drives the app from outside it, so it is hosted by the
+  # app target rather than loaded into it.
+  TurbidUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: TurbidUITests
+    dependencies:
+      - target: Turbid
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.turbid.TurbidUITests
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: "1"
+        TEST_TARGET_NAME: Turbid
