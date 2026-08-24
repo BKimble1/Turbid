@@ -156,7 +156,35 @@ jobs:
             done
           fi
 
-          xcodebuild "${ARGS[@]}" "$ACTION"
+          # Captured so the failure step can lift the diagnostics out of it.
+          # pipefail is already set, so xcodebuild still decides the exit code.
+          xcodebuild "${ARGS[@]}" "$ACTION" 2>&1 | tee "$RUNNER_TEMP/xcodebuild.log"
+
+      # xcodebuild prints tens of thousands of lines and buries the actual
+      # diagnostics among them. This lifts out the two parts worth reading and
+      # puts them in the job summary, so a failure is legible without
+      # downloading anything.
+      - name: Summarise the failure
+        if: failure()
+        run: |
+          set -uo pipefail
+          LOG="$RUNNER_TEMP/xcodebuild.log"
+          [ -f "$LOG" ] || exit 0
+          {
+            echo "### Build failure"
+            echo ""
+            echo '```'
+            # Xcode's own summary block, which names the errors but not where.
+            awk '/^Testing failed:/,/^\*\* (TEST|BUILD) FAILED \*\*/' "$LOG" | head -40
+            echo '```'
+            echo ""
+            echo "Diagnostics carrying a file and line:"
+            echo ""
+            echo '```'
+            grep -E '^/.*:[0-9]+:[0-9]+: (error|warning):' "$LOG" \
+              | sed "s|$GITHUB_WORKSPACE/||" | sort -u | head -40
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
 
       # Only on failure, only the result bundle, only for a week. A green run
       # leaves nothing behind to pay storage on.

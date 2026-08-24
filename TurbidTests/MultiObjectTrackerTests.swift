@@ -175,7 +175,10 @@ final class MultiObjectTrackerTests: XCTestCase {
         }
 
         let track = tracker.tracks.first
-        XCTAssertEqual(track?.velocity.dx ?? 0, speed, accuracy: speed * 0.15)
+        // `velocity` is a CGVector, so `dx` is a CGFloat and `speed` is a
+        // Double. XCTAssertEqual takes one generic FloatingPoint for all
+        // three arguments, and it cannot be both.
+        XCTAssertEqual(Double(track?.velocity.dx ?? 0), speed, accuracy: speed * 0.15)
         XCTAssertEqual(track?.velocity.dy ?? 0, 0, accuracy: 5)
         XCTAssertEqual(track?.medianStepSpeed ?? 0, speed, accuracy: speed * 0.05,
                        "the step speed is computed from real intervals")
