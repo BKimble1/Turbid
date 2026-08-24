@@ -1,0 +1,179 @@
+name: iOS CI
+
+# Manual only, on purpose. Every run costs macOS runner minutes, each interface
+# test drives a real analysis of synthetic frames, and nothing here needs to
+# happen on a push. Choose the smallest level that covers what changed —
+# docs/CI.md says which.
+on:
+  workflow_dispatch:
+    inputs:
+      level:
+        description: "How much to run"
+        type: choice
+        required: true
+        default: unit
+        options:
+          - build-only
+          - unit
+          - targeted-ui
+          - full
+      tests:
+        description: >-
+          targeted-ui only: comma-separated identifiers (Target,
+          Target/Class or Target/Class/testMethod). Empty = default smoke set.
+        type: string
+        required: false
+        default: ""
+
+# Read-only: this workflow never writes to the repository.
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  XCODE_PROJECT: Turbid.xcodeproj
+  XCODE_SCHEME: Turbid
+  DERIVED_DATA: ${{ github.workspace }}/.derived-data
+  RESULT_BUNDLE: ${{ github.workspace }}/.derived-data/TestResults.xcresult
+
+jobs:
+  ios:
+    name: ${{ inputs.level }}
+    # A standard GitHub-hosted macOS runner. Never a -large or -xlarge image:
+    # this project does not need one and they bill at a multiple.
+    runs-on: macos-latest
+    timeout-minutes: ${{ inputs.level == 'full' && 90 || 45 }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Record the toolchain
+        run: |
+          set -euo pipefail
+          sw_vers
+          xcodebuild -version
+          python3 --version
+
+      # The project declares no Swift packages today, so this resolves and
+      # caches nothing. It is here so that adding one later does not silently
+      # start re-downloading it on every run.
+      - name: Cache Swift packages
+        if: hashFiles('**/Package.resolved') != ''
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/org.swift.swiftpm
+            ~/Library/org.swift.swiftpm
+          key: spm-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: spm-${{ runner.os }}-
+
+      - name: Static checks and project generation
+        run: |
+          set -euo pipefail
+          # The Swift parser the structural audit uses. The audit skips itself
+          # with a message if this fails, so it is not fatal.
+          python3 -m pip install --quiet --disable-pip-version-check \
+            tree_sitter tree_sitter_swift || true
+          # Regenerates Turbid.xcodeproj from the file tree and validates it, so
+          # a source file added without regenerating fails here rather than at
+          # link time. Also runs the source checks and the numeric cross-check.
+          sh Tools/check.sh
+
+      - name: Select an available iPhone Simulator
+        id: sim
+        run: |
+          set -euo pipefail
+          UDID=$(xcrun simctl list devices available --json | python3 Tools/select_simulator.py)
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve what to run
+        id: plan
+        env:
+          LEVEL: ${{ inputs.level }}
+          REQUESTED: ${{ inputs.tests }}
+          # The smallest set that proves launch, onboarding, navigation and the
+          # simulated camera path. Every other interface test costs another
+          # full 12.5-second analysis run to re-prove what the unit suite
+          # already covers directly.
+          SMOKE: >-
+            TurbidUITests/PermissionAndOnboardingUITests/testFirstLaunchShowsTheDisclosureBeforeAnythingElse,
+            TurbidUITests/PermissionAndOnboardingUITests/testDeniedCameraAccessExplainsItselfAndOffersSettings,
+            TurbidUITests/MeasurementFlowUITests/testSetupOffersTheChecklistAndTheLiveViewBeforeCommitting,
+            TurbidUITests/MeasurementFlowUITests/testScreeningResultReportsClarityWithoutAnNTUValue
+        run: |
+          set -euo pipefail
+          case "$LEVEL" in
+            build-only)  ACTION=build; ONLY="" ;;
+            unit)        ACTION=test;  ONLY="TurbidTests" ;;
+            targeted-ui) ACTION=test;  ONLY="${REQUESTED:-}"
+                         [ -z "${ONLY//[[:space:],]/}" ] && ONLY="$SMOKE" ;;
+            full)        ACTION=test;  ONLY="" ;;
+            *) echo "unknown level: $LEVEL" >&2; exit 1 ;;
+          esac
+          echo "action=$ACTION" >> "$GITHUB_OUTPUT"
+          echo "only=$ONLY" >> "$GITHUB_OUTPUT"
+          echo "Level $LEVEL -> xcodebuild $ACTION ${ONLY:-(everything)}"
+
+      - name: Build and test
+        env:
+          NSUnbufferedIO: "YES"
+          ACTION: ${{ steps.plan.outputs.action }}
+          ONLY: ${{ steps.plan.outputs.only }}
+          SIM_UDID: ${{ steps.sim.outputs.udid }}
+        run: |
+          set -euo pipefail
+
+          ARGS=(
+            -project "$XCODE_PROJECT"
+            -scheme "$XCODE_SCHEME"
+            -configuration Debug
+            -destination "platform=iOS Simulator,id=$SIM_UDID"
+            -derivedDataPath "$DERIVED_DATA"
+            -resultBundlePath "$RESULT_BUNDLE"
+            -maximum-concurrent-test-simulator-destinations 1
+            # Simulator builds are never signed, and asking for an identity on
+            # a runner with no keychain invents a problem CI does not have.
+            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_REQUIRED=NO
+            CODE_SIGN_IDENTITY=
+          )
+
+          # `-only-testing:` accepts a target, a target/class or a
+          # target/class/testMethod, so one invocation can mix a whole target
+          # with individual interface tests.
+          if [ -n "${ONLY//[[:space:],]/}" ]; then
+            IFS=',' read -ra ENTRIES <<< "$ONLY"
+            for entry in "${ENTRIES[@]}"; do
+              trimmed="$(echo "$entry" | xargs)"
+              [ -n "$trimmed" ] && ARGS+=( "-only-testing:$trimmed" )
+            done
+          fi
+
+          xcodebuild "${ARGS[@]}" "$ACTION"
+
+      # Only on failure, only the result bundle, only for a week. A green run
+      # leaves nothing behind to pay storage on.
+      - name: Package diagnostics
+        if: failure()
+        run: |
+          set -euo pipefail
+          if [ -d "$RESULT_BUNDLE" ]; then
+            ditto -c -k --sequesterRsrc --keepParent \
+              "$RESULT_BUNDLE" "$RUNNER_TEMP/TestResults.xcresult.zip"
+          fi
+
+      - name: Upload diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcresult-${{ inputs.level }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/TestResults.xcresult.zip
+          retention-days: 7
+          if-no-files-found: ignore

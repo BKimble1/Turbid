@@ -144,12 +144,12 @@ Turbid/Domain/Analysis/  (15 files, 2417 lines)
     177  MeasurementProgress.swift
     127  SpeckCandidate.swift
 
-Turbid/Domain/Analysis/Tracking/  (8 files, 1484 lines)
+Turbid/Domain/Analysis/Tracking/  (8 files, 1499 lines)
      87  ConstantVelocityFilter.swift
     102  GlobalFlow.swift
     204  MultiObjectTracker.swift
     400  PatchFlowEstimator.swift
-    218  ScatteringWindowAggregator.swift
+    233  ScatteringWindowAggregator.swift
     220  Track.swift
     163  TrackClassifier.swift
      90  TrackingMetrics.swift
@@ -198,10 +198,10 @@ Turbid/Features/Setup/  (2 files, 261 lines)
      77  SetupChecklist.swift
     184  SetupWizardView.swift
 
-Turbid/Services/  (6 files, 298 lines)
+Turbid/Services/  (6 files, 306 lines)
     150  CalibrationLibrary.swift
      12  CameraAuthorizing.swift
-     61  DisclosureAcknowledgement.swift
+     69  DisclosureAcknowledgement.swift
      25  RuntimeEnvironment.swift
      21  SettingsOpening.swift
      29  SystemCameraAuthorizationService.swift
@@ -268,14 +268,16 @@ TurbidUITests/  (5 files, 312 lines)
      55  TurbidUITestCase.swift
      70  UITestIdentifiers.swift
 
-Tools/  (7 files, 3565 lines)
+Tools/  (9 files, 3938 lines)
    1211  analysis_reference.py
-     17  check.sh
-    488  check_sources.py
+    125  asc_build_number.py
+     20  check.sh
+    498  check_sources.py
     865  generate_xcodeproj.py
     105  make_app_icon.py
-    522  swift_audit.py
+     76  select_simulator.py
+    681  swift_audit.py
     357  validate_pbxproj.py
 
-TOTAL 26551 lines
+TOTAL 26947 lines
 ```

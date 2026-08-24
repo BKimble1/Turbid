@@ -109,6 +109,11 @@ values, torch level, frame rate, dropped frames and thermal state.
 
 ## Continuous integration and TestFlight
 
+CI runs on GitHub Actions: `iOS CI` and `TestFlight Upload`, both manual
+only. `docs/CI.md` says which level to choose and gives the exact `gh`
+commands. `codemagic.yaml` is kept as a fallback until a GitHub-built
+TestFlight upload has succeeded.
+
 `codemagic.yaml` defines three workflows: unit tests on a simulator (the fast
 gate, on every push), the interface tests (slower — each one runs a real
 12.5-second analysis), and a TestFlight build that signs, uploads and stops

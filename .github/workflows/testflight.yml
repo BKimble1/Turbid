@@ -1,0 +1,270 @@
+name: TestFlight Upload
+
+# Manual only. This signs with real credentials and puts a build in front of
+# testers, which is never something a push should do on its own.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type UPLOAD to confirm archiving and uploading to TestFlight"
+        type: string
+        required: true
+        default: ""
+
+permissions:
+  contents: read
+
+# Queued, not cancelled: two uploads must never race for the same build number,
+# and killing one mid-upload leaves App Store Connect holding a partial build.
+concurrency:
+  group: testflight-upload
+  cancel-in-progress: false
+
+env:
+  XCODE_PROJECT: Turbid.xcodeproj
+  XCODE_SCHEME: Turbid
+  BUNDLE_ID: com.idlery.turbid
+
+jobs:
+  upload:
+    name: Archive, sign and upload
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Confirm intent
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          set -euo pipefail
+          [ "$CONFIRM" = "UPLOAD" ] || {
+            echo "Type UPLOAD in the confirm field to run this workflow." >&2
+            exit 1
+          }
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Record the toolchain
+        run: |
+          set -euo pipefail
+          sw_vers
+          xcodebuild -version
+
+      # Generation and validation only. The tests are iOS CI's job, and running
+      # them again here would double the runner minutes to re-prove what the
+      # gate that let this build through already proved.
+      - name: Generate and validate the project
+        run: |
+          set -euo pipefail
+          python3 Tools/generate_xcodeproj.py
+          python3 Tools/validate_pbxproj.py
+          # The archive must carry the identifier this workflow claims to sign.
+          grep -q "PRODUCT_BUNDLE_IDENTIFIER = $BUNDLE_ID;" \
+            "$XCODE_PROJECT/project.pbxproj" || {
+              echo "The generated project does not declare $BUNDLE_ID." >&2
+              exit 1
+            }
+          # Export compliance is answered in the Info.plist so processing is
+          # never held behind the "Missing Compliance" question.
+          grep -q "INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;" \
+            "$XCODE_PROJECT/project.pbxproj" || {
+              echo "ITSAppUsesNonExemptEncryption is not set; TestFlight would" >&2
+              echo "hold the build for an export-compliance answer." >&2
+              exit 1
+            }
+
+      - name: Write the App Store Connect key
+        env:
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s\n' "$ASC_PRIVATE_KEY" > "$RUNNER_TEMP/asc_authkey.p8"
+          # Confirm the shape without printing any of it.
+          head -n 1 "$RUNNER_TEMP/asc_authkey.p8" | grep -q "BEGIN PRIVATE KEY" || {
+            echo "ASC_PRIVATE_KEY is not a PEM private key." >&2
+            exit 1
+          }
+          echo "key written to \$RUNNER_TEMP, mode $(stat -f '%Lp' "$RUNNER_TEMP/asc_authkey.p8")"
+
+      - name: Determine the next build number
+        id: build_number
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_PATH: ${{ runner.temp }}/asc_authkey.p8
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet --disable-pip-version-check pyjwt cryptography
+          NUMBER=$(python3 Tools/asc_build_number.py --bundle-id "$BUNDLE_ID")
+          echo "number=$NUMBER" >> "$GITHUB_OUTPUT"
+          echo "Next build number: $NUMBER"
+
+      - name: Read the marketing version
+        id: marketing
+        run: |
+          set -euo pipefail
+          VERSION=$(grep -m1 -oE 'MARKETING_VERSION = [^;]+;' \
+            "$XCODE_PROJECT/project.pbxproj" | sed 's/MARKETING_VERSION = //; s/;//')
+          [ -n "$VERSION" ] || { echo "no MARKETING_VERSION in the project" >&2; exit 1; }
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Marketing version $VERSION, carried through unchanged."
+
+      - name: Archive for iOS, Release
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          NUMBER: ${{ steps.build_number.outputs.number }}
+          NSUnbufferedIO: "YES"
+        run: |
+          set -euo pipefail
+          # The build number is passed as a build setting rather than stamped
+          # in with `agvtool`. This project sets GENERATE_INFOPLIST_FILE = YES,
+          # so there is no Info.plist on disk for agvtool to edit: Xcode
+          # synthesises CFBundleVersion from $(CURRENT_PROJECT_VERSION) and
+          # CFBundleShortVersionString from $(MARKETING_VERSION). Setting the
+          # one and not mentioning the other is what preserves the marketing
+          # version, and it leaves no modified file behind in the checkout.
+          xcodebuild archive \
+            -project "$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Turbid.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/asc_authkey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            CURRENT_PROJECT_VERSION="$NUMBER" \
+            CODE_SIGN_STYLE=Automatic \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID"
+
+      - name: Verify what the archive actually contains
+        env:
+          NUMBER: ${{ steps.build_number.outputs.number }}
+          MARKETING: ${{ steps.marketing.outputs.version }}
+        run: |
+          set -euo pipefail
+          PLIST="$RUNNER_TEMP/Turbid.xcarchive/Info.plist"
+          read_key() {
+            /usr/libexec/PlistBuddy -c "Print :ApplicationProperties:$1" "$PLIST"
+          }
+          BUILT_ID=$(read_key CFBundleIdentifier)
+          BUILT_BUILD=$(read_key CFBundleVersion)
+          BUILT_VERSION=$(read_key CFBundleShortVersionString)
+          SIGNED_BY=$(read_key SigningIdentity)
+          echo "identifier      $BUILT_ID"
+          echo "marketing       $BUILT_VERSION"
+          echo "build           $BUILT_BUILD"
+          echo "signing identity $SIGNED_BY"
+          [ "$BUILT_ID" = "$BUNDLE_ID" ] || { echo "wrong bundle identifier" >&2; exit 1; }
+          [ "$BUILT_BUILD" = "$NUMBER" ] || { echo "build number did not stick" >&2; exit 1; }
+          [ "$BUILT_VERSION" = "$MARKETING" ] || { echo "marketing version changed" >&2; exit 1; }
+
+      - name: Write the export options
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          # `app-store-connect` is the current name; `app-store` is deprecated.
+          # `destination: upload` makes exportArchive deliver the build itself,
+          # so there is no second tool and no second set of credentials.
+          # `manageAppVersionAndBuildNumber: false` matters: it defaults to
+          # true, and Xcode would then silently renumber the build we just
+          # chose from App Store Connect and could move the marketing version.
+          # No `testFlightInternalTestingOnly` key: that would restrict the
+          # build to internal testing only.
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store-connect</string>
+            <key>destination</key>
+            <string>upload</string>
+            <key>signingStyle</key>
+            <string>automatic</string>
+            <key>teamID</key>
+            <string>${APPLE_TEAM_ID}</string>
+            <key>manageAppVersionAndBuildNumber</key>
+            <false/>
+            <key>uploadSymbols</key>
+            <true/>
+          </dict>
+          </plist>
+          PLIST
+          plutil -lint "$RUNNER_TEMP/ExportOptions.plist"
+
+      - name: Export and upload to App Store Connect
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          NSUnbufferedIO: "YES"
+        run: |
+          set -euo pipefail
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Turbid.xcarchive" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/asc_authkey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+
+      - name: Confirm the build reached App Store Connect
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_PATH: ${{ runner.temp }}/asc_authkey.p8
+          EXPECTED: ${{ steps.build_number.outputs.number }}
+        run: |
+          set -euo pipefail
+          # Upload and ingestion are not the same event: the build appears a
+          # minute or two after xcodebuild returns. Poll rather than assert.
+          for attempt in $(seq 1 20); do
+            NEXT=$(python3 Tools/asc_build_number.py --bundle-id "$BUNDLE_ID" 2>/dev/null || echo 0)
+            if [ "$NEXT" -gt "$EXPECTED" ]; then
+              echo "App Store Connect now reports build $EXPECTED as present."
+              exit 0
+            fi
+            echo "attempt $attempt: build $EXPECTED not visible yet, waiting"
+            sleep 30
+          done
+          echo "Build $EXPECTED did not appear within 10 minutes." >&2
+          echo "The upload may still be processing; check App Store Connect." >&2
+          exit 1
+
+      - name: Summarise
+        if: always()
+        env:
+          NUMBER: ${{ steps.build_number.outputs.number }}
+          MARKETING: ${{ steps.marketing.outputs.version }}
+        run: |
+          set -euo pipefail
+          {
+            echo "### TestFlight upload"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Bundle identifier | \`$BUNDLE_ID\` |"
+            echo "| Marketing version | \`${MARKETING:-unknown}\` |"
+            echo "| Build number | \`${NUMBER:-not determined}\` |"
+            echo "| Commit | \`${GITHUB_SHA:0:12}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Runs whatever happened above, including a cancelled run.
+      - name: Remove credentials
+        if: always()
+        run: |
+          set -euo pipefail
+          rm -f "$RUNNER_TEMP/asc_authkey.p8"
+          rm -rf "$RUNNER_TEMP/export"
+          # Provisioning profiles automatic signing fetched onto the runner.
+          rm -rf ~/Library/MobileDevice/Provisioning\ Profiles || true
+          echo "temporary credentials removed"
