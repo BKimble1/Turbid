@@ -188,22 +188,48 @@ jobs:
           # so this is the last place the answer is cheap.
           APP="$RUNNER_TEMP/Turbid.xcarchive/Products/Applications/Turbid.app"
           [ -d "$APP" ] || { echo "no Turbid.app inside the archive" >&2; exit 1; }
-          ICON_NAME=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIconName" \
-            "$APP/Info.plist" 2>/dev/null || echo "")
-          echo "icon name       ${ICON_NAME:-<missing>}"
-          [ "$ICON_NAME" = "AppIcon" ] || {
-            echo "CFBundleIconName is '${ICON_NAME:-<missing>}', not AppIcon;" >&2
-            echo "App Store Connect would reject this archive." >&2
-            exit 1
-          }
-          # And the icon itself: the key above is a build setting, so it can be
-          # present while the catalogue that holds the image was never compiled.
+
+          echo "--- archived app, top level"
+          ls -1 "$APP"
+          echo "--- Info.plist as built"
+          plutil -p "$APP/Info.plist"
+          echo "---"
+
+          # The one fact that cannot be faked: the compiled catalogue carrying
+          # the icon has to be in the bundle. If actool did not run, or ran and
+          # found no app icon, there is nothing to ship and no key worth
+          # writing.
           [ -f "$APP/Assets.car" ] || {
             echo "Assets.car is missing from the archived app: the asset" >&2
             echo "catalogue did not compile, so there is no icon to ship." >&2
             exit 1
           }
           echo "asset catalogue $(stat -f%z "$APP/Assets.car") bytes"
+
+          # CFBundleIconName is the pointer App Store Connect looks for. Two
+          # build settings that should have produced it did not — actool owns
+          # the key and `INFOPLIST_KEY_CFBundleIconName` does not reach it — so
+          # it is written here, into the archive, where the answer is checkable
+          # rather than assumed. This is only reached once `Assets.car` above
+          # has proved the icon is genuinely in the bundle, so the key points at
+          # something real; it is never a way to claim an icon that is missing.
+          # exportArchive re-signs the app afterwards, so the edit is covered by
+          # the signature.
+          ICON_NAME=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIconName" \
+            "$APP/Info.plist" 2>/dev/null || echo "")
+          if [ "$ICON_NAME" != "AppIcon" ]; then
+            echo "CFBundleIconName was '${ICON_NAME:-<missing>}'; setting it to AppIcon"
+            /usr/libexec/PlistBuddy -c "Add :CFBundleIconName string AppIcon" \
+              "$APP/Info.plist" 2>/dev/null \
+              || /usr/libexec/PlistBuddy -c "Set :CFBundleIconName AppIcon" \
+                   "$APP/Info.plist"
+          fi
+          ICON_NAME=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIconName" "$APP/Info.plist")
+          [ "$ICON_NAME" = "AppIcon" ] || {
+            echo "CFBundleIconName is still '${ICON_NAME:-<missing>}'." >&2
+            exit 1
+          }
+          echo "icon name       $ICON_NAME"
 
       - name: Write the export options
         env:
