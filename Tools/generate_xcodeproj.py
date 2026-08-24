@@ -402,31 +402,6 @@ UITEST_TARGET_SETTINGS = {
 }
 
 
-# Release-only, and only for the app: this is the configuration the archive is
-# built from.
-#
-# Without it the archive asks for the wrong kind of profile. `CODE_SIGN_IDENTITY`
-# defaults to "Apple Development" on the iOS SDK, and automatic signing then
-# looks for a *development* provisioning profile even when the destination is an
-# App Store archive:
-#
-#   error: No profiles for 'com.idlery.turbid' were found: Xcode couldn't find
-#   any iOS App Development provisioning profiles matching 'com.idlery.turbid'.
-#
-# There is no such profile and there should not be one — a development profile
-# is bound to registered devices, which a TestFlight build has nothing to do
-# with. Naming the distribution identity makes automatic signing request an App
-# Store profile instead, which `-allowProvisioningUpdates` can create against
-# the App Store Connect key using a cloud-managed distribution certificate.
-#
-# Debug is deliberately left at the default. Simulator builds are never signed
-# (CI passes CODE_SIGNING_ALLOWED=NO), and a device debug build should still use
-# a development identity.
-APP_TARGET_RELEASE_SETTINGS = {
-    "CODE_SIGN_IDENTITY": "Apple Distribution",
-}
-
-
 if DEVELOPMENT_TEAM:
     APP_TARGET_SETTINGS["DEVELOPMENT_TEAM"] = DEVELOPMENT_TEAM
     TEST_TARGET_SETTINGS["DEVELOPMENT_TEAM"] = DEVELOPMENT_TEAM
@@ -549,7 +524,7 @@ def main() -> int:
     app_config_list = configuration_list(
         f'"{APP_NAME}" target',
         {**APP_TARGET_SETTINGS},
-        {**APP_TARGET_SETTINGS, **APP_TARGET_RELEASE_SETTINGS},
+        {**APP_TARGET_SETTINGS},
     )
 
     app_target = add(
