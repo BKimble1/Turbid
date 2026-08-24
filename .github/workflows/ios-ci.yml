@@ -181,7 +181,9 @@ jobs:
             echo "Diagnostics carrying a file and line:"
             echo ""
             echo '```'
-            grep -E '^/.*:[0-9]+:[0-9]+: (error|warning):' "$LOG" \
+            # `note:` too: it is the line that names a missing enum case
+            # or the overload that did not match.
+            grep -E '^/.*:[0-9]+:[0-9]+: (error|warning|note):' "$LOG" \
               | sed "s|$GITHUB_WORKSPACE/||" | sort -u | head -40
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"

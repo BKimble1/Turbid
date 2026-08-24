@@ -161,9 +161,13 @@ final class MultiObjectTrackerTests: XCTestCase {
         let speed = 90.0
         var time = 0.0
         var x = 200.0
-        let intervals = [1.0 / 30, 1.0 / 30, 2.0 / 30, 1.0 / 30, 3.0 / 30,
-                         1.0 / 30, 1.0 / 30, 2.0 / 30, 1.0 / 30, 1.0 / 30,
-                         1.0 / 30, 2.0 / 30, 1.0 / 30, 1.0 / 30, 1.0 / 30]
+        // Annotated, not inferred. Fifteen untyped `1.0 / 30` literals in one
+        // array give the type checker fifteen independent overload sets to
+        // reconcile, and it gives up: "unable to type-check this expression in
+        // reasonable time". Naming the element type collapses that to nothing.
+        let intervals: [Double] = [1.0 / 30, 1.0 / 30, 2.0 / 30, 1.0 / 30, 3.0 / 30,
+                                   1.0 / 30, 1.0 / 30, 2.0 / 30, 1.0 / 30, 1.0 / 30,
+                                   1.0 / 30, 2.0 / 30, 1.0 / 30, 1.0 / 30, 1.0 / 30]
 
         tracker.update(candidates: [candidate(x: x, y: 200)],
                        timestampSeconds: time, motion: .none)

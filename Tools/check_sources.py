@@ -111,6 +111,14 @@ BAD_BINARY = re.compile(r"\b0[bB][01_]*[2-9A-Za-z][A-Za-z0-9_]*")
 # A closure literal capturing nothing does not.
 SENDABLE_INIT_DEFAULT = re.compile(r"@Sendable\b[^=]*=\s*[A-Z][A-Za-z0-9_]*\.init\b")
 
+# A `let`/`var` bound straight to an array literal, with no type annotation.
+BARE_ARRAY_BINDING = re.compile(r"\b(?:let|var)\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\[")
+ARITHMETIC = re.compile(r"[-+*/]")
+# Where an inferred numeric array literal starts costing real compile time.
+# Comfortably above anything hand-written for clarity, and below the fifteen
+# elements that actually defeated the type checker.
+ARITHMETIC_ARRAY_LIMIT = 10
+
 # `: T?` or `: Optional<T>` at the end of an annotation. Only an optional
 # `var` picks up an implicit `= nil` in the memberwise initializer.
 OPTIONAL_TYPE = re.compile(r"(\?|\bOptional\s*<.*>)\s*$")
@@ -237,6 +245,60 @@ def required_properties(code: str, start: int, end: int) -> list[str] | None:
             continue          # an optional `var` defaults to nil
         names.append(match.group(2))
     return names
+
+
+def check_inferred_arithmetic_arrays(sources):
+    """Large array literals of arithmetic, with no element type named.
+
+    Every untyped numeric literal carries a set of candidate types, and the
+    type checker has to reconcile all of them at once. A handful is free;
+    fifteen `1.0 / 30` in one literal is "the compiler is unable to type-check
+    this expression in reasonable time", which is a build failure rather than a
+    slow build. Naming the element type collapses the search to nothing.
+
+    A heuristic about compile time, not a correctness rule, so the threshold is
+    set well above anything written by hand for clarity.
+    """
+    failures = []
+    for relative, code in sorted(sources.items()):
+        for match in re.finditer(BARE_ARRAY_BINDING, code):
+            open_bracket = match.end() - 1
+            depth, index = 0, open_bracket
+            while index < len(code):
+                if code[index] in "([{":
+                    depth += 1
+                elif code[index] in ")]}":
+                    depth -= 1
+                    if depth == 0:
+                        break
+                index += 1
+            if depth != 0:
+                continue
+            body = code[open_bracket + 1:index]
+            elements, level, start = [], 0, 0
+            for position, character in enumerate(body):
+                if character in "([{":
+                    level += 1
+                elif character in ")]}":
+                    level -= 1
+                elif character == "," and level == 0:
+                    elements.append(body[start:position])
+                    start = position + 1
+            elements.append(body[start:])
+            elements = [item for item in elements if item.strip()]
+            if len(elements) < ARITHMETIC_ARRAY_LIMIT:
+                continue
+            arithmetic = sum(1 for item in elements if ARITHMETIC.search(item))
+            if arithmetic >= ARITHMETIC_ARRAY_LIMIT:
+                line = code.count(chr(10), 0, match.start()) + 1
+                failures.append(
+                    relative + ": " + match.group(1) + " at line " + str(line)
+                    + " is " + str(len(elements)) + " inferred arithmetic"
+                    " elements; name the element type"
+                    " (`let x: [Double] = [...]`) so the type checker does not"
+                    " have to search"
+                )
+    return failures
 
 
 def check_async_assertions(sources: dict[str, str]) -> list[str]:
@@ -579,6 +641,7 @@ def main() -> int:
     failures.extend(check_frames_stay_on_device(sources))
     failures.extend(check_no_accuracy_claims(raw_sources))
     failures.extend(check_async_assertions(sources))
+    failures.extend(check_inferred_arithmetic_arrays(sources))
 
     if failures:
         for failure in failures:
