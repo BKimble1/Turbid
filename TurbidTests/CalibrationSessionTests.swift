@@ -290,7 +290,8 @@ final class CalibrationSessionTests: XCTestCase {
         session.fit()
         session.profileName = "Bench"
 
-        XCTAssertNil(await session.save())
+        let saveFailure = await session.save()
+        XCTAssertNil(saveFailure)
 
         XCTAssertEqual(measurement.calibrations.selectedProfile?.name, "Bench")
         XCTAssertNil(measurement.fixtureOverride,
@@ -312,7 +313,8 @@ final class CalibrationSessionTests: XCTestCase {
         XCTAssertFalse(session.outcome?.problems.isEmpty ?? true)
 
         session.profileName = "Nope"
-        XCTAssertNotNil(await session.save())
+        let refusal = await session.save()
+        XCTAssertNotNil(refusal)
         XCTAssertNil(session.savedProfile)
     }
 }

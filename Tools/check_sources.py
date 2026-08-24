@@ -239,6 +239,41 @@ def required_properties(code: str, start: int, end: int) -> list[str] | None:
     return names
 
 
+def check_async_assertions(sources: dict[str, str]) -> list[str]:
+    """`await` inside an XCTest assertion.
+
+    Every XCTAssert takes its expression as a non-async `@autoclosure`, so an
+    `await` inside the parentheses is "'async' call in an autoclosure that does
+    not support concurrency" — a compile error, not a runtime one, and one the
+    compiler reports without a file or line. Hoisting the await into a `let`
+    first is the whole fix.
+
+    Brace-matched rather than line-matched, so an assertion split over several
+    lines is read as one call.
+    """
+    failures: list[str] = []
+    for relative, code in sorted(sources.items()):
+        for match in re.finditer(r"\b(XCTAssert[A-Za-z]*|XCTUnwrap)\s*\(", code):
+            depth, index = 0, match.end() - 1
+            while index < len(code):
+                if code[index] in "([{":
+                    depth += 1
+                elif code[index] in ")]}":
+                    depth -= 1
+                    if depth == 0:
+                        break
+                index += 1
+            if depth != 0:
+                continue
+            if re.search(r"\bawait\b", code[match.end():index]):
+                line = code.count("\n", 0, match.start()) + 1
+                failures.append(
+                    f"{relative}: {match.group(1)} at line {line} awaits inside "
+                    "its autoclosure; assign the awaited value to a let first"
+                )
+    return failures
+
+
 def top_level_labels(code: str, open_index: int) -> tuple[list[str | None], int]:
     """Argument labels of the call whose '(' sits at `open_index`."""
     depth = 0
@@ -543,6 +578,7 @@ def main() -> int:
     failures.extend(check_identifier_mirror(raw_sources))
     failures.extend(check_frames_stay_on_device(sources))
     failures.extend(check_no_accuracy_claims(raw_sources))
+    failures.extend(check_async_assertions(sources))
 
     if failures:
         for failure in failures:
