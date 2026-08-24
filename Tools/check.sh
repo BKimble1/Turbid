@@ -11,6 +11,9 @@
 set -e
 cd "$(dirname "$0")/.."
 python3 Tools/check_sources.py
+# Proves the audit's derived-conformance rule can still fire before
+# trusting it to say the sources are clean.
+python3 Tools/swift_audit.py --self-test
 python3 Tools/swift_audit.py
 python3 Tools/analysis_reference.py
 python3 Tools/generate_xcodeproj.py

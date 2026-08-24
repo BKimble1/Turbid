@@ -99,7 +99,7 @@ struct FileCalibrationStore: CalibrationStoring {
     let url: URL
     private let now: @Sendable () -> Date
 
-    init(url: URL, now: @escaping @Sendable () -> Date = Date.init) {
+    init(url: URL, now: @escaping @Sendable () -> Date = { Date() }) {
         self.url = url
         self.now = now
     }

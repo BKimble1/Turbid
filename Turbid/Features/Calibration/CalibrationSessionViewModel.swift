@@ -82,7 +82,7 @@ final class CalibrationSessionViewModel {
          library: CalibrationLibrary,
          fitter: CalibrationFitter = CalibrationFitter(),
          tolerances: CalibrationTolerances = .screening,
-         now: @escaping @Sendable () -> Date = Date.init) {
+         now: @escaping @Sendable () -> Date = { Date() }) {
         self.measurement = measurement
         self.library = library
         self.fitter = fitter

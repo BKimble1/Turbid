@@ -104,6 +104,12 @@ FORCE_UNWRAP = re.compile(r"[A-Za-z0-9_\)\]]\s*!\s*(?:\.|,|\)|$|\s)")
 # placeholder that was never filled in.
 BAD_HEX = re.compile(r"\b0[xX](?![0-9a-fA-F])|\b0[xX][0-9a-fA-F_]*[G-Zg-z][A-Za-z0-9_]*")
 BAD_BINARY = re.compile(r"\b0[bB][01_]*[2-9A-Za-z][A-Za-z0-9_]*")
+
+# `= Date.init` as the default for a `@Sendable` closure parameter warns:
+# an unapplied initializer reference carries no `@Sendable`, so the conversion
+# is "converting non-Sendable function value ... may introduce data races".
+# A closure literal capturing nothing does not.
+SENDABLE_INIT_DEFAULT = re.compile(r"@Sendable\b[^=]*=\s*[A-Z][A-Za-z0-9_]*\.init\b")
 FORCE_CAST = re.compile(r"\bas!\s")
 TRY_BANG = re.compile(r"\btry!\s")
 
@@ -457,6 +463,10 @@ def main() -> int:
                         fail(f"malformed hex literal at line {number}: {stripped}")
                     if BAD_BINARY.search(line):
                         fail(f"malformed binary literal at line {number}: {stripped}")
+                    if SENDABLE_INIT_DEFAULT.search(line):
+                        fail(f"unapplied initializer as a @Sendable default at "
+                             f"line {number}; write a closure literal such as "
+                             f"`{{ Date() }}`: {stripped}")
                     if relative.replace(os.sep, "/").startswith(STRICT_DIRS):
                         if FORCE_UNWRAP.search(line):
                             fail(f"force unwrap at line {number}: {stripped}")

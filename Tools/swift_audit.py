@@ -20,6 +20,9 @@ It checks:
     argument labels and in order, allowing for defaults and a trailing closure;
   * every type that conforms to a protocol declared in this module implements
     that protocol's requirements;
+  * no type asks the compiler to synthesise `Equatable`, `Hashable` or
+    `Codable` while storing something that can never conform - a tuple or a
+    closure - which costs the whole type its conformance;
   * every `switch` over an enum declared in this module is exhaustive or has a
     default;
   * no SwiftUI view builder is given more than the ten children it accepts;
@@ -32,6 +35,7 @@ sit in `check.sh` without making the parser a hard requirement.
 from __future__ import annotations
 
 import os
+import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -359,6 +363,114 @@ def missing_conformances(module) -> list[str]:
     return failures
 
 
+# Protocols the compiler synthesises member by member, and the members that
+# opt a type out of synthesis by implementing the requirement by hand.
+SYNTHESIZED = {
+    "Equatable": {"==": "static func =="},
+    "Hashable": {"==": "static func ==", "hash": "func hash(into:)"},
+    "Codable": {"decode": "init(from:)", "encode": "func encode(to:)"},
+    "Decodable": {"decode": "init(from:)"},
+    "Encodable": {"encode": "func encode(to:)"},
+}
+
+# Neither ever conforms to Equatable, Hashable or Codable, whatever it is built
+# from, so one stored in a type that derives any of them is fatal to the whole
+# conformance. `function_type` is checked first because the grammar nests a
+# `tuple_type` inside every one of them for the parameter list.
+UNSYNTHESIZABLE = (("function_type", "a closure"), ("tuple_type", "a tuple"))
+
+
+def _stored_properties(body, src):
+    """Direct stored properties of a type body, with their annotation nodes."""
+    for node in body.children:
+        if node.type != "property_declaration":
+            continue
+        modifiers = {text(m, src) for child in node.children
+                     if child.type == "modifiers" for m in child.children}
+        # A static or class property is not part of the memberwise state the
+        # compiler compares, hashes or encodes.
+        if modifiers & {"static", "class"}:
+            continue
+        # A computed property stores nothing. `willSet`/`didSet` still does.
+        if any(child.type == "computed_property" for child in node.children):
+            continue
+        names = [k for child in node.children if child.type == "pattern"
+                 for k in child.children if k.type == "simple_identifier"]
+        name = text(names[0], src) if names else "?"
+        annotations = [c for c in node.children if c.type == "type_annotation"]
+        yield name, node, (annotations[0] if annotations else None)
+
+
+def _contains(node, kind) -> bool:
+    if node is None:
+        return False
+    if node.type == kind:
+        return True
+    return any(_contains(child, kind) for child in node.children)
+
+
+def unsynthesizable_conformances(module) -> list[str]:
+    """Derived conformances the compiler cannot actually synthesise.
+
+    `Equatable` synthesis needs every stored property to be `Equatable`, and a
+    tuple is not one however `Equatable` its elements are; nor is a closure.
+    The compiler reports this against the type's declaration line and says only
+    that it "does not conform", which points at the conformance rather than at
+    the member that broke it. This names the member.
+    """
+    failures = []
+    for path, src, tree in module.files:
+        def visit(node):
+            if node.type == "class_declaration":
+                names = [c for c in node.children if c.type == "type_identifier"]
+                bodies = [c for c in node.children if c.type.endswith("_body")]
+                declared = {text(c, src).strip()
+                            for c in node.children
+                            if c.type == "inheritance_specifier"}
+                derived = sorted(declared & set(SYNTHESIZED))
+                if names and bodies and derived:
+                    owner = text(names[0], src)
+                    body = bodies[0]
+                    source = text(node, src)
+                    # A hand-written requirement, or coding keys that can leave
+                    # a member out, means the compiler is not synthesising it.
+                    manual = set()
+                    if re.search(r"\bfunc\s*==", source):
+                        manual.add("==")
+                    if re.search(r"\bfunc\s+hash\s*\(\s*into\s*:", source):
+                        manual.add("hash")
+                    if re.search(r"\binit\s*\(\s*from\s", source):
+                        manual.add("decode")
+                    if re.search(r"\bfunc\s+encode\s*\(\s*to\s*:", source):
+                        manual.add("encode")
+                    if re.search(r"\benum\s+CodingKeys\b", source):
+                        manual |= {"decode", "encode"}
+
+                    for protocol in derived:
+                        synthesised = [requirement
+                                       for requirement, _ in SYNTHESIZED[protocol].items()
+                                       if requirement not in manual]
+                        if not synthesised:
+                            continue
+                        for name, prop, annotation in _stored_properties(body, src):
+                            for kind, described in UNSYNTHESIZABLE:
+                                if _contains(annotation, kind):
+                                    line = prop.start_point[0] + 1
+                                    failures.append(
+                                        f"{path}:{line}: {owner} derives {protocol} "
+                                        f"but stores {described} in `{name}`; "
+                                        f"write {SYNTHESIZED[protocol][synthesised[0]]} "
+                                        f"by hand or give `{name}` a named type"
+                                    )
+                                    break
+                        break          # one report per type is enough
+            for child in node.children:
+                visit(child)
+
+        visit(tree.root_node)
+    return sorted(set(failures))
+
+
 def inexhaustive_switches(module) -> list[str]:
     """Switches over a module enum that name some cases but not all."""
     failures = []
@@ -470,11 +582,57 @@ def duplicate_declarations(module) -> list[str]:
     return failures
 
 
+SELF_TEST = [
+    # (Swift, number of reports expected)
+    ("struct A: Equatable, Sendable {\n"
+     "    private var carried: [(timestamp: Double, specks: Int)] = []\n}\n", 1),
+    ("struct B: Equatable {\n    var size: (width: Int, height: Int)?\n}\n", 1),
+    ("struct C: Equatable {\n    let action: () -> Void\n}\n", 1),
+    ("struct D: Codable {\n    let pair: (Int, Int)\n}\n", 1),
+    # Named type instead of a tuple: the whole point of the fix.
+    ("struct E: Equatable {\n    struct Frame: Equatable { let t: Double }\n"
+     "    private var carried: [Frame] = []\n}\n", 0),
+    # Hand-written requirement: the compiler synthesises nothing.
+    ("struct F: Equatable {\n    let action: () -> Void\n"
+     "    static func == (lhs: F, rhs: F) -> Bool { true }\n}\n", 0),
+    # Coding keys can leave a member out of the encoded form.
+    ("struct G: Codable {\n    var pair: (Int, Int) = (0, 0)\n"
+     "    enum CodingKeys: String, CodingKey { case other }\n    var other = 1\n}\n", 0),
+    # Not a derived conformance at all.
+    ("struct H: Sendable {\n    let action: () -> Void\n}\n", 0),
+    # Static state is not part of the synthesised members.
+    ("struct I: Equatable {\n    static let shared: (Int, Int) = (0, 0)\n    let x: Int\n}\n", 0),
+    # A computed property stores nothing.
+    ("struct J: Equatable {\n    let x: Int\n    var pair: (Int, Int) { (x, x) }\n}\n", 0),
+]
+
+
+def self_test(parser) -> int:
+    """Proves the rule can fire, and that each exemption silences it."""
+    failures = 0
+    for index, (source, expected) in enumerate(SELF_TEST):
+        src = source.encode("utf-8")
+        module = Module()
+        module.files.append((f"selftest-{index}.swift", src, parser.parse(src)))
+        found = unsynthesizable_conformances(module)
+        if len(found) != expected:
+            failures += 1
+            print(f"FAIL self-test {index}: expected {expected} report(s), "
+                  f"got {len(found)}: {found}")
+    if failures:
+        return 1
+    print(f"swift audit self-test OK  ({len(SELF_TEST)} cases)")
+    return 0
+
+
 def main() -> int:
     parser, ok = load_parser()
     if not ok:
         print("swift audit SKIPPED  (pip install tree_sitter tree_sitter_swift)")
         return 0
+
+    if "--self-test" in sys.argv:
+        return self_test(parser)
 
     module = Module()
     for directory in SOURCE_DIRS:
@@ -504,6 +662,7 @@ def main() -> int:
     failures += unresolved_types(module)
     failures += call_mismatches(module, parser)
     failures += missing_conformances(module)
+    failures += unsynthesizable_conformances(module)
     failures += inexhaustive_switches(module)
     failures += overfull_view_builders(module)
     failures += duplicate_declarations(module)

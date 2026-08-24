@@ -24,7 +24,7 @@ final class CalibrationLibrary {
     private let store: any CalibrationStoring
     private let now: @Sendable () -> Date
 
-    init(store: any CalibrationStoring, now: @escaping @Sendable () -> Date = Date.init) {
+    init(store: any CalibrationStoring, now: @escaping @Sendable () -> Date = { Date() }) {
         self.store = store
         self.now = now
     }

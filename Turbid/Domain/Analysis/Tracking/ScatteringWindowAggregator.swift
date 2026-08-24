@@ -79,10 +79,23 @@ struct ScatteringWindowAggregator: Equatable, Sendable {
     private var totalActiveFraction: Double = 0
     private var speckEvents = 0
     private var lastTimestamp: Double = 0
+    /// One frame held back for replay into the next, overlapping window.
+    ///
+    /// A named type rather than a tuple. `Equatable` synthesis requires every
+    /// stored property to be `Equatable`, and a tuple is not one however
+    /// `Equatable` its elements are, so a tuple here silently costs the whole
+    /// enclosing type its conformance.
+    private struct CarriedFrame: Equatable, Sendable {
+        let timestamp: Double
+        let residual: Double
+        let upper: Double
+        let active: Double
+        let specks: Int
+    }
+
     /// Frames belonging to the overlapping tail, replayed into the next window
     /// so overlap costs one small buffer rather than a full frame history.
-    private var carried: [(timestamp: Double, residual: Double, upper: Double,
-                           active: Double, specks: Int)] = []
+    private var carried: [CarriedFrame] = []
 
     init(configuration: Configuration = .screening) {
         self.configuration = configuration
@@ -118,9 +131,11 @@ struct ScatteringWindowAggregator: Equatable, Sendable {
         guard let start = openStart else { return }
         // Retain the tail that the next window will overlap.
         if timestampSeconds - start >= configuration.strideSeconds {
-            carried.append((timestampSeconds, bulk.meanPositiveResidual,
-                            bulk.upperPercentileExcess, bulk.activeForegroundFraction,
-                            newSpeckEvents))
+            carried.append(CarriedFrame(timestamp: timestampSeconds,
+                                        residual: bulk.meanPositiveResidual,
+                                        upper: bulk.upperPercentileExcess,
+                                        active: bulk.activeForegroundFraction,
+                                        specks: newSpeckEvents))
         }
 
         if timestampSeconds - start >= configuration.windowSeconds {
