@@ -222,12 +222,20 @@ which a simulator build would have complained about:
   no image in it. A simulator build only warns; App Store Connect rejects the
   archive for a missing `CFBundleIconName`. `Tools/make_app_icon.py` now draws
   one from the app's own palette, and the validator fails if it goes missing.
-  Three things check it now, because each can pass while the next fails: a unit
-  test asserts `CFBundleIconName` is in the built bundle, a second asserts the
-  compiled `Assets.car` is there too — the key is a build setting and can be
-  present with no catalogue behind it — and the upload workflow reads both back
-  out of the archive it is about to send, so a missing icon fails on the runner
-  rather than at App Store Connect.
+  Two things check it, at the two places it can go wrong. A unit test asserts
+  the compiled `Assets.car` is in the built bundle, which is what proves
+  `actool` ran on the catalogue at all. The upload workflow then reads the
+  archive it is about to send: it fails if `Assets.car` is absent, and only
+  once that has passed does it write `CFBundleIconName` and re-read it.
+
+  That key is written by the workflow rather than by the build because on the
+  Xcode 26 toolchain the build does not produce it. `actool` emits it into a
+  partial Info.plist the build is supposed to merge, and measured on both a
+  Simulator build and a device archive the catalogue compiled and the key was
+  absent; `INFOPLIST_KEY_CFBundleIconName` does not reach it either, since that
+  mechanism only serves keys the build system knows. App Store Connect requires
+  the key, so it is supplied against the artifact actually being uploaded,
+  where the claim can be checked rather than assumed.
 - **Export compliance was unanswered.** Without
   `ITSAppUsesNonExemptEncryption`, every TestFlight build waits in *Missing
   Compliance* until somebody clicks through the question. Turbid implements no

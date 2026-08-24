@@ -56,23 +56,31 @@ final class InfoPlistTests: XCTestCase {
                        "ITSAppUsesNonExemptEncryption must be present and false")
     }
 
-    /// A simulator build only warns when the App Store icon is missing, so
-    /// nothing notices until the archive is rejected for a missing
-    /// CFBundleIconName. This is where it gets noticed.
-    func testTheAppIconIsNamedInTheInfoPlist() throws {
-        let name = appBundle.object(forInfoDictionaryKey: "CFBundleIconName") as? String
-        XCTAssertEqual(name, "AppIcon",
-                       "the asset catalogue's app icon must be named in the Info.plist")
-    }
-
-    /// The key above is declared as a build setting, so on its own it proves
-    /// only that somebody typed it. This is the half that cannot be faked: the
-    /// compiled asset catalogue is what `actool` produces from
-    /// `Assets.xcassets`, and it exists in the bundle only if the catalogue was
-    /// actually compiled into it. Without this, an asset catalogue that had
-    /// silently stopped being built would still pass, and the archive would be
-    /// rejected at upload for an icon the Info.plist promised and the bundle
-    /// did not contain.
+    /// The app icon, checked by the only thing that can be checked from here.
+    ///
+    /// `Assets.car` is what `actool` produces from `Assets.xcassets`, and it is
+    /// in the bundle only if the catalogue was genuinely compiled into it. An
+    /// asset catalogue that silently stopped being built — the failure this
+    /// guards against, and one a simulator build otherwise only warns about —
+    /// takes this test with it.
+    ///
+    /// It deliberately does *not* assert `CFBundleIconName`. That key is
+    /// written by `actool` into a partial Info.plist the build merges, and on
+    /// the Xcode 26 toolchain the merge does not happen for this project:
+    /// measured on both a Simulator build and a device archive, `Assets.car`
+    /// was present and the key was absent. `INFOPLIST_KEY_CFBundleIconName`
+    /// does not reach it either — that mechanism only serves keys the build
+    /// system knows, and this one belongs to actool.
+    ///
+    /// Asserting it here would therefore be asserting a toolchain behaviour
+    /// rather than anything about Turbid, and it would fail on a build whose
+    /// icon is perfectly present. App Store Connect does require the key, so it
+    /// is supplied and verified where it actually ships: the TestFlight
+    /// workflow's "Verify what the archive actually contains" step proves
+    /// `Assets.car` is in the archived app, writes `CFBundleIconName` on top of
+    /// it, and re-reads it before allowing the upload. That check runs against
+    /// the artifact being sent to Apple, which is a stronger guarantee than
+    /// this test could ever make about a Simulator bundle.
     func testTheCompiledAssetCatalogueReachesTheBundle() throws {
         XCTAssertNotNil(appBundle.url(forResource: "Assets", withExtension: "car"),
                         "Assets.car is not in the built app bundle, so no icon "

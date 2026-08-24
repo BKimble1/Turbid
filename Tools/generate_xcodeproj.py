@@ -330,15 +330,6 @@ RELEASE_PROJECT_SETTINGS = {
 APP_TARGET_SETTINGS = {
     "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
     "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": "AccentColor",
-    # Normally `actool` writes this into a partial Info.plist that the build
-    # merges, so setting it by hand is redundant. It is set anyway because the
-    # cost of the two disagreeing is nothing — both say "AppIcon" — and the
-    # cost of relying on the merge is an upload rejected by App Store Connect
-    # for a missing CFBundleIconName, discovered only after a full archive.
-    # The unit test checks the compiled catalogue itself (`Assets.car`) rather
-    # than this key alone, so declaring it here cannot turn a genuinely missing
-    # icon into a passing test.
-    "INFOPLIST_KEY_CFBundleIconName": "AppIcon",
     "CODE_SIGN_STYLE": "Automatic",
     "CURRENT_PROJECT_VERSION": "1",
     "ENABLE_PREVIEWS": "YES",
