@@ -53,6 +53,7 @@ struct FrameAggregate: Equatable, Sendable {
     // Running sums over contributing frames only.
     private var totalMean: Double = 0
     private var totalStandardDeviation: Double = 0
+    private var totalNoiseSigma: Double = 0
     private var totalSaturated: Double = 0
     private var totalTileShare: Double = 0
     private var totalSharpness: Double = 0
@@ -81,6 +82,7 @@ struct FrameAggregate: Equatable, Sendable {
 
         totalMean += Double(observation.statistics.mean)
         totalStandardDeviation += Double(observation.statistics.standardDeviation)
+        totalNoiseSigma += observation.statistics.noiseSigma
         totalSaturated += observation.statistics.saturatedFraction
         totalTileShare += observation.statistics.brightestTileShare
         totalSharpness += observation.statistics.sharpness
@@ -154,7 +156,11 @@ struct FrameAggregate: Equatable, Sendable {
             saturatedFraction: maximumSaturated,
             nearBlackFraction: 0,
             brightestTileShare: maximumTileShare,
-            sharpness: minimumSharpness == .greatestFiniteMagnitude ? 0 : minimumSharpness
+            sharpness: minimumSharpness == .greatestFiniteMagnitude ? 0 : minimumSharpness,
+            // Averaged, like the standard deviation it is a sibling of. Left
+            // at zero it would be the one field here a consumer might divide
+            // by or compare against, and zero noise is not a claim to make.
+            noiseSigma: totalNoiseSigma / n
         )
     }
 

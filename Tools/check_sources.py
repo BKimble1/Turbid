@@ -110,6 +110,10 @@ BAD_BINARY = re.compile(r"\b0[bB][01_]*[2-9A-Za-z][A-Za-z0-9_]*")
 # is "converting non-Sendable function value ... may introduce data races".
 # A closure literal capturing nothing does not.
 SENDABLE_INIT_DEFAULT = re.compile(r"@Sendable\b[^=]*=\s*[A-Z][A-Za-z0-9_]*\.init\b")
+
+# `: T?` or `: Optional<T>` at the end of an annotation. Only an optional
+# `var` picks up an implicit `= nil` in the memberwise initializer.
+OPTIONAL_TYPE = re.compile(r"(\?|\bOptional\s*<.*>)\s*$")
 FORCE_CAST = re.compile(r"\bas!\s")
 TRY_BANG = re.compile(r"\btry!\s")
 
@@ -196,6 +200,41 @@ def stored_properties(code: str, start: int, end: int) -> list[str]:
         # `var x: T { ... }` is computed; `var x = 0 { didSet ... }` is stored.
         if brace != -1 and (equals == -1 or equals > brace):
             continue
+        names.append(match.group(2))
+    return names
+
+
+def required_properties(code: str, start: int, end: int) -> list[str] | None:
+    """Stored properties a memberwise initializer call cannot leave out.
+
+    Swift's memberwise initializer takes `let x: T` and `var x: T` as required
+    parameters, `var x: T = v` as a defaulted one, `var x: T?` as defaulted to
+    nil, and omits `let x: T = v` entirely — it is already initialized and
+    cannot be reassigned.
+
+    Returns None for a struct this cannot reason about safely: a property
+    wrapper rewrites the initializer's signature in ways that are not visible
+    from the declaration line, so such a struct is skipped rather than guessed
+    at. Being silent about a real omission costs one compiler error; being
+    wrong about a legal call costs every call site.
+    """
+    names: list[str] = []
+    for line in own_lines(code, start, end):
+        match = STORED_PROPERTY.match(line)
+        if not match or STATIC_MEMBER.match(line):
+            continue
+        if line.lstrip().startswith("@"):
+            return None       # a property wrapper; the signature is not readable here
+        tail = line[match.end(2):]
+        brace = tail.find("{")
+        equals = tail.find("=")
+        if brace != -1 and (equals == -1 or equals > brace):
+            continue          # computed
+        if equals != -1:
+            continue          # defaulted, or a `let` that is not a parameter at all
+        annotation = tail[:brace if brace != -1 else len(tail)].strip()
+        if match.group(1) == "var" and OPTIONAL_TYPE.search(annotation):
+            continue          # an optional `var` defaults to nil
         names.append(match.group(2))
     return names
 
@@ -363,6 +402,7 @@ def check_memberwise(sources: dict[str, str]) -> list[str]:
     name declared more than once, is skipped rather than guessed at.
     """
     properties: dict[str, list[str]] = {}
+    required: dict[str, list[str]] = {}
     duplicates: set[str] = set()
     custom_init: set[str] = set()
 
@@ -380,6 +420,7 @@ def check_memberwise(sources: dict[str, str]) -> list[str]:
                 duplicates.add(name)
                 continue
             properties[name] = stored_properties(code, start, end)
+            required[name] = required_properties(code, start, end)
 
     checkable = {
         name: names for name, names in sorted(properties.items())
@@ -403,6 +444,24 @@ def check_memberwise(sources: dict[str, str]) -> list[str]:
                         f"{', '.join(unknown)}, which {name} does not declare"
                     )
                     continue
+                # A property added to a struct without updating every call
+                # site compiles nowhere but reads fine, and the labels that
+                # are present are both known and in order — so neither check
+                # above sees it. That defect reached CI once.
+                # A trailing closure supplies a parameter without naming it,
+                # so the labels alone do not say what was passed.
+                has_trailing_closure = code[close + 1:].lstrip().startswith("{")
+                omitted = [] if has_trailing_closure else [
+                    label for label in (required.get(name) or [])
+                    if label not in labels
+                ]
+                if omitted:
+                    failures.append(
+                        f"{relative}: {name}(...) at line {line} omits "
+                        f"{', '.join(omitted)}, which {name} requires"
+                    )
+                    continue
+
                 remaining = list(names)
                 for label in labels:
                     if label not in remaining:
