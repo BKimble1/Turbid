@@ -221,8 +221,13 @@ which a simulator build would have complained about:
 - **There was no app icon.** `AppIcon.appiconset` declared a 1024x1024 slot with
   no image in it. A simulator build only warns; App Store Connect rejects the
   archive for a missing `CFBundleIconName`. `Tools/make_app_icon.py` now draws
-  one from the app's own palette, the validator fails if it goes missing, and a
-  unit test checks it reaches the built bundle.
+  one from the app's own palette, and the validator fails if it goes missing.
+  Three things check it now, because each can pass while the next fails: a unit
+  test asserts `CFBundleIconName` is in the built bundle, a second asserts the
+  compiled `Assets.car` is there too — the key is a build setting and can be
+  present with no catalogue behind it — and the upload workflow reads both back
+  out of the archive it is about to send, so a missing icon fails on the runner
+  rather than at App Store Connect.
 - **Export compliance was unanswered.** Without
   `ITSAppUsesNonExemptEncryption`, every TestFlight build waits in *Missing
   Compliance* until somebody clicks through the question. Turbid implements no

@@ -205,8 +205,14 @@ final class FrameAnalyzerTests: XCTestCase {
     }
 
     func testAPanningCameraIsRejectedAsMotion() {
-        var scene = goodScene
-        scene.globalTranslation = CGVector(dx: 0.25, dy: 0)
+        // A textured scene, and a pan slow enough that the texture is still in
+        // frame at the end of the run. `goodScene` panned at 0.25 per second
+        // was neither: its twelve specks sit on a flat field and had left the
+        // frame entirely within four seconds, after which there was nothing
+        // left to move. The frames then read as featureless — rejected as out
+        // of focus, with a motion score near zero — so the window was rejected
+        // for the wrong reason and the motion gate was never exercised at all.
+        let scene = trackedScene(translationX: 0.08)
         let analyzer = makeAnalyzer()
         let observations = run(analyzer, scene: scene,
                                timestamps: SyntheticTimestamps.regular(count: 300, frameRate: 30))
@@ -378,11 +384,22 @@ final class FrameAnalyzerTests: XCTestCase {
     // MARK: - Detection is stage-gated
 
     /// A scene with drifting specks, so detection has something to find.
+    ///
+    /// Keeps `goodScene`'s twelve specks and its grid, and widens only the
+    /// orbit and the angular speed. An earlier version dropped to eight, which
+    /// quietly cost the scene the one property it inherits from `goodScene`
+    /// and needs: passing every per-frame gate. Sharpness here is measured as
+    /// noise-corrected Laplacian variance, and with a third of the texture
+    /// removed it fell below the focus limit on 16 frames out of 400 — so
+    /// those frames produced no detection, and any test counting on every
+    /// measurement frame to contribute failed for a reason that had nothing to
+    /// do with what it was testing. Twelve specks hold the minimum at 0.00122
+    /// against a limit of 0.0008.
     private var samplingScene: SyntheticScene {
         var scene = goodScene
-        scene.specks = (0..<8).map { index in
+        scene.specks = (0..<12).map { index in
             SyntheticSpeck(center: CGPoint(x: 0.2 + Double(index % 4) * 0.2,
-                                           y: 0.25 + Double(index / 4) * 0.35),
+                                           y: 0.2 + Double(index / 4) * 0.25),
                            orbitRadius: 0.06,
                            angularSpeed: 1.4,
                            initialPhase: Double(index),

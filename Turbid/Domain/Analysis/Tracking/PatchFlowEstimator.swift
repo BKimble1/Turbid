@@ -118,7 +118,22 @@ final class PatchFlowEstimator: GlobalFlowEstimating {
     private var reference = LumaImage(width: 0, height: 0)
     private var hasReference = false
     private var referenceTimestamp: Double = 0
+    /// The total folded in at the last re-anchor. Only ever advanced by a
+    /// measurement that was trustworthy at the moment it was taken.
     private var cumulativeOffset = CGVector.zero
+    /// Displacement measured against the *current* reference, not yet folded
+    /// into `cumulativeOffset`.
+    ///
+    /// This is what makes the reported offset continuous. An estimate is only
+    /// computed every `frameStride` frames, and the offset is only folded in at
+    /// a re-anchor; without carrying the measurement in between, the reported
+    /// origin would snap back to the last anchor on every frame that did not
+    /// measure, and snap forward again on the one that did. Downstream that
+    /// sawtooth is indistinguishable from real particle motion: the tracker
+    /// subtracts this offset to stabilise detections, so a 3.6 px step at 30 fps
+    /// injects roughly 100 px/s of velocity into every track on two frames out
+    /// of three.
+    private var pendingDisplacement = CGVector.zero
     private var lastFlow = GlobalFlow.none
     private var lastTrustworthy = false
     private var frameCounter = 0
@@ -141,6 +156,7 @@ final class PatchFlowEstimator: GlobalFlowEstimating {
         hasReference = false
         referenceTimestamp = 0
         cumulativeOffset = .zero
+        pendingDisplacement = .zero
         lastFlow = .none
         lastTrustworthy = false
         frameCounter = 0
@@ -157,20 +173,21 @@ final class PatchFlowEstimator: GlobalFlowEstimating {
             reference.values = region.values
             referenceTimestamp = timestampSeconds
             hasReference = true
-            return GlobalMotion(cumulativeOffset: cumulativeOffset, flow: .none, isTrustworthy: false)
+            return GlobalMotion(cumulativeOffset: reportedOffset, flow: .none, isTrustworthy: false)
         }
 
-        // Between estimates the last known rate still holds; the cumulative
-        // offset is only advanced when a fresh measurement arrives.
+        // Between estimates the last known rate and the last measured
+        // displacement both still hold. Reporting the anchor alone here would
+        // discard everything measured since it.
         guard frameCounter % max(1, configuration.frameStride) == 0 else {
-            return GlobalMotion(cumulativeOffset: cumulativeOffset,
+            return GlobalMotion(cumulativeOffset: reportedOffset,
                                 flow: lastFlow,
                                 isTrustworthy: lastTrustworthy)
         }
 
         let elapsed = timestampSeconds - referenceTimestamp
         guard elapsed > 0 else {
-            return GlobalMotion(cumulativeOffset: cumulativeOffset,
+            return GlobalMotion(cumulativeOffset: reportedOffset,
                                 flow: lastFlow,
                                 isTrustworthy: lastTrustworthy)
         }
@@ -184,11 +201,14 @@ final class PatchFlowEstimator: GlobalFlowEstimating {
                                   patchesUsed: measurement.patchesUsed,
                                   patchesOffered: measurement.patchesOffered)
             lastTrustworthy = false
-            // Re-anchor anyway: a reference that nothing matches is stale.
+            // Re-anchor anyway: a reference that nothing matches is stale. The
+            // pending displacement is folded in rather than dropped — it is the
+            // last thing actually measured about this baseline, and discarding
+            // it would lose that much offset permanently.
             if elapsed >= configuration.maximumBaselineSeconds {
-                anchor(to: region, at: timestampSeconds, adding: .zero)
+                anchor(to: region, at: timestampSeconds, adding: pendingDisplacement)
             }
-            return GlobalMotion(cumulativeOffset: cumulativeOffset,
+            return GlobalMotion(cumulativeOffset: reportedOffset,
                                 flow: lastFlow,
                                 isTrustworthy: false)
         }
@@ -207,28 +227,39 @@ final class PatchFlowEstimator: GlobalFlowEstimating {
                          + displacement.dy * displacement.dy).squareRoot()
         let reanchorDistance = Double(configuration.searchRadius) * configuration.reanchorFraction
 
+        // An untrustworthy measurement replaces nothing: the previous pending
+        // displacement is still the best thing known about this baseline.
+        if lastTrustworthy {
+            pendingDisplacement = CGVector(dx: displacement.dx, dy: displacement.dy)
+        }
+
         if magnitude >= reanchorDistance || elapsed >= configuration.maximumBaselineSeconds {
             // Fold the measured displacement into the running total and start a
             // new baseline from here, so error does not accumulate across a
             // long run.
-            anchor(to: region, at: timestampSeconds,
-                   adding: lastTrustworthy ? CGVector(dx: displacement.dx, dy: displacement.dy) : .zero)
-            return GlobalMotion(cumulativeOffset: cumulativeOffset,
+            anchor(to: region, at: timestampSeconds, adding: pendingDisplacement)
+            return GlobalMotion(cumulativeOffset: reportedOffset,
                                 flow: flow,
                                 isTrustworthy: lastTrustworthy)
         }
 
-        // Between anchors the offset is the anchor plus the live measurement.
-        let live = lastTrustworthy
-            ? CGVector(dx: cumulativeOffset.dx + displacement.dx,
-                       dy: cumulativeOffset.dy + displacement.dy)
-            : cumulativeOffset
-        return GlobalMotion(cumulativeOffset: live, flow: flow, isTrustworthy: lastTrustworthy)
+        return GlobalMotion(cumulativeOffset: reportedOffset,
+                            flow: flow,
+                            isTrustworthy: lastTrustworthy)
+    }
+
+    /// The anchored total plus whatever has been measured against the current
+    /// reference. This is the only value ever published, so the stabilised
+    /// origin moves continuously rather than in steps at each re-anchor.
+    private var reportedOffset: CGVector {
+        CGVector(dx: cumulativeOffset.dx + pendingDisplacement.dx,
+                 dy: cumulativeOffset.dy + pendingDisplacement.dy)
     }
 
     private func anchor(to region: LumaImage, at timestamp: Double, adding delta: CGVector) {
         cumulativeOffset = CGVector(dx: cumulativeOffset.dx + delta.dx,
                                     dy: cumulativeOffset.dy + delta.dy)
+        pendingDisplacement = .zero
         reference.values = region.values
         referenceTimestamp = timestamp
     }

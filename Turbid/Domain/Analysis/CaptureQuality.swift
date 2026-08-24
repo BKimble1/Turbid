@@ -122,9 +122,12 @@ struct QualityThresholds: Equatable, Sendable, Codable {
         // 3% allows for sensor noise without admitting real flicker.
         maximumExposureVariation: 0.03,
         // Small because the reading is noise-corrected: a still scene scores
-        // essentially zero. Calibrated against synthetic pans, where a drift of
-        // 10% of the frame width per second stays under the limit and 25% per
-        // second exceeds it. Scene-dependent, and superseded in Phase 3C.
+        // essentially zero. Measured against synthetic pans of a textured
+        // scene: a still run sits at 0.000000, a drift of 5% of the frame
+        // width per second lands on the limit at 0.0013, and 8% per second
+        // reads 0.0030. Strongly scene-dependent — the same pan over a
+        // near-featureless field barely registers, because there is nothing in
+        // it to move — and superseded in Phase 3C.
         maximumGlobalMotion: 0.0012,
         minimumUsableFrameRatio: 0.80,
         maximumDroppedFrameRatio: 0.10,

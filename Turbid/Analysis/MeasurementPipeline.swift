@@ -46,7 +46,6 @@ final class MeasurementPipeline: CaptureFrameConsuming, @unchecked Sendable {
     private var usableFrames = 0
     private var chart: ScatteringSampleBuffer
     private var latestProgress = MeasurementProgress.idle
-    private var lastObservation: FrameObservation?
     private var completionTimestamp: Double?
 
     private let continuation: AsyncStream<MeasurementProgress>.Continuation
@@ -85,7 +84,6 @@ final class MeasurementPipeline: CaptureFrameConsuming, @unchecked Sendable {
         analysedFrames = 0
         usableFrames = 0
         lastPublished = 0
-        lastObservation = nil
         chart.reset()
         latestProgress = .idle
     }
@@ -144,26 +142,7 @@ final class MeasurementPipeline: CaptureFrameConsuming, @unchecked Sendable {
             return
         }
 
-        lock.lock()
-        defer { lock.unlock() }
-        analysedFrames += 1
-        if observation.isUsable { usableFrames += 1 }
-        lastObservation = observation
-
-        if observation.stage == .complete, completionTimestamp == nil {
-            completionTimestamp = presentationSeconds
-        }
-
-        let elapsed = presentationSeconds - start
-        if elapsed - lastPublished >= configuration.publishInterval
-            || completionTimestamp != nil {
-            lastPublished = elapsed
-            appendChartSample(elapsed: elapsed)
-            latestProgress = makeProgress(observation: observation,
-                                          elapsed: elapsed,
-                                          presentationSeconds: presentationSeconds)
-            continuation.yield(latestProgress)
-        }
+        record(observation, presentationSeconds: presentationSeconds, start: start)
     }
 
     /// Deterministic entry point, for tests and the Simulator.
@@ -188,24 +167,55 @@ final class MeasurementPipeline: CaptureFrameConsuming, @unchecked Sendable {
 
         let observation = analyzer.analyze(luma: luma, presentationSeconds: presentationSeconds)
 
+        record(observation, presentationSeconds: presentationSeconds, start: start)
+        return observation
+    }
+
+    /// Folds one analysed frame into the run and decides what to publish.
+    ///
+    /// Shared by both `consume` entry points, which differ only in how they
+    /// obtain the observation. Takes the lock itself, so no caller may hold it.
+    private func record(_ observation: FrameObservation,
+                        presentationSeconds: Double,
+                        start: Double) {
         lock.lock()
         defer { lock.unlock() }
+
         analysedFrames += 1
         if observation.isUsable { usableFrames += 1 }
-        lastObservation = observation
+
         if observation.stage == .complete, completionTimestamp == nil {
             completionTimestamp = presentationSeconds
         }
+
         let elapsed = presentationSeconds - start
-        if elapsed - lastPublished >= configuration.publishInterval || completionTimestamp != nil {
+        // The slack is not superstition. Both sides are accumulated doubles, so
+        // an interval that is mathematically exact lands a few ulps short about
+        // as often as not — 7/30 - 1/30 is 0.19999999999999996, not 0.2. Without
+        // it that update is dropped and the next one arrives a whole interval
+        // late, which reads as a stutter in the progress display. A nanosecond
+        // is orders of magnitude below any real frame interval.
+        let slack = 1e-9
+        let shouldPublish =
+            elapsed - lastPublished >= configuration.publishInterval - slack
+            || completionTimestamp != nil
+
+        if shouldPublish {
             lastPublished = elapsed
             appendChartSample(elapsed: elapsed)
-            latestProgress = makeProgress(observation: observation,
-                                          elapsed: elapsed,
-                                          presentationSeconds: presentationSeconds)
+        }
+
+        // The polled snapshot always reflects the frame just analysed. Rate
+        // limiting exists to keep a slow interface from being flooded through
+        // `updates`, and to keep the chart from filling with per-frame noise.
+        // Neither is a reason to answer a direct read with a stale frame count.
+        latestProgress = makeProgress(observation: observation,
+                                      elapsed: elapsed,
+                                      presentationSeconds: presentationSeconds)
+
+        if shouldPublish {
             continuation.yield(latestProgress)
         }
-        return observation
     }
 
     /// Assembles the reading. Called once the run is complete.

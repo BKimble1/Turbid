@@ -72,13 +72,37 @@ struct FrameAggregate: Equatable, Sendable {
         evaluatedFrames += 1
         if observation.isUsable { usableFrames += 1 }
 
-        guard observation.contributesToResult else { return }
-        contributingFrames += 1
+        guard observation.stage.contributesToResult else { return }
 
-        meanLevels[writeIndex] = observation.statistics.mean
-        motionScores[writeIndex] = observation.globalMotionScore
-        writeIndex = (writeIndex + 1) % capacity
-        filled = min(filled + 1, capacity)
+        // The cross-frame history takes every frame the stage delivered,
+        // whether or not it passed the per-frame gates — only a frame with no
+        // pixels at all is skipped, having no level or motion to contribute.
+        //
+        // Filtering it by the per-frame verdict, as this once did, defeated the
+        // two window gates it feeds. `medianMotion()` and `exposureVariation()`
+        // exist precisely to catch what a single frame cannot show, and a frame
+        // that moved or flickered is rejected per-frame *for that reason* — so
+        // the evidence was being removed from the statistic meant to weigh it.
+        // Measured on a 300-frame run flickering at 2 Hz: median motion over
+        // the survivors read 0.001, under the 0.0012 limit, while over every
+        // frame it read 0.057. Exposure variation read 0.0002 against a real
+        // swing of 0.18. Both gates stayed silent on a window that was nothing
+        // but flicker.
+        //
+        // The stage restriction stays: torch-settling frames change brightness
+        // legitimately as the illumination comes up, and folding those in would
+        // report flicker on every sound run.
+        if observation.statistics.sampleCount > 0 {
+            meanLevels[writeIndex] = observation.statistics.mean
+            motionScores[writeIndex] = observation.globalMotionScore
+            writeIndex = (writeIndex + 1) % capacity
+            filled = min(filled + 1, capacity)
+        }
+
+        // Everything below describes the frames the result is actually computed
+        // from, so it stays restricted to the ones that passed.
+        guard observation.isUsable else { return }
+        contributingFrames += 1
 
         totalMean += Double(observation.statistics.mean)
         totalStandardDeviation += Double(observation.statistics.standardDeviation)

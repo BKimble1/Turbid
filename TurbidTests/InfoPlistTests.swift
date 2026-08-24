@@ -59,10 +59,24 @@ final class InfoPlistTests: XCTestCase {
     /// A simulator build only warns when the App Store icon is missing, so
     /// nothing notices until the archive is rejected for a missing
     /// CFBundleIconName. This is where it gets noticed.
-    func testTheAppIconReachesTheBundle() throws {
+    func testTheAppIconIsNamedInTheInfoPlist() throws {
         let name = appBundle.object(forInfoDictionaryKey: "CFBundleIconName") as? String
         XCTAssertEqual(name, "AppIcon",
                        "the asset catalogue's app icon must be named in the Info.plist")
+    }
+
+    /// The key above is declared as a build setting, so on its own it proves
+    /// only that somebody typed it. This is the half that cannot be faked: the
+    /// compiled asset catalogue is what `actool` produces from
+    /// `Assets.xcassets`, and it exists in the bundle only if the catalogue was
+    /// actually compiled into it. Without this, an asset catalogue that had
+    /// silently stopped being built would still pass, and the archive would be
+    /// rejected at upload for an icon the Info.plist promised and the bundle
+    /// did not contain.
+    func testTheCompiledAssetCatalogueReachesTheBundle() throws {
+        XCTAssertNotNil(appBundle.url(forResource: "Assets", withExtension: "car"),
+                        "Assets.car is not in the built app bundle, so no icon "
+                            + "and no accent colour were compiled into it")
     }
 
     // MARK: - Privacy manifest

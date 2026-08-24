@@ -94,19 +94,37 @@ struct TrackClassifier: Sendable {
 
         let staticScore = 1 - Self.ramp(speed, configuration.staticSpeedLow, configuration.staticSpeedHigh)
 
+        let straightTerm = Self.ramp(straightness,
+                                     configuration.straightnessLow,
+                                     configuration.straightnessHigh)
+
         let bubbleSize = Self.ramp(diameter, configuration.bubbleDiameterLow, configuration.bubbleDiameterHigh)
         let bubbleSpeed = Self.ramp(speed, configuration.bubbleSpeedLow, configuration.bubbleSpeedHigh)
         let bubbleScore = Self.fuzzyAnd([
             upward,
-            Self.ramp(straightness, configuration.straightnessLow, configuration.straightnessHigh),
+            straightTerm,
             max(bubbleSize, bubbleSpeed),
             1 - staticScore
         ])
 
+        // A straight path only argues against a speck when it is also going
+        // *up*. Sedimentation is ballistic too: a particle settling out of
+        // suspension falls in as straight a line as a bubble rises, and a bare
+        // straightness veto called every sinking particle ambiguous — with all
+        // three scores at zero it could not even be counted as unclassified
+        // motion.
+        //
+        // The gate is the unblended direction ramp rather than `upward`.
+        // `upward` is pulled towards neutral when gravity leaves the image
+        // plane, and letting that leak in here would let a straight rise be
+        // read as a speck whenever the phone is close to flat — the one
+        // geometry in which the direction evidence is worth least.
+        let ballisticRise = min(straightTerm, upwardTerm)
+
         let speckScore = Self.fuzzyAnd([
             1 - upward,
             1 - bubbleSize,
-            1 - Self.ramp(straightness, configuration.straightnessLow, configuration.straightnessHigh),
+            1 - ballisticRise,
             1 - staticScore,
             observationWeight
         ])

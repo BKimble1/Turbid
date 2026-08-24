@@ -166,6 +166,30 @@ jobs:
           [ "$BUILT_BUILD" = "$NUMBER" ] || { echo "build number did not stick" >&2; exit 1; }
           [ "$BUILT_VERSION" = "$MARKETING" ] || { echo "marketing version changed" >&2; exit 1; }
 
+          # The app icon, checked against the app that is about to be uploaded
+          # rather than against the build settings that were meant to produce
+          # it. App Store Connect rejects an archive whose Info.plist has no
+          # CFBundleIconName, and it does so after the upload has finished —
+          # so this is the last place the answer is cheap.
+          APP="$RUNNER_TEMP/Turbid.xcarchive/Products/Applications/Turbid.app"
+          [ -d "$APP" ] || { echo "no Turbid.app inside the archive" >&2; exit 1; }
+          ICON_NAME=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIconName" \
+            "$APP/Info.plist" 2>/dev/null || echo "")
+          echo "icon name       ${ICON_NAME:-<missing>}"
+          [ "$ICON_NAME" = "AppIcon" ] || {
+            echo "CFBundleIconName is '${ICON_NAME:-<missing>}', not AppIcon;" >&2
+            echo "App Store Connect would reject this archive." >&2
+            exit 1
+          }
+          # And the icon itself: the key above is a build setting, so it can be
+          # present while the catalogue that holds the image was never compiled.
+          [ -f "$APP/Assets.car" ] || {
+            echo "Assets.car is missing from the archived app: the asset" >&2
+            echo "catalogue did not compile, so there is no icon to ship." >&2
+            exit 1
+          }
+          echo "asset catalogue $(stat -f%z "$APP/Assets.car") bytes"
+
       - name: Write the export options
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
