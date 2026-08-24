@@ -50,10 +50,31 @@ final class MeasurementViewModel {
     private let environment: AppEnvironment
     private var pipeline: MeasurementPipeline?
     private var alignmentMonitor: AlignmentMonitor?
-    private var snapshotTask: Task<Void, Never>?
-    private var flowTask: Task<Void, Never>?
-    private var analysisTask: Task<Void, Never>?
-    private var alignmentTask: Task<Void, Never>?
+    /// The long-lived tasks, in storage `deinit` is allowed to touch.
+    ///
+    /// `deinit` is nonisolated even on a `@MainActor` class, so it cannot read
+    /// main-actor state. Keeping the cancellables behind a lock lets teardown
+    /// reach them from either isolation without giving up the guarantee that a
+    /// deallocated view model leaves nothing running. The four properties below
+    /// stay exactly as they read before, so every use site is unchanged.
+    private let running = RunningTasks()
+
+    private var snapshotTask: Task<Void, Never>? {
+        get { running[.snapshot] }
+        set { running[.snapshot] = newValue }
+    }
+    private var flowTask: Task<Void, Never>? {
+        get { running[.flow] }
+        set { running[.flow] = newValue }
+    }
+    private var analysisTask: Task<Void, Never>? {
+        get { running[.analysis] }
+        set { running[.analysis] = newValue }
+    }
+    private var alignmentTask: Task<Void, Never>? {
+        get { running[.alignment] }
+        set { running[.alignment] = newValue }
+    }
 
     private var lastProgressAt: ContinuousClock.Instant?
     private var didStall = false
@@ -67,10 +88,7 @@ final class MeasurementViewModel {
     }
 
     deinit {
-        snapshotTask?.cancel()
-        flowTask?.cancel()
-        analysisTask?.cancel()
-        alignmentTask?.cancel()
+        running.cancelAll()
     }
 
     // MARK: - Read-only surface for the interface
@@ -196,7 +214,10 @@ final class MeasurementViewModel {
         // Held in a task so backgrounding or cancelling can interrupt the
         // sequence mid-way; awaited so callers know when it has finished.
         let task = Task { [weak self] in
-            await self?.runMeasurementSequence()
+            // `await self?.run...()` would make this closure return `()?`,
+            // and the task `Task<()?, Never>`. Unwrapping first keeps it Void.
+            guard let self else { return }
+            await self.runMeasurementSequence()
         }
         flowTask = task
         await task.value
@@ -536,6 +557,45 @@ final class MeasurementViewModel {
             analysisTask?.cancel()
             machine.apply(.interrupted(.sessionInterrupted))
             Task { await shutdownCapture() }
+        }
+    }
+}
+
+/// Cancellable work held outside the main actor, so `deinit` can reach it.
+///
+/// Small and deliberately dumb: a lock and a dictionary. It exists only because
+/// a nonisolated `deinit` cannot read `@MainActor` stored properties, and a
+/// view model that is deallocated mid-run must still leave nothing running.
+private final class RunningTasks: @unchecked Sendable {
+    enum Kind: Hashable {
+        case snapshot, flow, analysis, alignment
+    }
+
+    private let lock = NSLock()
+    private var tasks: [Kind: Task<Void, Never>] = [:]
+
+    subscript(kind: Kind) -> Task<Void, Never>? {
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+            return tasks[kind]
+        }
+        set {
+            lock.lock()
+            defer { lock.unlock() }
+            tasks[kind] = newValue
+        }
+    }
+
+    /// Cancels everything still held. Copies under the lock and cancels outside
+    /// it, so a cancellation handler cannot re-enter and deadlock.
+    func cancelAll() {
+        lock.lock()
+        let running = Array(tasks.values)
+        tasks.removeAll()
+        lock.unlock()
+        for task in running {
+            task.cancel()
         }
     }
 }

@@ -23,6 +23,8 @@ It checks:
   * no type asks the compiler to synthesise `Equatable`, `Hashable` or
     `Codable` while storing something that can never conform - a tuple or a
     closure - which costs the whole type its conformance;
+  * no `deinit` on an actor-isolated type touches that type's own stored
+    properties, which it is not allowed to do because `deinit` is nonisolated;
   * every `switch` over an enum declared in this module is exhaustive or has a
     default;
   * no SwiftUI view builder is given more than the ten children it accepts;
@@ -471,6 +473,74 @@ def unsynthesizable_conformances(module) -> list[str]:
     return sorted(set(failures))
 
 
+def isolated_deinits(module) -> list[str]:
+    """`deinit` bodies that read state `deinit` cannot reach.
+
+    A `deinit` is nonisolated even on a `@MainActor` class or an `actor`, so it
+    cannot touch that type's isolated stored properties. The compiler reports
+    this once per property with no line number of its own, which points at the
+    property rather than at the `deinit` that is actually wrong.
+
+    Only mutable state is reported. An immutable `let` of a `Sendable` type is
+    readable from any isolation, and that is exactly how the fix for this is
+    usually written — the cancellables move into a `let` box the `deinit` can
+    reach. Whether a type is `Sendable` is not decidable from the syntax, so a
+    `let` is left alone rather than condemned: this checks for the mistake, not
+    for the remedy. A property marked `nonisolated` is exempt for the same
+    reason — that is the annotation that makes it reachable.
+    """
+    failures = []
+    for path, src, tree in module.files:
+        def visit(node):
+            if node.type == "class_declaration":
+                modifiers = [c for c in node.children if c.type == "modifiers"]
+                attributes = {text(a, src).lstrip("@").strip()
+                              for m in modifiers for a in m.children
+                              if a.type == "attribute"}
+                kinds = {text(c, src) for c in node.children}
+                isolated = "MainActor" in attributes or "actor" in kinds
+                bodies = [c for c in node.children if c.type.endswith("_body")]
+                if isolated and bodies:
+                    names = [c for c in node.children if c.type == "type_identifier"]
+                    owner = text(names[0], src) if names else "?"
+                    reachable, stored = set(), set()
+                    for name, prop, _ in _stored_properties(bodies[0], src):
+                        declaration = text(prop, src)
+                        bindings = [c for c in prop.children
+                                    if c.type == "value_binding_pattern"]
+                        mutable = bindings and text(bindings[0], src).strip() == "var"
+                        if mutable and "nonisolated" not in declaration:
+                            stored.add(name)
+                        else:
+                            reachable.add(name)
+                    for member in bodies[0].children:
+                        if member.type != "deinit_declaration":
+                            continue
+                        used = set()
+
+                        def scan(inner):
+                            if inner.type == "simple_identifier":
+                                word = text(inner, src)
+                                if word in stored:
+                                    used.add(word)
+                            for child in inner.children:
+                                scan(child)
+
+                        scan(member)
+                        if used:
+                            line = member.start_point[0] + 1
+                            failures.append(
+                                f"{path}:{line}: deinit of {owner} touches "
+                                f"{', '.join(sorted(used))}, but deinit is "
+                                "nonisolated and cannot reach isolated state"
+                            )
+            for child in node.children:
+                visit(child)
+
+        visit(tree.root_node)
+    return sorted(set(failures))
+
+
 def inexhaustive_switches(module) -> list[str]:
     """Switches over a module enum that name some cases but not all."""
     failures = []
@@ -606,6 +676,29 @@ SELF_TEST = [
     ("struct J: Equatable {\n    let x: Int\n    var pair: (Int, Int) { (x, x) }\n}\n", 0),
 ]
 
+DEINIT_SELF_TEST = [
+    # @MainActor class whose deinit touches its own stored property.
+    ("@MainActor\nfinal class A {\n    private var t: Int = 0\n"
+     "    deinit { t = 1 }\n}\n", 1),
+    # An actor is isolated too.
+    ("actor B {\n    private var t: Int = 0\n    deinit { print(t) }\n}\n", 1),
+    # Reaching it through a `let` box is the fix, and must stay quiet: a `let`
+    # of a Sendable type is readable from any isolation.
+    ("@MainActor\nfinal class C {\n    private let box = Box()\n"
+     "    private var t: Int { box.t }\n    deinit { box.cancelAll() }\n}\n", 0),
+    # Two mutable properties in one deinit are one report, naming both.
+    ("@MainActor\nfinal class G {\n    var a = 0\n    var b = 0\n"
+     "    deinit { a = 1; b = 2 }\n}\n", 1),
+    # An explicitly nonisolated property is reachable.
+    ("@MainActor\nfinal class D {\n    nonisolated(unsafe) var t = 0\n"
+     "    deinit { t = 1 }\n}\n", 0),
+    # No isolation, no problem.
+    ("final class E {\n    private var t: Int = 0\n    deinit { t = 1 }\n}\n", 0),
+    # A deinit that touches nothing of its own.
+    ("@MainActor\nfinal class F {\n    private var t: Int = 0\n"
+     "    deinit { }\n}\n", 0),
+]
+
 
 def self_test(parser) -> int:
     """Proves the rule can fire, and that each exemption silences it."""
@@ -619,9 +712,21 @@ def self_test(parser) -> int:
             failures += 1
             print(f"FAIL self-test {index}: expected {expected} report(s), "
                   f"got {len(found)}: {found}")
+
+    for index, (source, expected) in enumerate(DEINIT_SELF_TEST):
+        src = source.encode("utf-8")
+        module = Module()
+        module.files.append((f"deinit-selftest-{index}.swift", src, parser.parse(src)))
+        found = isolated_deinits(module)
+        if len(found) != expected:
+            failures += 1
+            print(f"FAIL deinit self-test {index}: expected {expected} "
+                  f"report(s), got {len(found)}: {found}")
+
     if failures:
         return 1
-    print(f"swift audit self-test OK  ({len(SELF_TEST)} cases)")
+    print(f"swift audit self-test OK  "
+          f"({len(SELF_TEST) + len(DEINIT_SELF_TEST)} cases)")
     return 0
 
 
@@ -663,6 +768,7 @@ def main() -> int:
     failures += call_mismatches(module, parser)
     failures += missing_conformances(module)
     failures += unsynthesizable_conformances(module)
+    failures += isolated_deinits(module)
     failures += inexhaustive_switches(module)
     failures += overfull_view_builders(module)
     failures += duplicate_declarations(module)
