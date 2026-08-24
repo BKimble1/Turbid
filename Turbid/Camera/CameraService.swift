@@ -741,6 +741,8 @@ final class CameraService: NSObject, CameraControlling, @unchecked Sendable {
             return "the camera is not available in Split View or Slide Over"
         case .videoDeviceNotAvailableDueToSystemPressure:
             return "the camera is unavailable because the iPhone is too warm"
+        case .sensitiveContentMitigationActivated:
+            return "the camera was interrupted by the system's sensitive-content protection"
         @unknown default:
             return "the camera was interrupted"
         }

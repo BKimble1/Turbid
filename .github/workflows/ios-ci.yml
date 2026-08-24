@@ -171,39 +171,48 @@ jobs:
           LOG="$RUNNER_TEMP/xcodebuild.log"
           [ -f "$LOG" ] || exit 0
           {
-            echo "### Build failure"
+            echo "### Failure"
             echo ""
             echo '```'
-            # Xcode's own summary block, which names the errors but not where.
-            awk '/^Testing failed:/,/^\*\* (TEST|BUILD) FAILED \*\*/' "$LOG" | head -40
+            # Two different shapes. A compile failure ends in a "Testing
+            # failed:" block; a test failure ends in a "Failing tests:" list
+            # and never prints one. Catching only the first is how the first
+            # run of the suite reported nothing at all.
+            awk '/^(Testing failed|Failing tests):/,/^\*\* TEST[A-Z ]* FAILED \*\*/' "$LOG" \
+              | head -60
             echo '```'
             echo ""
-            echo "Diagnostics carrying a file and line:"
+            echo "Diagnostics:"
             echo ""
             echo '```'
-            # `note:` too: it is the line that names a missing enum case
-            # or the overload that did not match.
-            grep -E '^/.*:[0-9]+:[0-9]+: (error|warning|note):' "$LOG" \
-              | sed "s|$GITHUB_WORKSPACE/||" | sort -u | head -40
+            # A compiler diagnostic carries file:line:column; an XCTest failure
+            # carries file:line only. Both matter, so the column is optional.
+            grep -E '^/.*:[0-9]+:([0-9]+:)? (error|warning|note):' "$LOG" \
+              | sed "s|$GITHUB_WORKSPACE/||" | sort -u | head -60
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"
 
-      # Only on failure, only the result bundle, only for a week. A green run
-      # leaves nothing behind to pay storage on.
+      # Text, not the .xcresult bundle: that came to 179 MB on the first run
+      # that actually executed tests, which is not a concise diagnostic by any
+      # reading. This is a few hundred kilobytes and readable without a Mac.
       - name: Package diagnostics
         if: failure()
         run: |
-          set -euo pipefail
-          if [ -d "$RESULT_BUNDLE" ]; then
-            ditto -c -k --sequesterRsrc --keepParent \
-              "$RESULT_BUNDLE" "$RUNNER_TEMP/TestResults.xcresult.zip"
-          fi
+          set -uo pipefail
+          OUT="$RUNNER_TEMP/diagnostics"
+          mkdir -p "$OUT"
+          LOG="$RUNNER_TEMP/xcodebuild.log"
+          [ -f "$LOG" ] || exit 0
+          grep -E "(: (error|warning): |^Test Case .* (failed|passed)|^Failing tests:)" \
+            "$LOG" > "$OUT/failures.txt" || true
+          tail -n 4000 "$LOG" > "$OUT/xcodebuild-tail.log"
+          wc -l "$OUT"/* || true
 
       - name: Upload diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: xcresult-${{ inputs.level }}-${{ github.run_id }}
-          path: ${{ runner.temp }}/TestResults.xcresult.zip
+          name: diagnostics-${{ inputs.level }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/diagnostics
           retention-days: 7
           if-no-files-found: ignore
