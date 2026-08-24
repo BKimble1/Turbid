@@ -56,6 +56,13 @@ targets:
         # Answered here rather than by hand on every upload.
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         INFOPLIST_KEY_NSCameraUsageDescription: "Turbid uses the camera and torch to analyze light scattering in a water sample. Video is processed on this iPhone and is not saved or sent anywhere."
+      # Release only, and only for the app: the configuration the archive is
+      # built from. Without it CODE_SIGN_IDENTITY defaults to "Apple
+      # Development" and an App Store archive asks for a development
+      # provisioning profile, which does not and should not exist.
+      configs:
+        Release:
+          CODE_SIGN_IDENTITY: "Apple Distribution"
 
   TurbidTests:
     type: bundle.unit-test
