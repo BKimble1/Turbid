@@ -15,9 +15,9 @@
 #   1. An App Store Connect API key added to Codemagic under Teams >
 #      Integrations > Developer Portal, named exactly `TurbidAppStoreKey`
 #      (or change `integrations.app_store_connect` below).
-#   2. A bundle identifier you own, registered in your Apple developer account.
-#      `com.turbid.Turbid` is a placeholder and will not sign. Change it in BOTH
-#      places marked CHANGE ME — a script step fails the build if they drift.
+#   2. The bundle identifier `com.idlery.turbid`, registered in your Apple
+#      developer account. It appears in BOTH places marked KEEP IN SYNC and a
+#      script step fails the build if the two ever drift apart.
 #   3. An app record in App Store Connect for that bundle identifier. Put its
 #      Apple ID (the numeric one, from the App Information page) in
 #      `APP_STORE_APPLE_ID` so the build number can be incremented.
@@ -106,13 +106,13 @@ workflows:
       <<: *xcode_and_project
       ios_signing:
         distribution_type: app_store
-        # CHANGE ME (1 of 2) — must be a bundle identifier you own.
-        bundle_identifier: com.turbid.Turbid
+        # KEEP IN SYNC (1 of 2) — the production bundle identifier.
+        bundle_identifier: com.idlery.turbid
       vars:
         XCODE_PROJECT: "Turbid.xcodeproj"
         XCODE_SCHEME: "Turbid"
-        # CHANGE ME (2 of 2) — keep identical to `bundle_identifier` above.
-        BUNDLE_ID: "com.turbid.Turbid"
+        # KEEP IN SYNC (2 of 2) — identical to `bundle_identifier` above.
+        BUNDLE_ID: "com.idlery.turbid"
         # The numeric Apple ID of the App Store Connect app record.
         APP_STORE_APPLE_ID: "0000000000"
     scripts:

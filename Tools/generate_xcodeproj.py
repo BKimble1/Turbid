@@ -28,7 +28,7 @@ UITEST_NAME = "TurbidUITests"
 # in someone's App Store Connect account, without editing a tracked file. The
 # generator is otherwise deterministic; setting these changes the output, which
 # is the point.
-BUNDLE_ID = os.environ.get("TURBID_BUNDLE_ID", "com.turbid.Turbid")
+BUNDLE_ID = os.environ.get("TURBID_BUNDLE_ID", "com.idlery.turbid")
 DEVELOPMENT_TEAM = os.environ.get("TURBID_DEVELOPMENT_TEAM", "")
 DEPLOYMENT_TARGET = "17.0"
 SWIFT_VERSION = "5.0"

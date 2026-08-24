@@ -61,8 +61,8 @@ verified* below.
    tests passing.
 5. If Xcode asks about signing, select the **Turbid** target → **Signing &
    Capabilities** → tick *Automatically manage signing* and choose your Apple ID
-   team. You may also need to change the bundle identifier from
-   `com.turbid.Turbid` to something unique to you.
+   team. The bundle identifier is `com.idlery.turbid`; signing it requires
+   the developer account that owns it.
 
 ### What you should see
 
@@ -116,10 +116,9 @@ short of store submission.
 
 Three things have to exist before the TestFlight workflow can work, and only
 the account holder can create them: an App Store Connect API key in Codemagic
-named `TurbidAppStoreKey`, a bundle identifier you own (`com.turbid.Turbid` is a
-placeholder and will not sign), and an app record for it. The file marks both
-places the identifier has to change, and a build step fails loudly if the two
-drift apart.
+named `TurbidAppStoreKey`, the bundle identifier `com.idlery.turbid` registered
+in the developer account, and an app record for it. The file marks both places
+the identifier appears, and a build step fails loudly if the two drift apart.
 
 The bundle identifier and development team are generator inputs
 (`TURBID_BUNDLE_ID`, `TURBID_DEVELOPMENT_TEAM`), not tracked constants, so CI sets

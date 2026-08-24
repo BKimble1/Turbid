@@ -231,13 +231,14 @@ which a simulator build would have complained about:
 - **`agvtool` could not set a build number**, because the app target had no
   `VERSIONING_SYSTEM`. TestFlight refuses a build number it has seen before, so
   the second upload would have failed.
-- **The bundle identifier was a tracked constant.** `com.turbid.Turbid` is a
-  placeholder nobody owns; it is now a generator input, so CI signs against a
-  real identifier without anyone editing a file.
+- **The bundle identifier was a tracked constant.** It is now a generator
+  input defaulting to the production identifier `com.idlery.turbid`, so CI can
+  sign against a different one without anyone editing a file.
 
 What still has to be created by hand, because only the account holder can: an
-App Store Connect API key added to Codemagic as `TurbidAppStoreKey`, a registered
-bundle identifier, and an app record for it. `codemagic.yaml` marks exactly
+App Store Connect API key added to Codemagic as `TurbidAppStoreKey`, the bundle
+identifier `com.idlery.turbid` registered in the developer account, and an app
+record for it. `codemagic.yaml` marks exactly
 where each goes.
 
 # What to do on a Mac with a device
