@@ -59,6 +59,9 @@ workflows:
     scripts:
       - *static_checks
       - name: Unit tests
+        # Script-level, not workflow-level. `xcode-project run-tests` writes
+        # JUnit XML to build/ios/test by default, which this glob matches.
+        test_report: build/ios/test/*.xml
         script: |
           # No --device: the default test destination follows whatever runtimes
           # the image has, which a hard-coded simulator name does not.
@@ -69,7 +72,6 @@ workflows:
     artifacts:
       - build/ios/test/*.xml
       - /tmp/xcodebuild_logs/*.log
-    test_report: build/ios/test/*.xml
 
   ios-ui-tests:
     name: Interface tests (Simulator)
@@ -82,6 +84,9 @@ workflows:
     scripts:
       - *static_checks
       - name: Interface tests
+        # Script-level, not workflow-level. `xcode-project run-tests` writes
+        # JUnit XML to build/ios/test by default, which this glob matches.
+        test_report: build/ios/test/*.xml
         script: |
           xcode-project run-tests \
             --project "$XCODE_PROJECT" \
@@ -90,7 +95,6 @@ workflows:
     artifacts:
       - build/ios/test/*.xml
       - /tmp/xcodebuild_logs/*.log
-    test_report: build/ios/test/*.xml
 
   ios-testflight:
     name: TestFlight
@@ -132,6 +136,9 @@ workflows:
               exit 1
             }
       - name: Unit tests
+        # Script-level, not workflow-level. `xcode-project run-tests` writes
+        # JUnit XML to build/ios/test by default, which this glob matches.
+        test_report: build/ios/test/*.xml
         script: |
           xcode-project run-tests \
             --project "$XCODE_PROJECT" \
@@ -155,7 +162,6 @@ workflows:
       - build/ios/test/*.xml
       - /tmp/xcodebuild_logs/*.log
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
-    test_report: build/ios/test/*.xml
     publishing:
       app_store_connect:
         auth: integration
